@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl
+import org.jetbrains.kotlin.incremental.js.IncrementalNextRoundChecker
 import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsIrLinker
 import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsIrModuleSerializer
 import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsMangler
@@ -39,6 +40,7 @@ import org.jetbrains.kotlin.library.impl.createKotlinLibrary
 import org.jetbrains.kotlin.library.resolver.KotlinLibraryResolveResult
 import org.jetbrains.kotlin.library.resolver.TopologicalLibraryOrder
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.progress.IncrementalNextRoundException
 import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi2ir.Psi2IrConfiguration
@@ -46,6 +48,7 @@ import org.jetbrains.kotlin.psi2ir.Psi2IrTranslator
 import org.jetbrains.kotlin.psi2ir.generators.GeneratorContext
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingContextUtils
+import org.jetbrains.kotlin.serialization.js.KotlinJavascriptSerializationUtil
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.storage.StorageManager
 import org.jetbrains.kotlin.utils.DFS
@@ -251,9 +254,31 @@ private class ModulesStructure(
             )
 
         ProgressIndicatorAndCompilationCanceledStatus.checkCanceled()
+
+        compilerConfiguration.get(JSConfigurationKeys.INCREMENTAL_NEXT_ROUND_CHECKER)?.checkProtoChanges(analysisResult)
+
         TopDownAnalyzerFacadeForJSIR.checkForErrors(files, analysisResult.bindingContext)
 
         return analysisResult
+    }
+
+    private fun IncrementalNextRoundChecker.checkProtoChanges(analysisResult: JsAnalysisResult) {
+        val bindingContext = analysisResult.bindingContext
+        for (ktFile in files) {
+            val memberScope = ktFile.declarations.map { getDescriptorForElement(bindingContext, it) }
+            val packageFragment = KotlinJavascriptSerializationUtil.serializeDescriptors(
+                bindingContext,
+                analysisResult.moduleDescriptor,
+                memberScope,
+                ktFile.packageFqName,
+                compilerConfiguration.languageVersionSettings,
+                compilerConfiguration.metadataVersion
+            )
+            val ioFile = VfsUtilCore.virtualToIoFile(ktFile.virtualFile)
+            checkProtoChanges(ioFile, packageFragment.toByteArray())
+        }
+
+        if (shouldGoToNextRound()) throw IncrementalNextRoundException()
     }
 
     private val languageVersionSettings: LanguageVersionSettings = compilerConfiguration.languageVersionSettings
