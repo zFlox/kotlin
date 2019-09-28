@@ -10,20 +10,20 @@ import org.w3c.performance.Performance
 
 @SinceKotlin("1.3")
 @ExperimentalTime
-public actual object MonoClock : Clock {
+public actual object MonoTimeSource : TimeSource {
 
-    private val actualClock: Clock = run {
+    private val actualClock: TimeSource = run {
         val isNode: Boolean = js("typeof process !== 'undefined' && process.versions && !!process.versions.node")
 
         if (isNode)
-            HrTimeClock(js("process").unsafeCast<Process>())
+            HrTimeSource(js("process").unsafeCast<Process>())
         else
-            js("self").unsafeCast<GlobalPerformance?>()?.performance?.let(::PerformanceClock)
-                ?: DateNowClock
+            js("self").unsafeCast<GlobalPerformance?>()?.performance?.let(::PerformanceTimeSource)
+                ?: DateNowTimeSource
 
     }
 
-    override fun markNow(): ClockMark = actualClock.markNow()
+    override fun markNow(): TimeSourceMark = actualClock.markNow()
 }
 
 internal external interface Process {
@@ -32,9 +32,9 @@ internal external interface Process {
 
 @SinceKotlin("1.3")
 @ExperimentalTime
-internal class HrTimeClock(val process: Process) : Clock {
+internal class HrTimeSource(val process: Process) : TimeSource {
 
-    override fun markNow(): ClockMark = object : ClockMark() {
+    override fun markNow(): TimeSourceMark = object : TimeSourceMark() {
         val startedAt = process.hrtime()
         override fun elapsedNow(): Duration =
             process.hrtime(startedAt).let { (seconds, nanos) -> seconds.seconds + nanos.nanoseconds }
@@ -45,14 +45,14 @@ internal class HrTimeClock(val process: Process) : Clock {
 
 @SinceKotlin("1.3")
 @ExperimentalTime
-internal class PerformanceClock(val performance: Performance) : AbstractDoubleClock(unit = DurationUnit.MILLISECONDS) {
+internal class PerformanceTimeSource(val performance: Performance) : AbstractDoubleTimeSource(unit = DurationUnit.MILLISECONDS) {
     override fun read(): Double = performance.now()
     override fun toString(): String = "Clock(self.performance.now())"
 }
 
 @SinceKotlin("1.3")
 @ExperimentalTime
-internal object DateNowClock : AbstractDoubleClock(unit = DurationUnit.MILLISECONDS) {
+internal object DateNowTimeSource : AbstractDoubleTimeSource(unit = DurationUnit.MILLISECONDS) {
     override fun read(): Double = kotlin.js.Date.now()
     override fun toString(): String = "Clock(Date.now())"
 }

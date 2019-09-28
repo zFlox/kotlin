@@ -13,7 +13,7 @@ package kotlin.time
  */
 @SinceKotlin("1.3")
 @ExperimentalTime
-public expect object MonoClock : Clock
+public expect object MonoTimeSource : TimeSource
 
 /**
  * An abstract class used to implement clocks that return their readings as [Long] values in the specified [unit].
@@ -22,19 +22,19 @@ public expect object MonoClock : Clock
  */
 @SinceKotlin("1.3")
 @ExperimentalTime
-public abstract class AbstractLongClock(protected val unit: DurationUnit) : Clock {
+public abstract class AbstractLongTimeSource(protected val unit: DurationUnit) : TimeSource {
     /**
      * This protected method should be overridden to return the current reading of the clock expressed as a [Long] number
      * in the unit specified by the [unit] property.
      */
     protected abstract fun read(): Long
 
-    private class LongClockMark(private val startedAt: Long, private val clock: AbstractLongClock, private val offset: Duration) : ClockMark() {
-        override fun elapsedNow(): Duration = (clock.read() - startedAt).toDuration(clock.unit) - offset
-        override fun plus(duration: Duration): ClockMark = LongClockMark(startedAt, clock, offset + duration)
+    private class LongClockMark(private val startedAt: Long, private val timeSource: AbstractLongTimeSource, private val offset: Duration) : TimeSourceMark() {
+        override fun elapsedNow(): Duration = (timeSource.read() - startedAt).toDuration(timeSource.unit) - offset
+        override fun plus(duration: Duration): TimeSourceMark = LongClockMark(startedAt, timeSource, offset + duration)
     }
 
-    override fun markNow(): ClockMark = LongClockMark(read(), this, Duration.ZERO)
+    override fun markNow(): TimeSourceMark = LongClockMark(read(), this, Duration.ZERO)
 }
 
 /**
@@ -44,19 +44,19 @@ public abstract class AbstractLongClock(protected val unit: DurationUnit) : Cloc
  */
 @SinceKotlin("1.3")
 @ExperimentalTime
-public abstract class AbstractDoubleClock(protected val unit: DurationUnit) : Clock {
+public abstract class AbstractDoubleTimeSource(protected val unit: DurationUnit) : TimeSource {
     /**
      * This protected method should be overridden to return the current reading of the clock expressed as a [Double] number
      * in the unit specified by the [unit] property.
      */
     protected abstract fun read(): Double
 
-    private class DoubleClockMark(private val startedAt: Double, private val clock: AbstractDoubleClock, private val offset: Duration) : ClockMark() {
-        override fun elapsedNow(): Duration = (clock.read() - startedAt).toDuration(clock.unit) - offset
-        override fun plus(duration: Duration): ClockMark = DoubleClockMark(startedAt, clock, offset + duration)
+    private class DoubleClockMark(private val startedAt: Double, private val timeSource: AbstractDoubleTimeSource, private val offset: Duration) : TimeSourceMark() {
+        override fun elapsedNow(): Duration = (timeSource.read() - startedAt).toDuration(timeSource.unit) - offset
+        override fun plus(duration: Duration): TimeSourceMark = DoubleClockMark(startedAt, timeSource, offset + duration)
     }
 
-    override fun markNow(): ClockMark = DoubleClockMark(read(), this, Duration.ZERO)
+    override fun markNow(): TimeSourceMark = DoubleClockMark(read(), this, Duration.ZERO)
 }
 
 /**
@@ -75,7 +75,7 @@ public abstract class AbstractDoubleClock(protected val unit: DurationUnit) : Cl
  */
 @SinceKotlin("1.3")
 @ExperimentalTime
-public class TestClock : AbstractLongClock(unit = DurationUnit.NANOSECONDS) {
+public class TestTimeSource : AbstractLongTimeSource(unit = DurationUnit.NANOSECONDS) {
     private var reading: Long = 0L
 
     override fun read(): Long = reading

@@ -49,7 +49,7 @@ class MeasureTimeTest {
 
     @Test
     fun measureTimeTestClock() {
-        val clock = TestClock()
+        val clock = TestTimeSource()
         val expectedNs = Random.nextLong(1_000_000_000L)
         val elapsed = clock.measureTime {
             clock += expectedNs.nanoseconds

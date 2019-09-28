@@ -8,30 +8,30 @@ package kotlin.time
 /**
  * A source of time for measuring time intervals.
  *
- * The only operation provided by the clock is [markNow]. It returns a [ClockMark], which can be used to query the elapsed time later.
+ * The only operation provided by the clock is [markNow]. It returns a [TimeSourceMark], which can be used to query the elapsed time later.
  *
  * @see [measureTime]
  * @see [measureTimedValue]
  */
 @SinceKotlin("1.3")
 @ExperimentalTime
-public interface Clock {
+public interface TimeSource {
     /**
      * Marks a time point on this clock.
      *
-     * The returned [ClockMark] instance encapsulates captured time point and allows querying
-     * the duration of time interval [elapsed][ClockMark.elapsedNow] from that point.
+     * The returned [TimeSourceMark] instance encapsulates captured time point and allows querying
+     * the duration of time interval [elapsed][TimeSourceMark.elapsedNow] from that point.
      */
-    public fun markNow(): ClockMark
+    public fun markNow(): TimeSourceMark
 }
 
 /**
- * Represents a time point notched on a particular [Clock]. Remains bound to the clock it was taken from
+ * Represents a time point notched on a particular [TimeSource]. Remains bound to the clock it was taken from
  * and allows querying for the duration of time elapsed from that point (see the function [elapsedNow]).
  */
 @SinceKotlin("1.3")
 @ExperimentalTime
-public abstract class ClockMark {
+public abstract class TimeSourceMark {
     /**
      * Returns the amount of time passed from this clock mark on the clock from which this mark was taken.
      *
@@ -44,14 +44,14 @@ public abstract class ClockMark {
      *
      * The returned clock mark is more _late_ when the [duration] is positive, and more _early_ when the [duration] is negative.
      */
-    public open operator fun plus(duration: Duration): ClockMark = AdjustedClockMark(this, duration)
+    public open operator fun plus(duration: Duration): TimeSourceMark = AdjustedTimeSourceMark(this, duration)
 
     /**
      * Returns a clock mark on the same clock that is behind this clock mark by the specified [duration].
      *
      * The returned clock mark is more _early_ when the [duration] is positive, and more _late_ when the [duration] is negative.
      */
-    public open operator fun minus(duration: Duration): ClockMark = plus(-duration)
+    public open operator fun minus(duration: Duration): TimeSourceMark = plus(-duration)
 
 
     /**
@@ -76,18 +76,18 @@ public abstract class ClockMark {
 @SinceKotlin("1.3")
 @kotlin.internal.InlineOnly
 @Deprecated("Subtracting one ClockMark from another is not a well defined operation because these clock marks could have been obtained from the different clocks.", level = DeprecationLevel.ERROR)
-public inline operator fun ClockMark.minus(other: ClockMark): Duration = throw Error("Operation is disallowed.")
+public inline operator fun TimeSourceMark.minus(other: TimeSourceMark): Duration = throw Error("Operation is disallowed.")
 
 @ExperimentalTime
 @SinceKotlin("1.3")
 @kotlin.internal.InlineOnly
 @Deprecated("Comparing one ClockMark to another is not a well defined operation because these clock marks could have been obtained from the different clocks.", level = DeprecationLevel.ERROR)
-public inline operator fun ClockMark.compareTo(other: ClockMark): Int = throw Error("Operation is disallowed.")
+public inline operator fun TimeSourceMark.compareTo(other: TimeSourceMark): Int = throw Error("Operation is disallowed.")
 
 
 @ExperimentalTime
-private class AdjustedClockMark(val mark: ClockMark, val adjustment: Duration) : ClockMark() {
+private class AdjustedTimeSourceMark(val mark: TimeSourceMark, val adjustment: Duration) : TimeSourceMark() {
     override fun elapsedNow(): Duration = mark.elapsedNow() - adjustment
 
-    override fun plus(duration: Duration): ClockMark = AdjustedClockMark(mark, adjustment + duration)
+    override fun plus(duration: Duration): TimeSourceMark = AdjustedTimeSourceMark(mark, adjustment + duration)
 }
