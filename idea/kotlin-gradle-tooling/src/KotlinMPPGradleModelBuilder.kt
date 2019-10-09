@@ -5,7 +5,10 @@
 
 package org.jetbrains.kotlin.gradle
 
-import org.gradle.api.*
+import org.gradle.api.Named
+import org.gradle.api.NamedDomainObjectContainer
+import org.gradle.api.Project
+import org.gradle.api.Task
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
@@ -133,11 +136,15 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
         val sourceSets =
             (getSourceSets(kotlinExt) as? NamedDomainObjectContainer<Named>)?.asMap?.values ?: emptyList<Named>()
 
+        val getAndroidSourceSetDependencies = kotlinExt.javaClass.getMethodOrNull("getAndroidSourceSetDependencies", Project::class.java)
+        @Suppress("UNCHECKED_CAST") val androidDeps =
+            getAndroidSourceSetDependencies?.let { it(kotlinExt, project) } as Map<String, List<File>>?
+
         // Some performance optimisation: do not build metadata dependencies if source set is not common
         val doBuildMetadataDependencies =
             project.properties["build_metadata_dependencies_for_actualised_source_sets"]?.toString()?.toBoolean()
                 ?: DEFAULT_BUILD_METADATA_DEPENDENCIES_FOR_ACTUALISED_SOURCE_SETS
-        val allSourceSetsProtos = sourceSets.mapNotNull { buildSourceSet(it, dependencyResolver, project, dependencyMapper) }
+        val allSourceSetsProtos = sourceSets.mapNotNull { buildSourceSet(it, dependencyResolver, project, dependencyMapper, androidDeps) }
         val allSourceSets = if (doBuildMetadataDependencies) {
             allSourceSetsProtos.map { proto -> proto.buildKotlinSourceSetImpl(true)}
         } else {
@@ -165,7 +172,8 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
         gradleSourceSet: Named,
         dependencyResolver: DependencyResolver,
         project: Project,
-        dependencyMapper: KotlinDependencyMapper
+        dependencyMapper: KotlinDependencyMapper,
+        androidDeps: Map<String, List<File>>?
     ): KotlinSourceSetProto? {
         val sourceSetClass = gradleSourceSet.javaClass
         val getLanguageSettings = sourceSetClass.getMethodOrNull("getLanguageSettings") ?: return null
@@ -180,7 +188,7 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
         val dependsOnSourceSets = (getDependsOn(gradleSourceSet) as? Set<Named>)?.mapTo(LinkedHashSet()) { it.name } ?: emptySet<String>()
 
         val sourceSetDependenciesBuilder: () -> Array<KotlinDependencyId> = {
-            buildSourceSetDependencies(gradleSourceSet, dependencyResolver, project).map { dependencyMapper.getId(it) }.distinct()
+            buildSourceSetDependencies(gradleSourceSet, dependencyResolver, project, androidDeps).map { dependencyMapper.getId(it) }.distinct()
                 .toTypedArray()
         }
         return KotlinSourceSetProto(
@@ -578,7 +586,8 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
     private fun buildSourceSetDependencies(
         gradleSourceSet: Named,
         dependencyResolver: DependencyResolver,
-        project: Project
+        project: Project,
+        androidDeps: Map<String, List<File>>?
     ): List<KotlinDependency> {
         return ArrayList<KotlinDependency>().apply {
             val transformationBuilder = MetadataDependencyTransformationBuilder(gradleSourceSet)
@@ -594,6 +603,8 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
             this += buildDependencies(
                 gradleSourceSet, dependencyResolver, "getRuntimeOnlyMetadataConfigurationName", "RUNTIME", project, transformationBuilder
             )
+
+            androidDeps?.get(gradleSourceSet.name)?.let { this += DefaultFileCollectionDependency(it) }
         }
     }
 
