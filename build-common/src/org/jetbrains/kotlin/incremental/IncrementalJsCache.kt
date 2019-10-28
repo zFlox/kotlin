@@ -85,8 +85,8 @@ open class IncrementalJsCache(
 
     fun compare(translatedFiles: Map<File, TranslationResultValue>, changesCollector: ChangesCollector) {
         for ((srcFile, data) in translatedFiles) {
-            val oldProtoMap = translationResults[srcFile]?.metadata?.let { getProtoData(srcFile, it) } ?: emptyMap()
-            val newProtoMap = getProtoData(srcFile, data.metadata)
+            val oldProtoMap = translationResults[srcFile]?.metadata?.let { protoData(srcFile, it) } ?: emptyMap()
+            val newProtoMap = protoData(srcFile, data.metadata)
 
             for (classId in oldProtoMap.keys + newProtoMap.keys) {
                 changesCollector.collectProtoChanges(oldProtoMap[classId], newProtoMap[classId])
