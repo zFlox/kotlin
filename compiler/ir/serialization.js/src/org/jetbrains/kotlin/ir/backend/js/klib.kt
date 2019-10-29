@@ -10,13 +10,13 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.backend.common.LoggingContext
 import org.jetbrains.kotlin.backend.common.serialization.DescriptorTable
+import org.jetbrains.kotlin.backend.common.serialization.DescriptorTableImpl
 import org.jetbrains.kotlin.backend.common.serialization.metadata.DynamicTypeDeserializer
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl
-import org.jetbrains.kotlin.incremental.js.IncrementalNextRoundChecker
 import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsIrLinker
 import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsIrModuleSerializer
 import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsMangler
@@ -41,8 +41,7 @@ import org.jetbrains.kotlin.library.impl.createKotlinLibrary
 import org.jetbrains.kotlin.library.resolver.KotlinLibraryResolveResult
 import org.jetbrains.kotlin.library.resolver.TopologicalLibraryOrder
 import org.jetbrains.kotlin.library.resolver.impl.libraryResolver
-import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.metadata.ProtoBuf
 import org.jetbrains.kotlin.progress.IncrementalNextRoundException
 import org.jetbrains.kotlin.progress.ProgressIndicatorAndCompilationCanceledStatus
 import org.jetbrains.kotlin.psi.KtFile
@@ -52,7 +51,6 @@ import org.jetbrains.kotlin.psi2ir.generators.GeneratorContext
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingContextUtils
 import org.jetbrains.kotlin.resolve.CompilerDeserializationConfiguration
-import org.jetbrains.kotlin.serialization.js.KotlinJavascriptSerializationUtil
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.storage.StorageManager
 import org.jetbrains.kotlin.util.Logger
@@ -290,30 +288,14 @@ private class ModulesStructure(
 
         ProgressIndicatorAndCompilationCanceledStatus.checkCanceled()
 
-        compilerConfiguration.get(JSConfigurationKeys.INCREMENTAL_NEXT_ROUND_CHECKER)?.checkProtoChanges(analysisResult)
+        if (IncrementalCompilation.isEnabledForJs()) {
+            /** can throw [IncrementalNextRoundException] */
+            compareMetadataAndGoToNextICRoundIfNeeded(analysisResult, compilerConfiguration, files)
+        }
 
         TopDownAnalyzerFacadeForJS.checkForErrors(files, analysisResult.bindingContext)
 
         return analysisResult
-    }
-
-    private fun IncrementalNextRoundChecker.checkProtoChanges(analysisResult: JsAnalysisResult) {
-        val bindingContext = analysisResult.bindingContext
-        for (ktFile in files) {
-            val memberScope = ktFile.declarations.map { getDescriptorForElement(bindingContext, it) }
-            val packageFragment = KotlinJavascriptSerializationUtil.serializeDescriptors(
-                bindingContext,
-                analysisResult.moduleDescriptor,
-                memberScope,
-                ktFile.packageFqName,
-                compilerConfiguration.languageVersionSettings,
-                compilerConfiguration.metadataVersion
-            )
-            val ioFile = VfsUtilCore.virtualToIoFile(ktFile.virtualFile)
-            checkProtoChanges(ioFile, packageFragment.toByteArray())
-        }
-
-        if (shouldGoToNextRound()) throw IncrementalNextRoundException()
     }
 
     private val languageVersionSettings: LanguageVersionSettings = compilerConfiguration.languageVersionSettings
@@ -366,7 +348,7 @@ fun serializeModuleIntoKlib(
 ) {
     assert(files.size == moduleFragment.files.size)
 
-    val descriptorTable = DescriptorTable()
+    val descriptorTable = DescriptorTableImpl()
     val serializedIr =
         JsIrModuleSerializer(emptyLoggingContext, moduleFragment.irBuiltins, descriptorTable).serializedIrModule(moduleFragment)
 
@@ -379,15 +361,6 @@ fun serializeModuleIntoKlib(
         languageVersionSettings,
         metadataVersion,
         descriptorTable)
-
-    fun serializeScope(fqName: FqName, memberScope: Collection<DeclarationDescriptor>): ByteArray {
-        return metadataSerializer.serializePackageFragment(
-            bindingContext,
-            moduleDescriptor,
-            memberScope,
-            fqName
-        ).toByteArray()
-    }
 
     val incrementalResultsConsumer = configuration.get(JSConfigurationKeys.INCREMENTAL_RESULTS_CONSUMER)
     val empty = ByteArray(0)
@@ -410,9 +383,8 @@ fun serializeModuleIntoKlib(
                 Ir: ${binaryFile.path}
             """.trimMargin()
         }
-        val memberScope = ktFile.declarations.map { getDescriptorForElement(bindingContext, it) }
-        val packageFragment = serializeScope(ktFile.packageFqName, memberScope)
-        val compiledKotlinFile = KotlinFileSerializedData(packageFragment, binaryFile)
+        val packageFragment = metadataSerializer.serializeScope(ktFile, bindingContext, moduleDescriptor)
+        val compiledKotlinFile = KotlinFileSerializedData(packageFragment.toByteArray(), binaryFile)
 
         additionalFiles += compiledKotlinFile
         processCompiledFileData(VfsUtilCore.virtualToIoFile(ktFile.virtualFile), compiledKotlinFile)
@@ -455,4 +427,46 @@ fun serializeModuleIntoKlib(
         output = klibPath,
         versions = versions
     )
+}
+
+private fun KlibMetadataIncrementalSerializer.serializeScope(
+    ktFile: KtFile,
+    bindingContext: BindingContext,
+    moduleDescriptor: ModuleDescriptor
+): ProtoBuf.PackageFragment {
+    val memberScope = ktFile.declarations.map { getDescriptorForElement(bindingContext, it) }
+    return serializePackageFragment(bindingContext, moduleDescriptor, memberScope, ktFile.packageFqName)
+}
+
+private fun compareMetadataAndGoToNextICRoundIfNeeded(
+    analysisResult: JsAnalysisResult,
+    config: CompilerConfiguration,
+    files: List<KtFile>
+) {
+    val nextRoundChecker = config.get(JSConfigurationKeys.INCREMENTAL_NEXT_ROUND_CHECKER) ?: return
+    val bindingContext = analysisResult.bindingContext
+    val serializer = KlibMetadataIncrementalSerializer(config.languageVersionSettings, config.metadataVersion, FakeDescriptorTable())
+    for (ktFile in files) {
+        val packageFragment = serializer.serializeScope(ktFile, bindingContext, analysisResult.moduleDescriptor)
+        // to minimize a number of IC rounds, we should inspect all proto for changes first,
+        // then go to a next round if needed, with all new dirty files
+        nextRoundChecker.checkProtoChanges(VfsUtilCore.virtualToIoFile(ktFile.virtualFile), packageFragment.toByteArray())
+    }
+
+    if (nextRoundChecker.shouldGoToNextRound()) throw IncrementalNextRoundException()
+}
+
+/**
+ * A hack to serialize metadata to compare it with cached proto before frontend errors are reported.
+ * DescriptorUniqId is not used during comparison, so fake IDs can be used to satisfy [KlibMetadataIncrementalSerializer] interface.
+ */
+private class FakeDescriptorTable : DescriptorTable {
+    private val descriptors = mutableMapOf<DeclarationDescriptor, Long>()
+
+    override fun put(descriptor: DeclarationDescriptor, uniqId: Long) {
+        throw NotImplementedError("FakeDescriptorTable#put is not expected to be called!")
+    }
+
+    override fun get(descriptor: DeclarationDescriptor): Long? =
+        descriptors.getOrPut(descriptor) { descriptors.size.toLong() }
 }

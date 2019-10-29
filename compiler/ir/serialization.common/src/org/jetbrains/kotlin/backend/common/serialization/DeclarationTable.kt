@@ -11,13 +11,19 @@ import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.lazy.IrLazyDeclarationBase
 import org.jetbrains.kotlin.ir.descriptors.IrBuiltIns
 
-class DescriptorTable {
+interface DescriptorTable {
+    fun put(descriptor: DeclarationDescriptor, uniqId: Long)
+    fun get(descriptor: DeclarationDescriptor): Long?
+}
+
+class DescriptorTableImpl : DescriptorTable {
     private val descriptors = mutableMapOf<DeclarationDescriptor, Long>()
-    fun put(descriptor: DeclarationDescriptor, uniqId: UniqId) {
-        descriptors.getOrPut(descriptor) { uniqId.index }
+    override fun put(descriptor: DeclarationDescriptor, uniqId: Long) {
+        descriptors.getOrPut(descriptor) { uniqId }
     }
 
-    fun get(descriptor: DeclarationDescriptor) = descriptors[descriptor]
+    override fun get(descriptor: DeclarationDescriptor): Long? =
+        descriptors[descriptor]
 }
 
 interface UniqIdClashTracker {
@@ -80,7 +86,7 @@ class DeclarationTable(
     fun uniqIdByDeclaration(declaration: IrDeclaration): UniqId {
         val uniqId = computeUniqIdByDeclaration(declaration)
         if (declaration.isMetadataDeclaration(false)) {
-            descriptorTable.put(declaration.descriptor, uniqId)
+            descriptorTable.put(declaration.descriptor, uniqId.index)
         }
         return uniqId
     }
