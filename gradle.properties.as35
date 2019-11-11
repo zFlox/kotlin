@@ -20,5 +20,6 @@ intellijEnforceCommunitySdk=true
 ## Used for compare gradle and jps build
 
 #kotlin.build.postprocessing=false
+
 #kotlin.build.java9=false
 #kotlin.build.useBootstrapStdlib=true
