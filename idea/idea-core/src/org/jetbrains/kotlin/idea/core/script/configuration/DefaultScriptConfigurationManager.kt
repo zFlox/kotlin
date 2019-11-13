@@ -115,14 +115,14 @@ internal class DefaultScriptConfigurationManager(project: Project) :
         get() = sequence {
             yield(outsiderLoader)
             yield(fileAttributeCache)
-            yieldAll(LOADER.extensionList)
+            yieldAll(LOADER.getPoint(project).extensionList)
             yield(defaultLoader)
         }
 
     private val defaultListener = DefaultScriptChangeListener()
     private val listeners: Sequence<ScriptChangeListener>
         get() = sequence {
-            yieldAll(LISTENER.extensionList)
+            yieldAll(LISTENER.getPoint(project).extensionList)
             yield(defaultListener)
         }
 
