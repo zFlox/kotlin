@@ -103,22 +103,22 @@ internal abstract class AbstractScriptConfigurationManager(
     }
 
     override fun getConfiguration(file: KtFile): ScriptCompilationConfigurationWrapper? {
-        return getConfiguration(file.originalFile.virtualFile, file)
+        return getConfigurationSnapshot(file.originalFile.virtualFile, file)?.configuration
     }
 
-    fun getConfiguration(
+    fun getConfigurationSnapshot(
         virtualFile: VirtualFile,
         preloadedKtFile: KtFile? = null
-    ): ScriptCompilationConfigurationWrapper? {
+    ): ScriptConfigurationSnapshot? {
         val cached = getAppliedConfiguration(virtualFile)
-        if (cached != null) return cached.configuration
+        if (cached != null) return cached
 
         val ktFile = project.getKtFile(virtualFile, preloadedKtFile) ?: return null
         rootsIndexer.transaction {
             reloadOutOfDateConfiguration(ktFile, isFirstLoad = true)
         }
 
-        return getAppliedConfiguration(virtualFile)?.configuration
+        return getAppliedConfiguration(virtualFile)
     }
 
     override val updater: ScriptConfigurationUpdater = object : ScriptConfigurationUpdater {
@@ -187,7 +187,7 @@ internal abstract class AbstractScriptConfigurationManager(
         debug(file) { "configuration changed = $newConfiguration" }
 
         if (newConfiguration != null) {
-            if (hasNotCachedRoots(newConfiguration)) {
+            if (hasNotCachedRoots(newConfigurationSnapshot)) {
                 rootsIndexer.markNewRoot(file, newConfiguration)
             }
 
@@ -206,7 +206,7 @@ internal abstract class AbstractScriptConfigurationManager(
         cache.setLoaded(file, configurationSnapshot)
     }
 
-    private fun hasNotCachedRoots(configuration: ScriptCompilationConfigurationWrapper): Boolean {
+    private fun hasNotCachedRoots(configuration: ScriptConfigurationSnapshot): Boolean {
         return classpathRoots.hasNotCachedRoots(configuration)
     }
 
@@ -276,7 +276,7 @@ internal abstract class AbstractScriptConfigurationManager(
     private fun newClassRootsCache() =
         object : ScriptClassRootsCache(project, cache.allApplied()) {
             override fun getConfiguration(file: VirtualFile) =
-                this@AbstractScriptConfigurationManager.getConfiguration(file)
+                this@AbstractScriptConfigurationManager.getConfigurationSnapshot(file)?.configuration
         }
 
     private fun clearClassRootsCaches() {
@@ -296,18 +296,21 @@ internal abstract class AbstractScriptConfigurationManager(
         ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
     }
 
-    override fun getScriptSdk(file: VirtualFile): Sdk? = classpathRoots.getScriptSdk(file)
-
-    override fun getFirstScriptsSdk(): Sdk? = classpathRoots.firstScriptSdk
+    override fun getScriptSdk(file: VirtualFile): Sdk? =
+        getConfigurationSnapshot(file)?.sdk
+            ?: ScriptConfigurationManager.getScriptDefaultSdk(project)
 
     override fun getScriptDependenciesClassFilesScope(file: VirtualFile): GlobalSearchScope =
-        classpathRoots.getScriptDependenciesClassFilesScope(file)
+        getConfigurationSnapshot(file)?.scope
+            ?: GlobalSearchScope.EMPTY_SCOPE
+
+    override fun getFirstScriptsSdk(): Sdk? = classpathRoots.firstScriptSdk
 
     override fun getAllScriptsDependenciesClassFilesScope(): GlobalSearchScope = classpathRoots.allDependenciesClassFilesScope
 
     override fun getAllScriptDependenciesSourcesScope(): GlobalSearchScope = classpathRoots.allDependenciesSourcesScope
 
-    override fun getAllScriptsDependenciesClassFiles(): List<VirtualFile> = classpathRoots.allDependenciesClassFiles
+    override fun getAllScriptsDependenciesClassFiles(): List<VirtualFile> = classpathRoots.allDependenciesClassFiles.toList()
 
-    override fun getAllScriptDependenciesSources(): List<VirtualFile> = classpathRoots.allDependenciesSources
+    override fun getAllScriptDependenciesSources(): List<VirtualFile> = classpathRoots.allDependenciesSources.toList()
 }

@@ -7,7 +7,14 @@ package org.jetbrains.kotlin.idea.core.script.configuration.cache
 
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.search.NonClasspathDirectoriesScope
+import org.jetbrains.kotlin.idea.caches.project.getAllProjectSdks
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.getKtFile
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.KtFile
@@ -31,7 +38,7 @@ interface ScriptConfigurationCache {
     fun setLoaded(file: VirtualFile, configurationSnapshot: ScriptConfigurationSnapshot)
     fun markOutOfDate(file: VirtualFile)
 
-    fun allApplied(): Collection<Pair<VirtualFile, ScriptCompilationConfigurationWrapper>>
+    fun allApplied(): Collection<ScriptConfigurationSnapshot>
     fun clear()
 }
 
@@ -47,7 +54,35 @@ data class ScriptConfigurationSnapshot(
     val inputs: CachedConfigurationInputs,
     val reports: List<ScriptDiagnostic>,
     val configuration: ScriptCompilationConfigurationWrapper?
-)
+) {
+    val sdk: Sdk? by lazy {
+        // workaround for mismatched gradle wrapper and plugin version
+        val javaHome = try {
+            configuration?.javaHome?.let { VfsUtil.findFileByIoFile(it, true) }
+        } catch (e: Throwable) {
+            null
+        } ?: return@lazy null
+
+        getAllProjectSdks().find { it.homeDirectory == javaHome }
+    }
+
+    val scope: GlobalSearchScope by lazy {
+        if (configuration == null) GlobalSearchScope.EMPTY_SCOPE
+        else {
+            val roots = configuration.dependenciesClassPath
+            val sdk = sdk
+
+            if (sdk == null) {
+                NonClasspathDirectoriesScope.compose(ScriptConfigurationManager.toVfsRoots(roots))
+            } else {
+                NonClasspathDirectoriesScope.compose(
+                    sdk.rootProvider.getFiles(OrderRootType.CLASSES).toList() +
+                            ScriptConfigurationManager.toVfsRoots(roots)
+                )
+            }
+        }
+    }
+}
 
 interface CachedConfigurationInputs {
     fun isUpToDate(project: Project, file: VirtualFile, ktFile: KtFile? = null): Boolean
