@@ -70,7 +70,8 @@ abstract class AbstractIrTextTestCase : AbstractIrGeneratorTestCase() {
 
         val path = wholeFile.path
         val replacedPath = path.replace(".kt", "__")
-        val externalFilePaths = wholeFile.parentFile.listFiles().mapNotNullTo(mutableListOf()) {
+        val filesInDir = wholeFile.parentFile.listFiles() ?: return
+        val externalFilePaths = filesInDir.mapNotNullTo(mutableListOf()) {
             if (it.path.startsWith(replacedPath)) it.path else null
         }
         for (externalClassFqn in parseDumpExternalClasses(wholeText)) {
@@ -102,7 +103,7 @@ abstract class AbstractIrTextTestCase : AbstractIrGeneratorTestCase() {
         if (testFile.isExternalFile()) return
 
         val expectations = parseExpectations(dir, testFile)
-        val irFileDump = irFile.dump()
+        val irFileDump = irFile.dump(normalizeNames = true)
 
         val expected = StringBuilder()
         val actual = StringBuilder()
@@ -113,13 +114,13 @@ abstract class AbstractIrTextTestCase : AbstractIrGeneratorTestCase() {
         }
 
         for (irTreeFileLabel in expectations.irTreeFileLabels) {
-            val actualTrees = irFile.dumpTreesFromLineNumber(irTreeFileLabel.lineNumber)
+            val actualTrees = irFile.dumpTreesFromLineNumber(irTreeFileLabel.lineNumber, normalizeNames = true)
             KotlinTestUtils.assertEqualsToFile(irTreeFileLabel.expectedTextFile, actualTrees)
             verify(irFile)
 
             // Check that deep copy produces an equivalent result
             val irFileCopy = irFile.deepCopyWithSymbols()
-            val copiedTrees = irFileCopy.dumpTreesFromLineNumber(irTreeFileLabel.lineNumber)
+            val copiedTrees = irFileCopy.dumpTreesFromLineNumber(irTreeFileLabel.lineNumber, normalizeNames = true)
             TestCase.assertEquals("IR dump mismatch after deep copy with symbols", actualTrees, copiedTrees)
             verify(irFileCopy)
         }
@@ -196,6 +197,22 @@ abstract class AbstractIrTextTestCase : AbstractIrGeneratorTestCase() {
             }
         }
 
+        override fun visitProperty(declaration: IrProperty) {
+            visitDeclaration(declaration)
+
+            require((declaration.origin == IrDeclarationOrigin.FAKE_OVERRIDE) == declaration.isFakeOverride) {
+                "${declaration.descriptor}: origin: ${declaration.origin}; isFakeOverride: ${declaration.isFakeOverride}"
+            }
+        }
+
+        override fun visitField(declaration: IrField) {
+            visitDeclaration(declaration)
+
+            require((declaration.origin == IrDeclarationOrigin.FAKE_OVERRIDE) == declaration.isFakeOverride) {
+                "${declaration.descriptor}: origin: ${declaration.origin}; isFakeOverride: ${declaration.isFakeOverride}"
+            }
+        }
+
         override fun visitFunction(declaration: IrFunction) {
             visitDeclaration(declaration)
 
@@ -229,6 +246,14 @@ abstract class AbstractIrTextTestCase : AbstractIrGeneratorTestCase() {
                         "$functionDescriptor: Value parameters mismatch: $declaredValueParameter != $actualValueParameter"
                     }
                 }
+            }
+        }
+
+        override fun visitSimpleFunction(declaration: IrSimpleFunction) {
+            visitFunction(declaration)
+
+            require((declaration.origin == IrDeclarationOrigin.FAKE_OVERRIDE) == declaration.isFakeOverride) {
+                "${declaration.descriptor}: origin: ${declaration.origin}; isFakeOverride: ${declaration.isFakeOverride}"
             }
         }
 
@@ -322,12 +347,12 @@ abstract class AbstractIrTextTestCase : AbstractIrGeneratorTestCase() {
         var treeFiles =
             testFile.content.matchLinesWith(IR_FILE_TXT_PATTERN) {
                 val fileName = it.groupValues[1].trim()
-                val file = createExpectedTextFile(testFile, dir, getExpectedTextFileName(testFile, fileName))
+                val file = File(dir, getExpectedTextFileName(testFile, fileName))
                 IrTreeFileLabel(file, 0)
             }
 
         if (treeFiles.isEmpty()) {
-            val file = createExpectedTextFile(testFile, dir, getExpectedTextFileName(testFile))
+            val file = File(dir, getExpectedTextFileName(testFile))
             treeFiles = listOf(IrTreeFileLabel(file, 0))
         }
 

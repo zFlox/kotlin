@@ -71,7 +71,11 @@ fun createFunctionConsumer(
         callInfo.typeArguments,
         bodyResolveComponents.session,
         callInfo.containingFile,
-        callInfo.container,
+        callInfo.implicitReceiverStack,
+        callInfo.containingDeclaration,
+        callInfo.expectedType,
+        callInfo.outerCSBuilder,
+        callInfo.lhs,
         callInfo.typeProvider
     )
     return PrioritizedTowerDataConsumer(
@@ -135,4 +139,19 @@ fun createSimpleConsumer(
     } else {
         NoExplicitReceiverTowerDataConsumer(session, name, token, factory, resultCollector)
     }
+}
+
+fun createCallableReferencesConsumer(
+    session: FirSession,
+    name: Name,
+    callInfo: CallInfo,
+    bodyResolveComponents: BodyResolveComponents,
+    resultCollector: CandidateCollector
+): TowerDataConsumer {
+    // TODO: Use SamePriorityConsumer
+    return PrioritizedTowerDataConsumer(
+        resultCollector,
+        createSimpleConsumer(session, name, TowerScopeLevel.Token.Functions, callInfo, bodyResolveComponents, resultCollector),
+        createSimpleConsumer(session, name, TowerScopeLevel.Token.Properties, callInfo, bodyResolveComponents, resultCollector)
+    )
 }

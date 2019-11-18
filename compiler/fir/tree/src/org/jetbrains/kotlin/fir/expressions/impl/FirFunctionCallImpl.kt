@@ -5,7 +5,7 @@
 
 package org.jetbrains.kotlin.fir.expressions.impl
 
-import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.fir.visitors.*
  */
 
 class FirFunctionCallImpl(
-    override val psi: PsiElement?
+    override val source: FirSourceElement?
 ) : FirFunctionCall(), FirModifiableQualifiedAccess, FirCallWithArgumentList, FirAbstractAnnotatedElement {
     override var typeRef: FirTypeRef = FirImplicitTypeRefImpl(null)
     override val annotations: MutableList<FirAnnotationCall> = mutableListOf()
@@ -60,7 +60,7 @@ class FirFunctionCallImpl(
             extensionReceiver = extensionReceiver.transformSingle(transformer, data)
         }
         transformArguments(transformer, data)
-        typeArguments.transformInplace(transformer, data)
+        transformTypeArguments(transformer, data)
         transformCalleeReference(transformer, data)
         return this
     }
@@ -82,6 +82,11 @@ class FirFunctionCallImpl(
 
     override fun <D> transformArguments(transformer: FirTransformer<D>, data: D): FirFunctionCallImpl {
         arguments.transformInplace(transformer, data)
+        return this
+    }
+
+    override fun <D> transformTypeArguments(transformer: FirTransformer<D>, data: D): FirFunctionCallImpl {
+        typeArguments.transformInplace(transformer, data)
         return this
     }
 

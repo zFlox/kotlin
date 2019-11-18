@@ -1004,6 +1004,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             runTest("compiler/testData/codegen/box/bridges/fakeOverrideFromInterfaceThroughIntermediateClass.kt");
         }
 
+        @TestMetadata("fakeOverrideMultiFile.kt")
+        public void testFakeOverrideMultiFile() throws Exception {
+            runTest("compiler/testData/codegen/box/bridges/fakeOverrideMultiFile.kt");
+        }
+
         @TestMetadata("fakeOverrideOfTraitImpl.kt")
         public void testFakeOverrideOfTraitImpl() throws Exception {
             runTest("compiler/testData/codegen/box/bridges/fakeOverrideOfTraitImpl.kt");
@@ -2067,9 +2072,24 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
                 runTest("compiler/testData/codegen/box/callableReference/varargAndDefaults/emptyVarargAndDefault.kt");
             }
 
-            @TestMetadata("inline.kt")
-            public void testInline() throws Exception {
-                runTest("compiler/testData/codegen/box/callableReference/varargAndDefaults/inline.kt");
+            @TestMetadata("inlineDefault.kt")
+            public void testInlineDefault() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/varargAndDefaults/inlineDefault.kt");
+            }
+
+            @TestMetadata("inlineVararg.kt")
+            public void testInlineVararg() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/varargAndDefaults/inlineVararg.kt");
+            }
+
+            @TestMetadata("inlineVarargAndDefault.kt")
+            public void testInlineVarargAndDefault() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/varargAndDefaults/inlineVarargAndDefault.kt");
+            }
+
+            @TestMetadata("inlineVarargInts.kt")
+            public void testInlineVarargInts() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/varargAndDefaults/inlineVarargInts.kt");
             }
 
             @TestMetadata("innerConstructorWithVararg.kt")
@@ -3706,11 +3726,6 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/compatibility"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
         }
 
-        @TestMetadata("dataClassEqualsHashCodeToString.kt")
-        public void testDataClassEqualsHashCodeToString() throws Exception {
-            runTest("compiler/testData/codegen/box/compatibility/dataClassEqualsHashCodeToString.kt");
-        }
-
         @TestMetadata("privateCompanionObject.kt")
         public void testPrivateCompanionObject() throws Exception {
             runTest("compiler/testData/codegen/box/compatibility/privateCompanionObject.kt");
@@ -4323,11 +4338,6 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
                 runTest("compiler/testData/codegen/box/controlStructures/forInArray/forInArrayWithArrayPropertyUpdatedInLoopBody.kt");
             }
 
-            @TestMetadata("forInArrayWithArrayVarUpdatedInLoopBody12.kt")
-            public void testForInArrayWithArrayVarUpdatedInLoopBody12() throws Exception {
-                runTest("compiler/testData/codegen/box/controlStructures/forInArray/forInArrayWithArrayVarUpdatedInLoopBody12.kt");
-            }
-
             @TestMetadata("forInArrayWithArrayVarUpdatedInLoopBody13.kt")
             public void testForInArrayWithArrayVarUpdatedInLoopBody13() throws Exception {
                 runTest("compiler/testData/codegen/box/controlStructures/forInArray/forInArrayWithArrayVarUpdatedInLoopBody13.kt");
@@ -4489,6 +4499,21 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
                 runTest("compiler/testData/codegen/box/controlStructures/forInCharSequenceWithIndex/forInCharSequenceWithIndex.kt");
             }
 
+            @TestMetadata("forInCharSequenceWithIndexCheckSideEffects.kt")
+            public void testForInCharSequenceWithIndexCheckSideEffects() throws Exception {
+                runTest("compiler/testData/codegen/box/controlStructures/forInCharSequenceWithIndex/forInCharSequenceWithIndexCheckSideEffects.kt");
+            }
+
+            @TestMetadata("forInCharSequenceWithIndexNoElementVarCheckSideEffects.kt")
+            public void testForInCharSequenceWithIndexNoElementVarCheckSideEffects() throws Exception {
+                runTest("compiler/testData/codegen/box/controlStructures/forInCharSequenceWithIndex/forInCharSequenceWithIndexNoElementVarCheckSideEffects.kt");
+            }
+
+            @TestMetadata("forInCharSequenceWithIndexNoIndexVarCheckSideEffects.kt")
+            public void testForInCharSequenceWithIndexNoIndexVarCheckSideEffects() throws Exception {
+                runTest("compiler/testData/codegen/box/controlStructures/forInCharSequenceWithIndex/forInCharSequenceWithIndexNoIndexVarCheckSideEffects.kt");
+            }
+
             @TestMetadata("forInEmptyStringWithIndex.kt")
             public void testForInEmptyStringWithIndex() throws Exception {
                 runTest("compiler/testData/codegen/box/controlStructures/forInCharSequenceWithIndex/forInEmptyStringWithIndex.kt");
@@ -4530,6 +4555,21 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             @TestMetadata("forInEmptyListWithIndex.kt")
             public void testForInEmptyListWithIndex() throws Exception {
                 runTest("compiler/testData/codegen/box/controlStructures/forInIterableWithIndex/forInEmptyListWithIndex.kt");
+            }
+
+            @TestMetadata("forInIterableWithIndexCheckSideEffects.kt")
+            public void testForInIterableWithIndexCheckSideEffects() throws Exception {
+                runTest("compiler/testData/codegen/box/controlStructures/forInIterableWithIndex/forInIterableWithIndexCheckSideEffects.kt");
+            }
+
+            @TestMetadata("forInIterableWithIndexNoElementVarCheckSideEffects.kt")
+            public void testForInIterableWithIndexNoElementVarCheckSideEffects() throws Exception {
+                runTest("compiler/testData/codegen/box/controlStructures/forInIterableWithIndex/forInIterableWithIndexNoElementVarCheckSideEffects.kt");
+            }
+
+            @TestMetadata("forInIterableWithIndexNoIndexVarCheckSideEffects.kt")
+            public void testForInIterableWithIndexNoIndexVarCheckSideEffects() throws Exception {
+                runTest("compiler/testData/codegen/box/controlStructures/forInIterableWithIndex/forInIterableWithIndexNoIndexVarCheckSideEffects.kt");
             }
 
             @TestMetadata("forInListWithIndex.kt")
@@ -4575,14 +4615,29 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
                 runTest("compiler/testData/codegen/box/controlStructures/forInSequenceWithIndex/forInSequenceWithIndex.kt");
             }
 
+            @TestMetadata("forInSequenceWithIndexCheckSideEffects.kt")
+            public void testForInSequenceWithIndexCheckSideEffects() throws Exception {
+                runTest("compiler/testData/codegen/box/controlStructures/forInSequenceWithIndex/forInSequenceWithIndexCheckSideEffects.kt");
+            }
+
             @TestMetadata("forInSequenceWithIndexNoElementVar.kt")
             public void testForInSequenceWithIndexNoElementVar() throws Exception {
                 runTest("compiler/testData/codegen/box/controlStructures/forInSequenceWithIndex/forInSequenceWithIndexNoElementVar.kt");
             }
 
+            @TestMetadata("forInSequenceWithIndexNoElementVarCheckSideEffects.kt")
+            public void testForInSequenceWithIndexNoElementVarCheckSideEffects() throws Exception {
+                runTest("compiler/testData/codegen/box/controlStructures/forInSequenceWithIndex/forInSequenceWithIndexNoElementVarCheckSideEffects.kt");
+            }
+
             @TestMetadata("forInSequenceWithIndexNoIndexVar.kt")
             public void testForInSequenceWithIndexNoIndexVar() throws Exception {
                 runTest("compiler/testData/codegen/box/controlStructures/forInSequenceWithIndex/forInSequenceWithIndexNoIndexVar.kt");
+            }
+
+            @TestMetadata("forInSequenceWithIndexNoIndexVarCheckSideEffects.kt")
+            public void testForInSequenceWithIndexNoIndexVarCheckSideEffects() throws Exception {
+                runTest("compiler/testData/codegen/box/controlStructures/forInSequenceWithIndex/forInSequenceWithIndexNoIndexVarCheckSideEffects.kt");
             }
 
             @TestMetadata("forInSequenceWithIndexWithExplicitlyTypedIndexVariable.kt")
@@ -4829,29 +4884,14 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/coroutines"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
         }
 
-        @TestMetadata("asyncIteratorNullMerge_1_2.kt")
-        public void testAsyncIteratorNullMerge_1_2() throws Exception {
-            runTest("compiler/testData/codegen/box/coroutines/asyncIteratorNullMerge_1_2.kt");
-        }
-
         @TestMetadata("asyncIteratorNullMerge_1_3.kt")
         public void testAsyncIteratorNullMerge_1_3() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/asyncIteratorNullMerge_1_3.kt");
         }
 
-        @TestMetadata("asyncIteratorToList_1_2.kt")
-        public void testAsyncIteratorToList_1_2() throws Exception {
-            runTest("compiler/testData/codegen/box/coroutines/asyncIteratorToList_1_2.kt");
-        }
-
         @TestMetadata("asyncIteratorToList_1_3.kt")
         public void testAsyncIteratorToList_1_3() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/asyncIteratorToList_1_3.kt");
-        }
-
-        @TestMetadata("asyncIterator_1_2.kt")
-        public void testAsyncIterator_1_2() throws Exception {
-            runTest("compiler/testData/codegen/box/coroutines/asyncIterator_1_2.kt");
         }
 
         @TestMetadata("asyncIterator_1_3.kt")
@@ -4957,11 +4997,6 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         @TestMetadata("createCoroutinesOnManualInstances.kt")
         public void testCreateCoroutinesOnManualInstances() throws Exception {
             runTest("compiler/testData/codegen/box/coroutines/createCoroutinesOnManualInstances.kt");
-        }
-
-        @TestMetadata("createCoroutinesOnManualInstances_1_2.kt")
-        public void testCreateCoroutinesOnManualInstances_1_2() throws Exception {
-            runTest("compiler/testData/codegen/box/coroutines/createCoroutinesOnManualInstances_1_2.kt");
         }
 
         @TestMetadata("crossInlineWithCapturedOuterReceiver.kt")
@@ -5827,11 +5862,6 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
                 runTestWithPackageReplacement("compiler/testData/codegen/box/coroutines/controlFlow/ifStatement.kt", "kotlin.coroutines");
             }
 
-            @TestMetadata("kt22694_1_2.kt")
-            public void testKt22694_1_2() throws Exception {
-                runTest("compiler/testData/codegen/box/coroutines/controlFlow/kt22694_1_2.kt");
-            }
-
             @TestMetadata("kt22694_1_3.kt")
             public void testKt22694_1_3() throws Exception {
                 runTest("compiler/testData/codegen/box/coroutines/controlFlow/kt22694_1_3.kt");
@@ -6025,11 +6055,6 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             @TestMetadata("suspendDestructuringInLambdas.kt")
             public void testSuspendDestructuringInLambdas_1_3() throws Exception {
                 runTestWithPackageReplacement("compiler/testData/codegen/box/coroutines/featureIntersection/suspendDestructuringInLambdas.kt", "kotlin.coroutines");
-            }
-
-            @TestMetadata("suspendFunction12.kt")
-            public void testSuspendFunction12() throws Exception {
-                runTest("compiler/testData/codegen/box/coroutines/featureIntersection/suspendFunction12.kt");
             }
 
             @TestMetadata("suspendFunctionIsAs.kt")
@@ -6910,11 +6935,6 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             public void testAllFilesPresentInReflect() throws Exception {
                 KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/coroutines/reflect"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
             }
-
-            @TestMetadata("isSuspend12.kt")
-            public void testIsSuspend12() throws Exception {
-                runTest("compiler/testData/codegen/box/coroutines/reflect/isSuspend12.kt");
-            }
         }
 
         @TestMetadata("compiler/testData/codegen/box/coroutines/stackUnwinding")
@@ -7028,11 +7048,6 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             @TestMetadata("handleException.kt")
             public void testHandleException_1_3() throws Exception {
                 runTestWithPackageReplacement("compiler/testData/codegen/box/coroutines/suspendFunctionAsCoroutine/handleException.kt", "kotlin.coroutines");
-            }
-
-            @TestMetadata("ifExpressionInsideCoroutine_1_2.kt")
-            public void testIfExpressionInsideCoroutine_1_2() throws Exception {
-                runTest("compiler/testData/codegen/box/coroutines/suspendFunctionAsCoroutine/ifExpressionInsideCoroutine_1_2.kt");
             }
 
             @TestMetadata("ifExpressionInsideCoroutine_1_3.kt")
@@ -9019,6 +9034,16 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/elvis"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
         }
 
+        @TestMetadata("genericElvisWithMoreSpecificLHS.kt")
+        public void testGenericElvisWithMoreSpecificLHS() throws Exception {
+            runTest("compiler/testData/codegen/box/elvis/genericElvisWithMoreSpecificLHS.kt");
+        }
+
+        @TestMetadata("genericElvisWithNullLHS.kt")
+        public void testGenericElvisWithNullLHS() throws Exception {
+            runTest("compiler/testData/codegen/box/elvis/genericElvisWithNullLHS.kt");
+        }
+
         @TestMetadata("genericNull.kt")
         public void testGenericNull() throws Exception {
             runTest("compiler/testData/codegen/box/elvis/genericNull.kt");
@@ -10058,11 +10083,6 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
                 runTest("compiler/testData/codegen/box/functions/bigArity/invokeMemberCallableReference.kt");
             }
 
-            @TestMetadata("noBigFunctionTypes.kt")
-            public void testNoBigFunctionTypes() throws Exception {
-                runTest("compiler/testData/codegen/box/functions/bigArity/noBigFunctionTypes.kt");
-            }
-
             @TestMetadata("subclass.kt")
             public void testSubclass() throws Exception {
                 runTest("compiler/testData/codegen/box/functions/bigArity/subclass.kt");
@@ -10099,6 +10119,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             @TestMetadata("functionLiteralExpression.kt")
             public void testFunctionLiteralExpression() throws Exception {
                 runTest("compiler/testData/codegen/box/functions/functionExpression/functionLiteralExpression.kt");
+            }
+
+            @TestMetadata("insideGenericLambda.kt")
+            public void testInsideGenericLambda() throws Exception {
+                runTest("compiler/testData/codegen/box/functions/functionExpression/insideGenericLambda.kt");
             }
 
             @TestMetadata("underscoreParameters.kt")
@@ -10509,11 +10534,6 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             runTest("compiler/testData/codegen/box/ieee754/nullableDoubleEquals.kt");
         }
 
-        @TestMetadata("nullableDoubleEquals10.kt")
-        public void testNullableDoubleEquals10() throws Exception {
-            runTest("compiler/testData/codegen/box/ieee754/nullableDoubleEquals10.kt");
-        }
-
         @TestMetadata("nullableDoubleEqualsLV13.kt")
         public void testNullableDoubleEqualsLV13() throws Exception {
             runTest("compiler/testData/codegen/box/ieee754/nullableDoubleEqualsLV13.kt");
@@ -10524,29 +10544,14 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             runTest("compiler/testData/codegen/box/ieee754/nullableDoubleNotEquals.kt");
         }
 
-        @TestMetadata("nullableDoubleNotEquals10.kt")
-        public void testNullableDoubleNotEquals10() throws Exception {
-            runTest("compiler/testData/codegen/box/ieee754/nullableDoubleNotEquals10.kt");
-        }
-
         @TestMetadata("nullableFloatEquals.kt")
         public void testNullableFloatEquals() throws Exception {
             runTest("compiler/testData/codegen/box/ieee754/nullableFloatEquals.kt");
         }
 
-        @TestMetadata("nullableFloatEquals10.kt")
-        public void testNullableFloatEquals10() throws Exception {
-            runTest("compiler/testData/codegen/box/ieee754/nullableFloatEquals10.kt");
-        }
-
         @TestMetadata("nullableFloatNotEquals.kt")
         public void testNullableFloatNotEquals() throws Exception {
             runTest("compiler/testData/codegen/box/ieee754/nullableFloatNotEquals.kt");
-        }
-
-        @TestMetadata("nullableFloatNotEquals10.kt")
-        public void testNullableFloatNotEquals10() throws Exception {
-            runTest("compiler/testData/codegen/box/ieee754/nullableFloatNotEquals10.kt");
         }
 
         @TestMetadata("nullableIntEquals.kt")
@@ -10594,16 +10599,6 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             runTest("compiler/testData/codegen/box/ieee754/when.kt");
         }
 
-        @TestMetadata("when10.kt")
-        public void testWhen10() throws Exception {
-            runTest("compiler/testData/codegen/box/ieee754/when10.kt");
-        }
-
-        @TestMetadata("when10_properIeeeComparisons.kt")
-        public void testWhen10_properIeeeComparisons() throws Exception {
-            runTest("compiler/testData/codegen/box/ieee754/when10_properIeeeComparisons.kt");
-        }
-
         @TestMetadata("whenNoSubject.kt")
         public void testWhenNoSubject() throws Exception {
             runTest("compiler/testData/codegen/box/ieee754/whenNoSubject.kt");
@@ -10617,11 +10612,6 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         @TestMetadata("whenNullableSmartCast.kt")
         public void testWhenNullableSmartCast() throws Exception {
             runTest("compiler/testData/codegen/box/ieee754/whenNullableSmartCast.kt");
-        }
-
-        @TestMetadata("whenNullableSmartCast10.kt")
-        public void testWhenNullableSmartCast10() throws Exception {
-            runTest("compiler/testData/codegen/box/ieee754/whenNullableSmartCast10.kt");
         }
 
         @TestMetadata("when_properIeeeComparisons.kt")
@@ -11421,6 +11411,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         @TestMetadata("useThisInsideInlineClass.kt")
         public void testUseThisInsideInlineClass() throws Exception {
             runTest("compiler/testData/codegen/box/inlineClasses/useThisInsideInlineClass.kt");
+        }
+
+        @TestMetadata("whenWithSubject.kt")
+        public void testWhenWithSubject() throws Exception {
+            runTest("compiler/testData/codegen/box/inlineClasses/whenWithSubject.kt");
         }
 
         @TestMetadata("compiler/testData/codegen/box/inlineClasses/callableReferences")
@@ -13858,6 +13853,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
                 runTest("compiler/testData/codegen/box/multiplatform/defaultArguments/superCall.kt");
             }
 
+            @TestMetadata("suspend.kt")
+            public void testSuspend() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/defaultArguments/suspend.kt");
+            }
+
             @TestMetadata("typeAlias.kt")
             public void testTypeAlias() throws Exception {
                 runTest("compiler/testData/codegen/box/multiplatform/defaultArguments/typeAlias.kt");
@@ -14428,6 +14428,286 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
                 @TestMetadata("shortCompanionObject.kt")
                 public void testShortCompanionObject() throws Exception {
                     runTest("compiler/testData/codegen/box/objects/companionObjectAccess/primitiveCompanion/shortCompanionObject.kt");
+                }
+            }
+        }
+    }
+
+    @TestMetadata("compiler/testData/codegen/box/oldLanguageVersions")
+    @TestDataPath("$PROJECT_ROOT")
+    @RunWith(JUnit3RunnerWithInners.class)
+    public static class OldLanguageVersions extends AbstractJsCodegenBoxTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+        }
+
+        public void testAllFilesPresentInOldLanguageVersions() throws Exception {
+            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/oldLanguageVersions"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+        }
+
+        @TestMetadata("dataClassEqualsHashCodeToString.kt")
+        public void testDataClassEqualsHashCodeToString() throws Exception {
+            runTest("compiler/testData/codegen/box/oldLanguageVersions/dataClassEqualsHashCodeToString.kt");
+        }
+
+        @TestMetadata("compiler/testData/codegen/box/oldLanguageVersions/controlStructures")
+        @TestDataPath("$PROJECT_ROOT")
+        @RunWith(JUnit3RunnerWithInners.class)
+        public static class ControlStructures extends AbstractJsCodegenBoxTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+            }
+
+            public void testAllFilesPresentInControlStructures() throws Exception {
+                KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/oldLanguageVersions/controlStructures"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+            }
+
+            @TestMetadata("compiler/testData/codegen/box/oldLanguageVersions/controlStructures/forInArray")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class ForInArray extends AbstractJsCodegenBoxTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInForInArray() throws Exception {
+                    KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/oldLanguageVersions/controlStructures/forInArray"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                }
+
+                @TestMetadata("forInArrayWithArrayVarUpdatedInLoopBody12.kt")
+                public void testForInArrayWithArrayVarUpdatedInLoopBody12() throws Exception {
+                    runTest("compiler/testData/codegen/box/oldLanguageVersions/controlStructures/forInArray/forInArrayWithArrayVarUpdatedInLoopBody12.kt");
+                }
+            }
+        }
+
+        @TestMetadata("compiler/testData/codegen/box/oldLanguageVersions/coroutines")
+        @TestDataPath("$PROJECT_ROOT")
+        @RunWith(JUnit3RunnerWithInners.class)
+        public static class Coroutines extends AbstractJsCodegenBoxTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+            }
+
+            public void testAllFilesPresentInCoroutines() throws Exception {
+                KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/oldLanguageVersions/coroutines"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+            }
+
+            @TestMetadata("asyncIteratorNullMerge_1_2.kt")
+            public void testAsyncIteratorNullMerge_1_2() throws Exception {
+                runTest("compiler/testData/codegen/box/oldLanguageVersions/coroutines/asyncIteratorNullMerge_1_2.kt");
+            }
+
+            @TestMetadata("asyncIteratorToList_1_2.kt")
+            public void testAsyncIteratorToList_1_2() throws Exception {
+                runTest("compiler/testData/codegen/box/oldLanguageVersions/coroutines/asyncIteratorToList_1_2.kt");
+            }
+
+            @TestMetadata("asyncIterator_1_2.kt")
+            public void testAsyncIterator_1_2() throws Exception {
+                runTest("compiler/testData/codegen/box/oldLanguageVersions/coroutines/asyncIterator_1_2.kt");
+            }
+
+            @TestMetadata("createCoroutinesOnManualInstances_1_2.kt")
+            public void testCreateCoroutinesOnManualInstances_1_2() throws Exception {
+                runTest("compiler/testData/codegen/box/oldLanguageVersions/coroutines/createCoroutinesOnManualInstances_1_2.kt");
+            }
+
+            @TestMetadata("compiler/testData/codegen/box/oldLanguageVersions/coroutines/controlFlow")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class ControlFlow extends AbstractJsCodegenBoxTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInControlFlow() throws Exception {
+                    KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/oldLanguageVersions/coroutines/controlFlow"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                }
+
+                @TestMetadata("kt22694_1_2.kt")
+                public void testKt22694_1_2() throws Exception {
+                    runTest("compiler/testData/codegen/box/oldLanguageVersions/coroutines/controlFlow/kt22694_1_2.kt");
+                }
+            }
+
+            @TestMetadata("compiler/testData/codegen/box/oldLanguageVersions/coroutines/featureIntersection")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class FeatureIntersection extends AbstractJsCodegenBoxTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInFeatureIntersection() throws Exception {
+                    KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/oldLanguageVersions/coroutines/featureIntersection"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                }
+
+                @TestMetadata("suspendFunction_1_2.kt")
+                public void testSuspendFunction_1_2() throws Exception {
+                    runTest("compiler/testData/codegen/box/oldLanguageVersions/coroutines/featureIntersection/suspendFunction_1_2.kt");
+                }
+            }
+
+            @TestMetadata("compiler/testData/codegen/box/oldLanguageVersions/coroutines/multiModule")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class MultiModule extends AbstractJsCodegenBoxTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInMultiModule() throws Exception {
+                    KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/oldLanguageVersions/coroutines/multiModule"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                }
+            }
+
+            @TestMetadata("compiler/testData/codegen/box/oldLanguageVersions/coroutines/reflect")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class Reflect extends AbstractJsCodegenBoxTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInReflect() throws Exception {
+                    KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/oldLanguageVersions/coroutines/reflect"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                }
+
+                @TestMetadata("isSuspend_1_2.kt")
+                public void testIsSuspend_1_2() throws Exception {
+                    runTest("compiler/testData/codegen/box/oldLanguageVersions/coroutines/reflect/isSuspend_1_2.kt");
+                }
+            }
+
+            @TestMetadata("compiler/testData/codegen/box/oldLanguageVersions/coroutines/suspendFunctionAsCoroutine")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class SuspendFunctionAsCoroutine extends AbstractJsCodegenBoxTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInSuspendFunctionAsCoroutine() throws Exception {
+                    KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/oldLanguageVersions/coroutines/suspendFunctionAsCoroutine"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                }
+
+                @TestMetadata("ifExpressionInsideCoroutine_1_2.kt")
+                public void testIfExpressionInsideCoroutine_1_2() throws Exception {
+                    runTest("compiler/testData/codegen/box/oldLanguageVersions/coroutines/suspendFunctionAsCoroutine/ifExpressionInsideCoroutine_1_2.kt");
+                }
+            }
+        }
+
+        @TestMetadata("compiler/testData/codegen/box/oldLanguageVersions/functions")
+        @TestDataPath("$PROJECT_ROOT")
+        @RunWith(JUnit3RunnerWithInners.class)
+        public static class Functions extends AbstractJsCodegenBoxTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+            }
+
+            public void testAllFilesPresentInFunctions() throws Exception {
+                KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/oldLanguageVersions/functions"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+            }
+
+            @TestMetadata("compiler/testData/codegen/box/oldLanguageVersions/functions/bigArity")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class BigArity extends AbstractJsCodegenBoxTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInBigArity() throws Exception {
+                    KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/oldLanguageVersions/functions/bigArity"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                }
+
+                @TestMetadata("noBigFunctionTypes.kt")
+                public void testNoBigFunctionTypes() throws Exception {
+                    runTest("compiler/testData/codegen/box/oldLanguageVersions/functions/bigArity/noBigFunctionTypes.kt");
+                }
+            }
+        }
+
+        @TestMetadata("compiler/testData/codegen/box/oldLanguageVersions/ieee754")
+        @TestDataPath("$PROJECT_ROOT")
+        @RunWith(JUnit3RunnerWithInners.class)
+        public static class Ieee754 extends AbstractJsCodegenBoxTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+            }
+
+            public void testAllFilesPresentInIeee754() throws Exception {
+                KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/oldLanguageVersions/ieee754"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+            }
+
+            @TestMetadata("nullableDoubleEquals10.kt")
+            public void testNullableDoubleEquals10() throws Exception {
+                runTest("compiler/testData/codegen/box/oldLanguageVersions/ieee754/nullableDoubleEquals10.kt");
+            }
+
+            @TestMetadata("nullableDoubleNotEquals10.kt")
+            public void testNullableDoubleNotEquals10() throws Exception {
+                runTest("compiler/testData/codegen/box/oldLanguageVersions/ieee754/nullableDoubleNotEquals10.kt");
+            }
+
+            @TestMetadata("nullableFloatEquals10.kt")
+            public void testNullableFloatEquals10() throws Exception {
+                runTest("compiler/testData/codegen/box/oldLanguageVersions/ieee754/nullableFloatEquals10.kt");
+            }
+
+            @TestMetadata("nullableFloatNotEquals10.kt")
+            public void testNullableFloatNotEquals10() throws Exception {
+                runTest("compiler/testData/codegen/box/oldLanguageVersions/ieee754/nullableFloatNotEquals10.kt");
+            }
+
+            @TestMetadata("when10.kt")
+            public void testWhen10() throws Exception {
+                runTest("compiler/testData/codegen/box/oldLanguageVersions/ieee754/when10.kt");
+            }
+
+            @TestMetadata("whenNullableSmartCast10.kt")
+            public void testWhenNullableSmartCast10() throws Exception {
+                runTest("compiler/testData/codegen/box/oldLanguageVersions/ieee754/whenNullableSmartCast10.kt");
+            }
+        }
+
+        @TestMetadata("compiler/testData/codegen/box/oldLanguageVersions/operatorConventions")
+        @TestDataPath("$PROJECT_ROOT")
+        @RunWith(JUnit3RunnerWithInners.class)
+        public static class OperatorConventions extends AbstractJsCodegenBoxTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+            }
+
+            public void testAllFilesPresentInOperatorConventions() throws Exception {
+                KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/oldLanguageVersions/operatorConventions"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+            }
+        }
+
+        @TestMetadata("compiler/testData/codegen/box/oldLanguageVersions/platformTypes")
+        @TestDataPath("$PROJECT_ROOT")
+        @RunWith(JUnit3RunnerWithInners.class)
+        public static class PlatformTypes extends AbstractJsCodegenBoxTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+            }
+
+            public void testAllFilesPresentInPlatformTypes() throws Exception {
+                KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/oldLanguageVersions/platformTypes"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+            }
+
+            @TestMetadata("compiler/testData/codegen/box/oldLanguageVersions/platformTypes/primitives")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class Primitives extends AbstractJsCodegenBoxTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInPrimitives() throws Exception {
+                    KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/oldLanguageVersions/platformTypes/primitives"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
                 }
             }
         }
@@ -15786,6 +16066,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
                     runTest("compiler/testData/codegen/box/properties/lateinit/isInitializedAndDeinitialize/innerSubclass.kt");
                 }
 
+                @TestMetadata("isInitializedMultiFile.kt")
+                public void testIsInitializedMultiFile() throws Exception {
+                    runTest("compiler/testData/codegen/box/properties/lateinit/isInitializedAndDeinitialize/isInitializedMultiFile.kt");
+                }
+
                 @TestMetadata("nonInlineLambda.kt")
                 public void testNonInlineLambda() throws Exception {
                     runTest("compiler/testData/codegen/box/properties/lateinit/isInitializedAndDeinitialize/nonInlineLambda.kt");
@@ -15943,6 +16228,16 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         @TestMetadata("forInCharSequenceLengthIncreasedInLoopBody.kt")
         public void testForInCharSequenceLengthIncreasedInLoopBody() throws Exception {
             runTest("compiler/testData/codegen/box/ranges/forInCharSequenceLengthIncreasedInLoopBody.kt");
+        }
+
+        @TestMetadata("forInCharSequenceWithCustomIterator.kt")
+        public void testForInCharSequenceWithCustomIterator() throws Exception {
+            runTest("compiler/testData/codegen/box/ranges/forInCharSequenceWithCustomIterator.kt");
+        }
+
+        @TestMetadata("forInCharSequenceWithMultipleGetFunctions.kt")
+        public void testForInCharSequenceWithMultipleGetFunctions() throws Exception {
+            runTest("compiler/testData/codegen/box/ranges/forInCharSequenceWithMultipleGetFunctions.kt");
         }
 
         @TestMetadata("forInRangeLiteralWithMixedTypeBounds.kt")
@@ -16287,6 +16582,178 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             public void testForInUntilReversedReversed() throws Exception {
                 runTest("compiler/testData/codegen/box/ranges/evaluationOrder/forInUntilReversedReversed.kt");
             }
+
+            @TestMetadata("compiler/testData/codegen/box/ranges/evaluationOrder/stepped")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class Stepped extends AbstractJsCodegenBoxTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInStepped() throws Exception {
+                    KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/ranges/evaluationOrder/stepped"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                }
+
+                @TestMetadata("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInDownTo")
+                @TestDataPath("$PROJECT_ROOT")
+                @RunWith(JUnit3RunnerWithInners.class)
+                public static class ForInDownTo extends AbstractJsCodegenBoxTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                    }
+
+                    public void testAllFilesPresentInForInDownTo() throws Exception {
+                        KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInDownTo"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                    }
+
+                    @TestMetadata("forInDownToReversedStep.kt")
+                    public void testForInDownToReversedStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInDownTo/forInDownToReversedStep.kt");
+                    }
+
+                    @TestMetadata("forInDownToReversedStepReversed.kt")
+                    public void testForInDownToReversedStepReversed() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInDownTo/forInDownToReversedStepReversed.kt");
+                    }
+
+                    @TestMetadata("forInDownToReversedStepReversedStep.kt")
+                    public void testForInDownToReversedStepReversedStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInDownTo/forInDownToReversedStepReversedStep.kt");
+                    }
+
+                    @TestMetadata("forInDownToStep.kt")
+                    public void testForInDownToStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInDownTo/forInDownToStep.kt");
+                    }
+
+                    @TestMetadata("forInDownToStepReversed.kt")
+                    public void testForInDownToStepReversed() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInDownTo/forInDownToStepReversed.kt");
+                    }
+
+                    @TestMetadata("forInDownToStepReversedStep.kt")
+                    public void testForInDownToStepReversedStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInDownTo/forInDownToStepReversedStep.kt");
+                    }
+
+                    @TestMetadata("forInDownToStepReversedStepReversed.kt")
+                    public void testForInDownToStepReversedStepReversed() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInDownTo/forInDownToStepReversedStepReversed.kt");
+                    }
+
+                    @TestMetadata("forInDownToStepStep.kt")
+                    public void testForInDownToStepStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInDownTo/forInDownToStepStep.kt");
+                    }
+                }
+
+                @TestMetadata("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInRangeLiteral")
+                @TestDataPath("$PROJECT_ROOT")
+                @RunWith(JUnit3RunnerWithInners.class)
+                public static class ForInRangeLiteral extends AbstractJsCodegenBoxTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                    }
+
+                    public void testAllFilesPresentInForInRangeLiteral() throws Exception {
+                        KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInRangeLiteral"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                    }
+
+                    @TestMetadata("forInRangeLiteralReversedStep.kt")
+                    public void testForInRangeLiteralReversedStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInRangeLiteral/forInRangeLiteralReversedStep.kt");
+                    }
+
+                    @TestMetadata("forInRangeLiteralReversedStepReversed.kt")
+                    public void testForInRangeLiteralReversedStepReversed() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInRangeLiteral/forInRangeLiteralReversedStepReversed.kt");
+                    }
+
+                    @TestMetadata("forInRangeLiteralReversedStepReversedStep.kt")
+                    public void testForInRangeLiteralReversedStepReversedStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInRangeLiteral/forInRangeLiteralReversedStepReversedStep.kt");
+                    }
+
+                    @TestMetadata("forInRangeLiteralStep.kt")
+                    public void testForInRangeLiteralStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInRangeLiteral/forInRangeLiteralStep.kt");
+                    }
+
+                    @TestMetadata("forInRangeLiteralStepReversed.kt")
+                    public void testForInRangeLiteralStepReversed() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInRangeLiteral/forInRangeLiteralStepReversed.kt");
+                    }
+
+                    @TestMetadata("forInRangeLiteralStepReversedStep.kt")
+                    public void testForInRangeLiteralStepReversedStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInRangeLiteral/forInRangeLiteralStepReversedStep.kt");
+                    }
+
+                    @TestMetadata("forInRangeLiteralStepReversedStepReversed.kt")
+                    public void testForInRangeLiteralStepReversedStepReversed() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInRangeLiteral/forInRangeLiteralStepReversedStepReversed.kt");
+                    }
+
+                    @TestMetadata("forInRangeLiteralStepStep.kt")
+                    public void testForInRangeLiteralStepStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInRangeLiteral/forInRangeLiteralStepStep.kt");
+                    }
+                }
+
+                @TestMetadata("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInUntil")
+                @TestDataPath("$PROJECT_ROOT")
+                @RunWith(JUnit3RunnerWithInners.class)
+                public static class ForInUntil extends AbstractJsCodegenBoxTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                    }
+
+                    public void testAllFilesPresentInForInUntil() throws Exception {
+                        KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInUntil"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                    }
+
+                    @TestMetadata("forInUntilReversedStep.kt")
+                    public void testForInUntilReversedStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInUntil/forInUntilReversedStep.kt");
+                    }
+
+                    @TestMetadata("forInUntilReversedStepReversed.kt")
+                    public void testForInUntilReversedStepReversed() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInUntil/forInUntilReversedStepReversed.kt");
+                    }
+
+                    @TestMetadata("forInUntilReversedStepReversedStep.kt")
+                    public void testForInUntilReversedStepReversedStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInUntil/forInUntilReversedStepReversedStep.kt");
+                    }
+
+                    @TestMetadata("forInUntilStep.kt")
+                    public void testForInUntilStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInUntil/forInUntilStep.kt");
+                    }
+
+                    @TestMetadata("forInUntilStepReversed.kt")
+                    public void testForInUntilStepReversed() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInUntil/forInUntilStepReversed.kt");
+                    }
+
+                    @TestMetadata("forInUntilStepReversedStep.kt")
+                    public void testForInUntilStepReversedStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInUntil/forInUntilStepReversedStep.kt");
+                    }
+
+                    @TestMetadata("forInUntilStepReversedStepReversed.kt")
+                    public void testForInUntilStepReversedStepReversed() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInUntil/forInUntilStepReversedStepReversed.kt");
+                    }
+
+                    @TestMetadata("forInUntilStepStep.kt")
+                    public void testForInUntilStepStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/evaluationOrder/stepped/forInUntil/forInUntilStepStep.kt");
+                    }
+                }
+            }
         }
 
         @TestMetadata("compiler/testData/codegen/box/ranges/expression")
@@ -16507,6 +16974,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
                 runTest("compiler/testData/codegen/box/ranges/forInIndices/forInCharSequenceIndices.kt");
             }
 
+            @TestMetadata("forInCharSequenceTypeParameterIndices.kt")
+            public void testForInCharSequenceTypeParameterIndices() throws Exception {
+                runTest("compiler/testData/codegen/box/ranges/forInIndices/forInCharSequenceTypeParameterIndices.kt");
+            }
+
             @TestMetadata("forInCollectionImplicitReceiverIndices.kt")
             public void testForInCollectionImplicitReceiverIndices() throws Exception {
                 runTest("compiler/testData/codegen/box/ranges/forInIndices/forInCollectionImplicitReceiverIndices.kt");
@@ -16515,6 +16987,11 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             @TestMetadata("forInCollectionIndices.kt")
             public void testForInCollectionIndices() throws Exception {
                 runTest("compiler/testData/codegen/box/ranges/forInIndices/forInCollectionIndices.kt");
+            }
+
+            @TestMetadata("forInCollectionTypeParameterIndices.kt")
+            public void testForInCollectionTypeParameterIndices() throws Exception {
+                runTest("compiler/testData/codegen/box/ranges/forInIndices/forInCollectionTypeParameterIndices.kt");
             }
 
             @TestMetadata("forInNonOptimizedIndices.kt")
@@ -17035,6 +17512,1144 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             @TestMetadata("rangeLiteral.kt")
             public void testRangeLiteral() throws Exception {
                 runTest("compiler/testData/codegen/box/ranges/nullableLoopParameter/rangeLiteral.kt");
+            }
+        }
+
+        @TestMetadata("compiler/testData/codegen/box/ranges/stepped")
+        @TestDataPath("$PROJECT_ROOT")
+        @RunWith(JUnit3RunnerWithInners.class)
+        public static class Stepped extends AbstractJsCodegenBoxTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+            }
+
+            public void testAllFilesPresentInStepped() throws Exception {
+                KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/ranges/stepped"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+            }
+
+            @TestMetadata("compiler/testData/codegen/box/ranges/stepped/expression")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class Expression extends AbstractJsCodegenBoxTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInExpression() throws Exception {
+                    KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/ranges/stepped/expression"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                }
+
+                @TestMetadata("compiler/testData/codegen/box/ranges/stepped/expression/downTo")
+                @TestDataPath("$PROJECT_ROOT")
+                @RunWith(JUnit3RunnerWithInners.class)
+                public static class DownTo extends AbstractJsCodegenBoxTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                    }
+
+                    public void testAllFilesPresentInDownTo() throws Exception {
+                        KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/ranges/stepped/expression/downTo"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                    }
+
+                    @TestMetadata("emptyProgression.kt")
+                    public void testEmptyProgression() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/emptyProgression.kt");
+                    }
+
+                    @TestMetadata("illegalStepNegative.kt")
+                    public void testIllegalStepNegative() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/illegalStepNegative.kt");
+                    }
+
+                    @TestMetadata("illegalStepNonConst.kt")
+                    public void testIllegalStepNonConst() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/illegalStepNonConst.kt");
+                    }
+
+                    @TestMetadata("illegalStepThenLegalStep.kt")
+                    public void testIllegalStepThenLegalStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/illegalStepThenLegalStep.kt");
+                    }
+
+                    @TestMetadata("illegalStepZero.kt")
+                    public void testIllegalStepZero() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/illegalStepZero.kt");
+                    }
+
+                    @TestMetadata("legalStepThenIllegalStep.kt")
+                    public void testLegalStepThenIllegalStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/legalStepThenIllegalStep.kt");
+                    }
+
+                    @TestMetadata("maxValueToMinValueStepMaxValue.kt")
+                    public void testMaxValueToMinValueStepMaxValue() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/maxValueToMinValueStepMaxValue.kt");
+                    }
+
+                    @TestMetadata("maxValueToOneStepMaxValue.kt")
+                    public void testMaxValueToOneStepMaxValue() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/maxValueToOneStepMaxValue.kt");
+                    }
+
+                    @TestMetadata("maxValueToZeroStepMaxValue.kt")
+                    public void testMaxValueToZeroStepMaxValue() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/maxValueToZeroStepMaxValue.kt");
+                    }
+
+                    @TestMetadata("mixedTypeStep.kt")
+                    public void testMixedTypeStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/mixedTypeStep.kt");
+                    }
+
+                    @TestMetadata("singleElementStepTwo.kt")
+                    public void testSingleElementStepTwo() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/singleElementStepTwo.kt");
+                    }
+
+                    @TestMetadata("stepNonConst.kt")
+                    public void testStepNonConst() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/stepNonConst.kt");
+                    }
+
+                    @TestMetadata("stepOne.kt")
+                    public void testStepOne() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/stepOne.kt");
+                    }
+
+                    @TestMetadata("stepToOutsideRange.kt")
+                    public void testStepToOutsideRange() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/stepToOutsideRange.kt");
+                    }
+
+                    @TestMetadata("stepToSameLast.kt")
+                    public void testStepToSameLast() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/stepToSameLast.kt");
+                    }
+
+                    @TestMetadata("stepToSmallerLast.kt")
+                    public void testStepToSmallerLast() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/stepToSmallerLast.kt");
+                    }
+
+                    @TestMetadata("compiler/testData/codegen/box/ranges/stepped/expression/downTo/nestedStep")
+                    @TestDataPath("$PROJECT_ROOT")
+                    @RunWith(JUnit3RunnerWithInners.class)
+                    public static class NestedStep extends AbstractJsCodegenBoxTest {
+                        private void runTest(String testDataFilePath) throws Exception {
+                            KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                        }
+
+                        public void testAllFilesPresentInNestedStep() throws Exception {
+                            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/ranges/stepped/expression/downTo/nestedStep"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                        }
+
+                        @TestMetadata("stepOneThenStepOne.kt")
+                        public void testStepOneThenStepOne() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/nestedStep/stepOneThenStepOne.kt");
+                        }
+
+                        @TestMetadata("stepThenSameStep.kt")
+                        public void testStepThenSameStep() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/nestedStep/stepThenSameStep.kt");
+                        }
+
+                        @TestMetadata("stepToSameLastThenStepOne.kt")
+                        public void testStepToSameLastThenStepOne() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/nestedStep/stepToSameLastThenStepOne.kt");
+                        }
+
+                        @TestMetadata("stepToSameLastThenStepToSameLast.kt")
+                        public void testStepToSameLastThenStepToSameLast() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/nestedStep/stepToSameLastThenStepToSameLast.kt");
+                        }
+
+                        @TestMetadata("stepToSameLastThenStepToSmallerLast.kt")
+                        public void testStepToSameLastThenStepToSmallerLast() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/nestedStep/stepToSameLastThenStepToSmallerLast.kt");
+                        }
+
+                        @TestMetadata("stepToSmallerLastThenStepOne.kt")
+                        public void testStepToSmallerLastThenStepOne() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/nestedStep/stepToSmallerLastThenStepOne.kt");
+                        }
+
+                        @TestMetadata("stepToSmallerLastThenStepToSameLast.kt")
+                        public void testStepToSmallerLastThenStepToSameLast() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/nestedStep/stepToSmallerLastThenStepToSameLast.kt");
+                        }
+
+                        @TestMetadata("stepToSmallerLastThenStepToSmallerLast.kt")
+                        public void testStepToSmallerLastThenStepToSmallerLast() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/nestedStep/stepToSmallerLastThenStepToSmallerLast.kt");
+                        }
+                    }
+
+                    @TestMetadata("compiler/testData/codegen/box/ranges/stepped/expression/downTo/reversed")
+                    @TestDataPath("$PROJECT_ROOT")
+                    @RunWith(JUnit3RunnerWithInners.class)
+                    public static class Reversed extends AbstractJsCodegenBoxTest {
+                        private void runTest(String testDataFilePath) throws Exception {
+                            KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                        }
+
+                        public void testAllFilesPresentInReversed() throws Exception {
+                            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/ranges/stepped/expression/downTo/reversed"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                        }
+
+                        @TestMetadata("reversedThenStep.kt")
+                        public void testReversedThenStep() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/reversed/reversedThenStep.kt");
+                        }
+
+                        @TestMetadata("reversedThenStepThenReversed.kt")
+                        public void testReversedThenStepThenReversed() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/reversed/reversedThenStepThenReversed.kt");
+                        }
+
+                        @TestMetadata("reversedThenStepThenReversedThenStep.kt")
+                        public void testReversedThenStepThenReversedThenStep() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/reversed/reversedThenStepThenReversedThenStep.kt");
+                        }
+
+                        @TestMetadata("stepThenReversed.kt")
+                        public void testStepThenReversed() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/reversed/stepThenReversed.kt");
+                        }
+
+                        @TestMetadata("stepThenReversedThenStep.kt")
+                        public void testStepThenReversedThenStep() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/reversed/stepThenReversedThenStep.kt");
+                        }
+
+                        @TestMetadata("stepThenReversedThenStepThenReversed.kt")
+                        public void testStepThenReversedThenStepThenReversed() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/downTo/reversed/stepThenReversedThenStepThenReversed.kt");
+                        }
+                    }
+                }
+
+                @TestMetadata("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo")
+                @TestDataPath("$PROJECT_ROOT")
+                @RunWith(JUnit3RunnerWithInners.class)
+                public static class RangeTo extends AbstractJsCodegenBoxTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                    }
+
+                    public void testAllFilesPresentInRangeTo() throws Exception {
+                        KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                    }
+
+                    @TestMetadata("emptyProgression.kt")
+                    public void testEmptyProgression() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/emptyProgression.kt");
+                    }
+
+                    @TestMetadata("illegalStepNegative.kt")
+                    public void testIllegalStepNegative() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/illegalStepNegative.kt");
+                    }
+
+                    @TestMetadata("illegalStepNonConst.kt")
+                    public void testIllegalStepNonConst() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/illegalStepNonConst.kt");
+                    }
+
+                    @TestMetadata("illegalStepThenLegalStep.kt")
+                    public void testIllegalStepThenLegalStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/illegalStepThenLegalStep.kt");
+                    }
+
+                    @TestMetadata("illegalStepZero.kt")
+                    public void testIllegalStepZero() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/illegalStepZero.kt");
+                    }
+
+                    @TestMetadata("legalStepThenIllegalStep.kt")
+                    public void testLegalStepThenIllegalStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/legalStepThenIllegalStep.kt");
+                    }
+
+                    @TestMetadata("minValueToMaxValueStepMaxValue.kt")
+                    public void testMinValueToMaxValueStepMaxValue() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/minValueToMaxValueStepMaxValue.kt");
+                    }
+
+                    @TestMetadata("mixedTypeStep.kt")
+                    public void testMixedTypeStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/mixedTypeStep.kt");
+                    }
+
+                    @TestMetadata("oneToMaxValueStepMaxValue.kt")
+                    public void testOneToMaxValueStepMaxValue() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/oneToMaxValueStepMaxValue.kt");
+                    }
+
+                    @TestMetadata("singleElementStepTwo.kt")
+                    public void testSingleElementStepTwo() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/singleElementStepTwo.kt");
+                    }
+
+                    @TestMetadata("stepNonConst.kt")
+                    public void testStepNonConst() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/stepNonConst.kt");
+                    }
+
+                    @TestMetadata("stepOne.kt")
+                    public void testStepOne() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/stepOne.kt");
+                    }
+
+                    @TestMetadata("stepToOutsideRange.kt")
+                    public void testStepToOutsideRange() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/stepToOutsideRange.kt");
+                    }
+
+                    @TestMetadata("stepToSameLast.kt")
+                    public void testStepToSameLast() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/stepToSameLast.kt");
+                    }
+
+                    @TestMetadata("stepToSmallerLast.kt")
+                    public void testStepToSmallerLast() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/stepToSmallerLast.kt");
+                    }
+
+                    @TestMetadata("zeroToMaxValueStepMaxValue.kt")
+                    public void testZeroToMaxValueStepMaxValue() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/zeroToMaxValueStepMaxValue.kt");
+                    }
+
+                    @TestMetadata("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/nestedStep")
+                    @TestDataPath("$PROJECT_ROOT")
+                    @RunWith(JUnit3RunnerWithInners.class)
+                    public static class NestedStep extends AbstractJsCodegenBoxTest {
+                        private void runTest(String testDataFilePath) throws Exception {
+                            KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                        }
+
+                        public void testAllFilesPresentInNestedStep() throws Exception {
+                            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/nestedStep"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                        }
+
+                        @TestMetadata("stepOneThenStepOne.kt")
+                        public void testStepOneThenStepOne() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/nestedStep/stepOneThenStepOne.kt");
+                        }
+
+                        @TestMetadata("stepThenSameStep.kt")
+                        public void testStepThenSameStep() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/nestedStep/stepThenSameStep.kt");
+                        }
+
+                        @TestMetadata("stepToSameLastThenStepOne.kt")
+                        public void testStepToSameLastThenStepOne() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/nestedStep/stepToSameLastThenStepOne.kt");
+                        }
+
+                        @TestMetadata("stepToSameLastThenStepToSameLast.kt")
+                        public void testStepToSameLastThenStepToSameLast() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/nestedStep/stepToSameLastThenStepToSameLast.kt");
+                        }
+
+                        @TestMetadata("stepToSameLastThenStepToSmallerLast.kt")
+                        public void testStepToSameLastThenStepToSmallerLast() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/nestedStep/stepToSameLastThenStepToSmallerLast.kt");
+                        }
+
+                        @TestMetadata("stepToSmallerLastThenStepOne.kt")
+                        public void testStepToSmallerLastThenStepOne() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/nestedStep/stepToSmallerLastThenStepOne.kt");
+                        }
+
+                        @TestMetadata("stepToSmallerLastThenStepToSameLast.kt")
+                        public void testStepToSmallerLastThenStepToSameLast() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/nestedStep/stepToSmallerLastThenStepToSameLast.kt");
+                        }
+
+                        @TestMetadata("stepToSmallerLastThenStepToSmallerLast.kt")
+                        public void testStepToSmallerLastThenStepToSmallerLast() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/nestedStep/stepToSmallerLastThenStepToSmallerLast.kt");
+                        }
+                    }
+
+                    @TestMetadata("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/reversed")
+                    @TestDataPath("$PROJECT_ROOT")
+                    @RunWith(JUnit3RunnerWithInners.class)
+                    public static class Reversed extends AbstractJsCodegenBoxTest {
+                        private void runTest(String testDataFilePath) throws Exception {
+                            KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                        }
+
+                        public void testAllFilesPresentInReversed() throws Exception {
+                            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/reversed"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                        }
+
+                        @TestMetadata("reversedThenStep.kt")
+                        public void testReversedThenStep() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/reversed/reversedThenStep.kt");
+                        }
+
+                        @TestMetadata("reversedThenStepThenReversed.kt")
+                        public void testReversedThenStepThenReversed() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/reversed/reversedThenStepThenReversed.kt");
+                        }
+
+                        @TestMetadata("reversedThenStepThenReversedThenStep.kt")
+                        public void testReversedThenStepThenReversedThenStep() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/reversed/reversedThenStepThenReversedThenStep.kt");
+                        }
+
+                        @TestMetadata("stepThenReversed.kt")
+                        public void testStepThenReversed() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/reversed/stepThenReversed.kt");
+                        }
+
+                        @TestMetadata("stepThenReversedThenStep.kt")
+                        public void testStepThenReversedThenStep() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/reversed/stepThenReversedThenStep.kt");
+                        }
+
+                        @TestMetadata("stepThenReversedThenStepThenReversed.kt")
+                        public void testStepThenReversedThenStepThenReversed() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/rangeTo/reversed/stepThenReversedThenStepThenReversed.kt");
+                        }
+                    }
+                }
+
+                @TestMetadata("compiler/testData/codegen/box/ranges/stepped/expression/until")
+                @TestDataPath("$PROJECT_ROOT")
+                @RunWith(JUnit3RunnerWithInners.class)
+                public static class Until extends AbstractJsCodegenBoxTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                    }
+
+                    public void testAllFilesPresentInUntil() throws Exception {
+                        KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/ranges/stepped/expression/until"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                    }
+
+                    @TestMetadata("emptyProgression.kt")
+                    public void testEmptyProgression() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/emptyProgression.kt");
+                    }
+
+                    @TestMetadata("emptyProgressionToMinValue.kt")
+                    public void testEmptyProgressionToMinValue() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/emptyProgressionToMinValue.kt");
+                    }
+
+                    @TestMetadata("illegalStepNegative.kt")
+                    public void testIllegalStepNegative() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/illegalStepNegative.kt");
+                    }
+
+                    @TestMetadata("illegalStepNonConst.kt")
+                    public void testIllegalStepNonConst() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/illegalStepNonConst.kt");
+                    }
+
+                    @TestMetadata("illegalStepThenLegalStep.kt")
+                    public void testIllegalStepThenLegalStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/illegalStepThenLegalStep.kt");
+                    }
+
+                    @TestMetadata("illegalStepZero.kt")
+                    public void testIllegalStepZero() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/illegalStepZero.kt");
+                    }
+
+                    @TestMetadata("legalStepThenIllegalStep.kt")
+                    public void testLegalStepThenIllegalStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/legalStepThenIllegalStep.kt");
+                    }
+
+                    @TestMetadata("minValueToMaxValueStepMaxValue.kt")
+                    public void testMinValueToMaxValueStepMaxValue() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/minValueToMaxValueStepMaxValue.kt");
+                    }
+
+                    @TestMetadata("mixedTypeStep.kt")
+                    public void testMixedTypeStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/mixedTypeStep.kt");
+                    }
+
+                    @TestMetadata("progressionToNonConst.kt")
+                    public void testProgressionToNonConst() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/progressionToNonConst.kt");
+                    }
+
+                    @TestMetadata("singleElementStepTwo.kt")
+                    public void testSingleElementStepTwo() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/singleElementStepTwo.kt");
+                    }
+
+                    @TestMetadata("stepNonConst.kt")
+                    public void testStepNonConst() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/stepNonConst.kt");
+                    }
+
+                    @TestMetadata("stepOne.kt")
+                    public void testStepOne() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/stepOne.kt");
+                    }
+
+                    @TestMetadata("stepToOutsideRange.kt")
+                    public void testStepToOutsideRange() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/stepToOutsideRange.kt");
+                    }
+
+                    @TestMetadata("stepToSameLast.kt")
+                    public void testStepToSameLast() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/stepToSameLast.kt");
+                    }
+
+                    @TestMetadata("stepToSmallerLast.kt")
+                    public void testStepToSmallerLast() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/stepToSmallerLast.kt");
+                    }
+
+                    @TestMetadata("zeroToMaxValueStepMaxValue.kt")
+                    public void testZeroToMaxValueStepMaxValue() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/zeroToMaxValueStepMaxValue.kt");
+                    }
+
+                    @TestMetadata("compiler/testData/codegen/box/ranges/stepped/expression/until/nestedStep")
+                    @TestDataPath("$PROJECT_ROOT")
+                    @RunWith(JUnit3RunnerWithInners.class)
+                    public static class NestedStep extends AbstractJsCodegenBoxTest {
+                        private void runTest(String testDataFilePath) throws Exception {
+                            KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                        }
+
+                        public void testAllFilesPresentInNestedStep() throws Exception {
+                            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/ranges/stepped/expression/until/nestedStep"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                        }
+
+                        @TestMetadata("stepOneThenStepOne.kt")
+                        public void testStepOneThenStepOne() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/nestedStep/stepOneThenStepOne.kt");
+                        }
+
+                        @TestMetadata("stepThenSameStep.kt")
+                        public void testStepThenSameStep() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/nestedStep/stepThenSameStep.kt");
+                        }
+
+                        @TestMetadata("stepToSameLastThenStepOne.kt")
+                        public void testStepToSameLastThenStepOne() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/nestedStep/stepToSameLastThenStepOne.kt");
+                        }
+
+                        @TestMetadata("stepToSameLastThenStepToSameLast.kt")
+                        public void testStepToSameLastThenStepToSameLast() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/nestedStep/stepToSameLastThenStepToSameLast.kt");
+                        }
+
+                        @TestMetadata("stepToSameLastThenStepToSmallerLast.kt")
+                        public void testStepToSameLastThenStepToSmallerLast() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/nestedStep/stepToSameLastThenStepToSmallerLast.kt");
+                        }
+
+                        @TestMetadata("stepToSmallerLastThenStepOne.kt")
+                        public void testStepToSmallerLastThenStepOne() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/nestedStep/stepToSmallerLastThenStepOne.kt");
+                        }
+
+                        @TestMetadata("stepToSmallerLastThenStepToSameLast.kt")
+                        public void testStepToSmallerLastThenStepToSameLast() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/nestedStep/stepToSmallerLastThenStepToSameLast.kt");
+                        }
+
+                        @TestMetadata("stepToSmallerLastThenStepToSmallerLast.kt")
+                        public void testStepToSmallerLastThenStepToSmallerLast() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/nestedStep/stepToSmallerLastThenStepToSmallerLast.kt");
+                        }
+                    }
+
+                    @TestMetadata("compiler/testData/codegen/box/ranges/stepped/expression/until/reversed")
+                    @TestDataPath("$PROJECT_ROOT")
+                    @RunWith(JUnit3RunnerWithInners.class)
+                    public static class Reversed extends AbstractJsCodegenBoxTest {
+                        private void runTest(String testDataFilePath) throws Exception {
+                            KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                        }
+
+                        public void testAllFilesPresentInReversed() throws Exception {
+                            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/ranges/stepped/expression/until/reversed"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                        }
+
+                        @TestMetadata("reversedThenStep.kt")
+                        public void testReversedThenStep() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/reversed/reversedThenStep.kt");
+                        }
+
+                        @TestMetadata("reversedThenStepThenReversed.kt")
+                        public void testReversedThenStepThenReversed() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/reversed/reversedThenStepThenReversed.kt");
+                        }
+
+                        @TestMetadata("reversedThenStepThenReversedThenStep.kt")
+                        public void testReversedThenStepThenReversedThenStep() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/reversed/reversedThenStepThenReversedThenStep.kt");
+                        }
+
+                        @TestMetadata("stepThenReversed.kt")
+                        public void testStepThenReversed() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/reversed/stepThenReversed.kt");
+                        }
+
+                        @TestMetadata("stepThenReversedThenStep.kt")
+                        public void testStepThenReversedThenStep() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/reversed/stepThenReversedThenStep.kt");
+                        }
+
+                        @TestMetadata("stepThenReversedThenStepThenReversed.kt")
+                        public void testStepThenReversedThenStepThenReversed() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/expression/until/reversed/stepThenReversedThenStepThenReversed.kt");
+                        }
+                    }
+                }
+            }
+
+            @TestMetadata("compiler/testData/codegen/box/ranges/stepped/literal")
+            @TestDataPath("$PROJECT_ROOT")
+            @RunWith(JUnit3RunnerWithInners.class)
+            public static class Literal extends AbstractJsCodegenBoxTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                }
+
+                public void testAllFilesPresentInLiteral() throws Exception {
+                    KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/ranges/stepped/literal"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                }
+
+                @TestMetadata("compiler/testData/codegen/box/ranges/stepped/literal/downTo")
+                @TestDataPath("$PROJECT_ROOT")
+                @RunWith(JUnit3RunnerWithInners.class)
+                public static class DownTo extends AbstractJsCodegenBoxTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                    }
+
+                    public void testAllFilesPresentInDownTo() throws Exception {
+                        KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/ranges/stepped/literal/downTo"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                    }
+
+                    @TestMetadata("emptyProgression.kt")
+                    public void testEmptyProgression() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/downTo/emptyProgression.kt");
+                    }
+
+                    @TestMetadata("illegalStepThenLegalStep.kt")
+                    public void testIllegalStepThenLegalStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/downTo/illegalStepThenLegalStep.kt");
+                    }
+
+                    @TestMetadata("legalStepThenIllegalStep.kt")
+                    public void testLegalStepThenIllegalStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/downTo/legalStepThenIllegalStep.kt");
+                    }
+
+                    @TestMetadata("maxValueToMinValueStepMaxValue.kt")
+                    public void testMaxValueToMinValueStepMaxValue() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/downTo/maxValueToMinValueStepMaxValue.kt");
+                    }
+
+                    @TestMetadata("maxValueToOneStepMaxValue.kt")
+                    public void testMaxValueToOneStepMaxValue() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/downTo/maxValueToOneStepMaxValue.kt");
+                    }
+
+                    @TestMetadata("maxValueToZeroStepMaxValue.kt")
+                    public void testMaxValueToZeroStepMaxValue() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/downTo/maxValueToZeroStepMaxValue.kt");
+                    }
+
+                    @TestMetadata("mixedTypeStep.kt")
+                    public void testMixedTypeStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/downTo/mixedTypeStep.kt");
+                    }
+
+                    @TestMetadata("singleElementStepTwo.kt")
+                    public void testSingleElementStepTwo() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/downTo/singleElementStepTwo.kt");
+                    }
+
+                    @TestMetadata("stepNonConst.kt")
+                    public void testStepNonConst() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/downTo/stepNonConst.kt");
+                    }
+
+                    @TestMetadata("stepOne.kt")
+                    public void testStepOne() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/downTo/stepOne.kt");
+                    }
+
+                    @TestMetadata("stepToOutsideRange.kt")
+                    public void testStepToOutsideRange() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/downTo/stepToOutsideRange.kt");
+                    }
+
+                    @TestMetadata("stepToSameLast.kt")
+                    public void testStepToSameLast() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/downTo/stepToSameLast.kt");
+                    }
+
+                    @TestMetadata("stepToSmallerLast.kt")
+                    public void testStepToSmallerLast() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/downTo/stepToSmallerLast.kt");
+                    }
+
+                    @TestMetadata("compiler/testData/codegen/box/ranges/stepped/literal/downTo/nestedStep")
+                    @TestDataPath("$PROJECT_ROOT")
+                    @RunWith(JUnit3RunnerWithInners.class)
+                    public static class NestedStep extends AbstractJsCodegenBoxTest {
+                        private void runTest(String testDataFilePath) throws Exception {
+                            KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                        }
+
+                        public void testAllFilesPresentInNestedStep() throws Exception {
+                            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/ranges/stepped/literal/downTo/nestedStep"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                        }
+
+                        @TestMetadata("stepOneThenStepOne.kt")
+                        public void testStepOneThenStepOne() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/downTo/nestedStep/stepOneThenStepOne.kt");
+                        }
+
+                        @TestMetadata("stepThenSameStep.kt")
+                        public void testStepThenSameStep() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/downTo/nestedStep/stepThenSameStep.kt");
+                        }
+
+                        @TestMetadata("stepToSameLastThenStepOne.kt")
+                        public void testStepToSameLastThenStepOne() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/downTo/nestedStep/stepToSameLastThenStepOne.kt");
+                        }
+
+                        @TestMetadata("stepToSameLastThenStepToSameLast.kt")
+                        public void testStepToSameLastThenStepToSameLast() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/downTo/nestedStep/stepToSameLastThenStepToSameLast.kt");
+                        }
+
+                        @TestMetadata("stepToSameLastThenStepToSmallerLast.kt")
+                        public void testStepToSameLastThenStepToSmallerLast() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/downTo/nestedStep/stepToSameLastThenStepToSmallerLast.kt");
+                        }
+
+                        @TestMetadata("stepToSmallerLastThenStepOne.kt")
+                        public void testStepToSmallerLastThenStepOne() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/downTo/nestedStep/stepToSmallerLastThenStepOne.kt");
+                        }
+
+                        @TestMetadata("stepToSmallerLastThenStepToSameLast.kt")
+                        public void testStepToSmallerLastThenStepToSameLast() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/downTo/nestedStep/stepToSmallerLastThenStepToSameLast.kt");
+                        }
+
+                        @TestMetadata("stepToSmallerLastThenStepToSmallerLast.kt")
+                        public void testStepToSmallerLastThenStepToSmallerLast() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/downTo/nestedStep/stepToSmallerLastThenStepToSmallerLast.kt");
+                        }
+                    }
+
+                    @TestMetadata("compiler/testData/codegen/box/ranges/stepped/literal/downTo/reversed")
+                    @TestDataPath("$PROJECT_ROOT")
+                    @RunWith(JUnit3RunnerWithInners.class)
+                    public static class Reversed extends AbstractJsCodegenBoxTest {
+                        private void runTest(String testDataFilePath) throws Exception {
+                            KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                        }
+
+                        public void testAllFilesPresentInReversed() throws Exception {
+                            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/ranges/stepped/literal/downTo/reversed"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                        }
+
+                        @TestMetadata("reversedThenStep.kt")
+                        public void testReversedThenStep() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/downTo/reversed/reversedThenStep.kt");
+                        }
+
+                        @TestMetadata("reversedThenStepThenReversed.kt")
+                        public void testReversedThenStepThenReversed() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/downTo/reversed/reversedThenStepThenReversed.kt");
+                        }
+
+                        @TestMetadata("reversedThenStepThenReversedThenStep.kt")
+                        public void testReversedThenStepThenReversedThenStep() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/downTo/reversed/reversedThenStepThenReversedThenStep.kt");
+                        }
+
+                        @TestMetadata("stepThenReversed.kt")
+                        public void testStepThenReversed() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/downTo/reversed/stepThenReversed.kt");
+                        }
+
+                        @TestMetadata("stepThenReversedThenStep.kt")
+                        public void testStepThenReversedThenStep() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/downTo/reversed/stepThenReversedThenStep.kt");
+                        }
+
+                        @TestMetadata("stepThenReversedThenStepThenReversed.kt")
+                        public void testStepThenReversedThenStepThenReversed() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/downTo/reversed/stepThenReversedThenStepThenReversed.kt");
+                        }
+                    }
+                }
+
+                @TestMetadata("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo")
+                @TestDataPath("$PROJECT_ROOT")
+                @RunWith(JUnit3RunnerWithInners.class)
+                public static class RangeTo extends AbstractJsCodegenBoxTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                    }
+
+                    public void testAllFilesPresentInRangeTo() throws Exception {
+                        KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                    }
+
+                    @TestMetadata("emptyProgression.kt")
+                    public void testEmptyProgression() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/emptyProgression.kt");
+                    }
+
+                    @TestMetadata("illegalStepThenLegalStep.kt")
+                    public void testIllegalStepThenLegalStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/illegalStepThenLegalStep.kt");
+                    }
+
+                    @TestMetadata("legalStepThenIllegalStep.kt")
+                    public void testLegalStepThenIllegalStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/legalStepThenIllegalStep.kt");
+                    }
+
+                    @TestMetadata("minValueToMaxValueStepMaxValue.kt")
+                    public void testMinValueToMaxValueStepMaxValue() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/minValueToMaxValueStepMaxValue.kt");
+                    }
+
+                    @TestMetadata("mixedTypeStep.kt")
+                    public void testMixedTypeStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/mixedTypeStep.kt");
+                    }
+
+                    @TestMetadata("oneToMaxValueStepMaxValue.kt")
+                    public void testOneToMaxValueStepMaxValue() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/oneToMaxValueStepMaxValue.kt");
+                    }
+
+                    @TestMetadata("singleElementStepTwo.kt")
+                    public void testSingleElementStepTwo() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/singleElementStepTwo.kt");
+                    }
+
+                    @TestMetadata("stepNonConst.kt")
+                    public void testStepNonConst() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/stepNonConst.kt");
+                    }
+
+                    @TestMetadata("stepOne.kt")
+                    public void testStepOne() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/stepOne.kt");
+                    }
+
+                    @TestMetadata("stepToOutsideRange.kt")
+                    public void testStepToOutsideRange() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/stepToOutsideRange.kt");
+                    }
+
+                    @TestMetadata("stepToSameLast.kt")
+                    public void testStepToSameLast() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/stepToSameLast.kt");
+                    }
+
+                    @TestMetadata("stepToSmallerLast.kt")
+                    public void testStepToSmallerLast() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/stepToSmallerLast.kt");
+                    }
+
+                    @TestMetadata("zeroToMaxValueStepMaxValue.kt")
+                    public void testZeroToMaxValueStepMaxValue() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/zeroToMaxValueStepMaxValue.kt");
+                    }
+
+                    @TestMetadata("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/nestedStep")
+                    @TestDataPath("$PROJECT_ROOT")
+                    @RunWith(JUnit3RunnerWithInners.class)
+                    public static class NestedStep extends AbstractJsCodegenBoxTest {
+                        private void runTest(String testDataFilePath) throws Exception {
+                            KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                        }
+
+                        public void testAllFilesPresentInNestedStep() throws Exception {
+                            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/nestedStep"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                        }
+
+                        @TestMetadata("stepOneThenStepOne.kt")
+                        public void testStepOneThenStepOne() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/nestedStep/stepOneThenStepOne.kt");
+                        }
+
+                        @TestMetadata("stepThenSameStep.kt")
+                        public void testStepThenSameStep() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/nestedStep/stepThenSameStep.kt");
+                        }
+
+                        @TestMetadata("stepToSameLastThenStepOne.kt")
+                        public void testStepToSameLastThenStepOne() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/nestedStep/stepToSameLastThenStepOne.kt");
+                        }
+
+                        @TestMetadata("stepToSameLastThenStepToSameLast.kt")
+                        public void testStepToSameLastThenStepToSameLast() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/nestedStep/stepToSameLastThenStepToSameLast.kt");
+                        }
+
+                        @TestMetadata("stepToSameLastThenStepToSmallerLast.kt")
+                        public void testStepToSameLastThenStepToSmallerLast() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/nestedStep/stepToSameLastThenStepToSmallerLast.kt");
+                        }
+
+                        @TestMetadata("stepToSmallerLastThenStepOne.kt")
+                        public void testStepToSmallerLastThenStepOne() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/nestedStep/stepToSmallerLastThenStepOne.kt");
+                        }
+
+                        @TestMetadata("stepToSmallerLastThenStepToSameLast.kt")
+                        public void testStepToSmallerLastThenStepToSameLast() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/nestedStep/stepToSmallerLastThenStepToSameLast.kt");
+                        }
+
+                        @TestMetadata("stepToSmallerLastThenStepToSmallerLast.kt")
+                        public void testStepToSmallerLastThenStepToSmallerLast() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/nestedStep/stepToSmallerLastThenStepToSmallerLast.kt");
+                        }
+                    }
+
+                    @TestMetadata("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/reversed")
+                    @TestDataPath("$PROJECT_ROOT")
+                    @RunWith(JUnit3RunnerWithInners.class)
+                    public static class Reversed extends AbstractJsCodegenBoxTest {
+                        private void runTest(String testDataFilePath) throws Exception {
+                            KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                        }
+
+                        public void testAllFilesPresentInReversed() throws Exception {
+                            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/reversed"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                        }
+
+                        @TestMetadata("reversedThenStep.kt")
+                        public void testReversedThenStep() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/reversed/reversedThenStep.kt");
+                        }
+
+                        @TestMetadata("reversedThenStepThenReversed.kt")
+                        public void testReversedThenStepThenReversed() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/reversed/reversedThenStepThenReversed.kt");
+                        }
+
+                        @TestMetadata("reversedThenStepThenReversedThenStep.kt")
+                        public void testReversedThenStepThenReversedThenStep() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/reversed/reversedThenStepThenReversedThenStep.kt");
+                        }
+
+                        @TestMetadata("stepThenReversed.kt")
+                        public void testStepThenReversed() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/reversed/stepThenReversed.kt");
+                        }
+
+                        @TestMetadata("stepThenReversedThenStep.kt")
+                        public void testStepThenReversedThenStep() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/reversed/stepThenReversedThenStep.kt");
+                        }
+
+                        @TestMetadata("stepThenReversedThenStepThenReversed.kt")
+                        public void testStepThenReversedThenStepThenReversed() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/rangeTo/reversed/stepThenReversedThenStepThenReversed.kt");
+                        }
+                    }
+                }
+
+                @TestMetadata("compiler/testData/codegen/box/ranges/stepped/literal/until")
+                @TestDataPath("$PROJECT_ROOT")
+                @RunWith(JUnit3RunnerWithInners.class)
+                public static class Until extends AbstractJsCodegenBoxTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                    }
+
+                    public void testAllFilesPresentInUntil() throws Exception {
+                        KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/ranges/stepped/literal/until"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                    }
+
+                    @TestMetadata("emptyProgression.kt")
+                    public void testEmptyProgression() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/until/emptyProgression.kt");
+                    }
+
+                    @TestMetadata("emptyProgressionToMinValue.kt")
+                    public void testEmptyProgressionToMinValue() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/until/emptyProgressionToMinValue.kt");
+                    }
+
+                    @TestMetadata("illegalStepThenLegalStep.kt")
+                    public void testIllegalStepThenLegalStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/until/illegalStepThenLegalStep.kt");
+                    }
+
+                    @TestMetadata("legalStepThenIllegalStep.kt")
+                    public void testLegalStepThenIllegalStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/until/legalStepThenIllegalStep.kt");
+                    }
+
+                    @TestMetadata("minValueToMaxValueStepMaxValue.kt")
+                    public void testMinValueToMaxValueStepMaxValue() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/until/minValueToMaxValueStepMaxValue.kt");
+                    }
+
+                    @TestMetadata("mixedTypeStep.kt")
+                    public void testMixedTypeStep() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/until/mixedTypeStep.kt");
+                    }
+
+                    @TestMetadata("progressionToNonConst.kt")
+                    public void testProgressionToNonConst() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/until/progressionToNonConst.kt");
+                    }
+
+                    @TestMetadata("singleElementStepTwo.kt")
+                    public void testSingleElementStepTwo() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/until/singleElementStepTwo.kt");
+                    }
+
+                    @TestMetadata("stepNonConst.kt")
+                    public void testStepNonConst() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/until/stepNonConst.kt");
+                    }
+
+                    @TestMetadata("stepOne.kt")
+                    public void testStepOne() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/until/stepOne.kt");
+                    }
+
+                    @TestMetadata("stepToOutsideRange.kt")
+                    public void testStepToOutsideRange() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/until/stepToOutsideRange.kt");
+                    }
+
+                    @TestMetadata("stepToSameLast.kt")
+                    public void testStepToSameLast() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/until/stepToSameLast.kt");
+                    }
+
+                    @TestMetadata("stepToSmallerLast.kt")
+                    public void testStepToSmallerLast() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/until/stepToSmallerLast.kt");
+                    }
+
+                    @TestMetadata("zeroToMaxValueStepMaxValue.kt")
+                    public void testZeroToMaxValueStepMaxValue() throws Exception {
+                        runTest("compiler/testData/codegen/box/ranges/stepped/literal/until/zeroToMaxValueStepMaxValue.kt");
+                    }
+
+                    @TestMetadata("compiler/testData/codegen/box/ranges/stepped/literal/until/nestedStep")
+                    @TestDataPath("$PROJECT_ROOT")
+                    @RunWith(JUnit3RunnerWithInners.class)
+                    public static class NestedStep extends AbstractJsCodegenBoxTest {
+                        private void runTest(String testDataFilePath) throws Exception {
+                            KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                        }
+
+                        public void testAllFilesPresentInNestedStep() throws Exception {
+                            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/ranges/stepped/literal/until/nestedStep"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                        }
+
+                        @TestMetadata("stepOneThenStepOne.kt")
+                        public void testStepOneThenStepOne() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/until/nestedStep/stepOneThenStepOne.kt");
+                        }
+
+                        @TestMetadata("stepThenSameStep.kt")
+                        public void testStepThenSameStep() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/until/nestedStep/stepThenSameStep.kt");
+                        }
+
+                        @TestMetadata("stepToSameLastThenStepOne.kt")
+                        public void testStepToSameLastThenStepOne() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/until/nestedStep/stepToSameLastThenStepOne.kt");
+                        }
+
+                        @TestMetadata("stepToSameLastThenStepToSameLast.kt")
+                        public void testStepToSameLastThenStepToSameLast() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/until/nestedStep/stepToSameLastThenStepToSameLast.kt");
+                        }
+
+                        @TestMetadata("stepToSameLastThenStepToSmallerLast.kt")
+                        public void testStepToSameLastThenStepToSmallerLast() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/until/nestedStep/stepToSameLastThenStepToSmallerLast.kt");
+                        }
+
+                        @TestMetadata("stepToSmallerLastThenStepOne.kt")
+                        public void testStepToSmallerLastThenStepOne() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/until/nestedStep/stepToSmallerLastThenStepOne.kt");
+                        }
+
+                        @TestMetadata("stepToSmallerLastThenStepToSameLast.kt")
+                        public void testStepToSmallerLastThenStepToSameLast() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/until/nestedStep/stepToSmallerLastThenStepToSameLast.kt");
+                        }
+
+                        @TestMetadata("stepToSmallerLastThenStepToSmallerLast.kt")
+                        public void testStepToSmallerLastThenStepToSmallerLast() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/until/nestedStep/stepToSmallerLastThenStepToSmallerLast.kt");
+                        }
+                    }
+
+                    @TestMetadata("compiler/testData/codegen/box/ranges/stepped/literal/until/reversed")
+                    @TestDataPath("$PROJECT_ROOT")
+                    @RunWith(JUnit3RunnerWithInners.class)
+                    public static class Reversed extends AbstractJsCodegenBoxTest {
+                        private void runTest(String testDataFilePath) throws Exception {
+                            KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+                        }
+
+                        public void testAllFilesPresentInReversed() throws Exception {
+                            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/ranges/stepped/literal/until/reversed"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+                        }
+
+                        @TestMetadata("reversedThenStep.kt")
+                        public void testReversedThenStep() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/until/reversed/reversedThenStep.kt");
+                        }
+
+                        @TestMetadata("reversedThenStepThenReversed.kt")
+                        public void testReversedThenStepThenReversed() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/until/reversed/reversedThenStepThenReversed.kt");
+                        }
+
+                        @TestMetadata("reversedThenStepThenReversedThenStep.kt")
+                        public void testReversedThenStepThenReversedThenStep() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/until/reversed/reversedThenStepThenReversedThenStep.kt");
+                        }
+
+                        @TestMetadata("stepThenReversed.kt")
+                        public void testStepThenReversed() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/until/reversed/stepThenReversed.kt");
+                        }
+
+                        @TestMetadata("stepThenReversedThenStep.kt")
+                        public void testStepThenReversedThenStep() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/until/reversed/stepThenReversedThenStep.kt");
+                        }
+
+                        @TestMetadata("stepThenReversedThenStepThenReversed.kt")
+                        public void testStepThenReversedThenStepThenReversed() throws Exception {
+                            runTest("compiler/testData/codegen/box/ranges/stepped/literal/until/reversed/stepThenReversedThenStepThenReversed.kt");
+                        }
+                    }
+                }
             }
         }
 
@@ -17821,11 +19436,6 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             @TestMetadata("annotationClassLiteral.kt")
             public void testAnnotationClassLiteral() throws Exception {
                 runTest("compiler/testData/codegen/box/reflection/classLiterals/annotationClassLiteral.kt");
-            }
-
-            @TestMetadata("builtinClassLiterals.kt")
-            public void testBuiltinClassLiterals() throws Exception {
-                runTest("compiler/testData/codegen/box/reflection/classLiterals/builtinClassLiterals.kt");
             }
 
             @TestMetadata("genericClass.kt")
@@ -20331,6 +21941,24 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         @TestMetadata("syntheticAccessor.kt")
         public void testSyntheticAccessor() throws Exception {
             runTest("compiler/testData/codegen/box/topLevelPrivate/syntheticAccessor.kt");
+        }
+    }
+
+    @TestMetadata("compiler/testData/codegen/box/trailingComma")
+    @TestDataPath("$PROJECT_ROOT")
+    @RunWith(JUnit3RunnerWithInners.class)
+    public static class TrailingComma extends AbstractJsCodegenBoxTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest0(this::doTest, TargetBackend.JS, testDataFilePath);
+        }
+
+        public void testAllFilesPresentInTrailingComma() throws Exception {
+            KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/box/trailingComma"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JS, true);
+        }
+
+        @TestMetadata("noDisambiguation.kt")
+        public void testNoDisambiguation() throws Exception {
+            runTest("compiler/testData/codegen/box/trailingComma/noDisambiguation.kt");
         }
     }
 

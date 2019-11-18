@@ -16,7 +16,11 @@ node {
 }
 
 val antLauncherJar by configurations.creating
-val testJsRuntime by configurations.creating
+val testJsRuntime by configurations.creating {
+    attributes {
+        attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, objects.named(LibraryElements.JAR))
+    }
+}
 
 dependencies {
     testRuntime(intellijDep())
@@ -59,7 +63,9 @@ dependencies {
 
     testRuntime(kotlinStdlib())
     testJsRuntime(kotlinStdlib("js"))
-    testJsRuntime(project(":kotlin-test:kotlin-test-js")) // to be sure that kotlin-test-js built before tests runned
+    if (!kotlinBuildProperties.isInJpsBuildIdeaSync) {
+        testJsRuntime(project(":kotlin-test:kotlin-test-js")) // to be sure that kotlin-test-js built before tests runned
+    }
     testRuntime(project(":kotlin-reflect"))
     testRuntime(project(":kotlin-preloader")) // it's required for ant tests
     testRuntime(project(":compiler:backend-common"))

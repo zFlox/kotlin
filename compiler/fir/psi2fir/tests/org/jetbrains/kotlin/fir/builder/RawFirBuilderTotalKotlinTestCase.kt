@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccess
 import org.jetbrains.kotlin.fir.expressions.FirStatement
 import org.jetbrains.kotlin.fir.expressions.impl.FirExpressionStub
+import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.references.FirErrorNamedReference
 import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.visitors.FirVisitorVoid
@@ -75,7 +76,7 @@ class RawFirBuilderTotalKotlinTestCase : AbstractRawFirBuilderTestCase() {
                         val calleeReference = qualifiedAccess.calleeReference
                         if (calleeReference is FirErrorNamedReference) {
                             errorReferences++
-                            println(calleeReference.errorReason)
+                            println(calleeReference.diagnostic.reason)
                         } else {
                             normalReferences++
                         }

@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.backend.common.lower.loops
 
 import org.jetbrains.kotlin.backend.common.CommonBackendContext
 import org.jetbrains.kotlin.backend.common.ir.Symbols
-import org.jetbrains.kotlin.backend.common.ir.isTopLevel
 import org.jetbrains.kotlin.backend.common.lower.DeclarationIrBuilder
 import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
 import org.jetbrains.kotlin.backend.common.lower.irIfThen
@@ -24,8 +23,6 @@ import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.deepCopyWithSymbols
 import org.jetbrains.kotlin.ir.util.functions
-import org.jetbrains.kotlin.ir.util.getPackageFragment
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 /**
@@ -63,8 +60,8 @@ internal sealed class ForLoopHeader(
     /** Statement used to increment the induction variable. */
     fun incrementInductionVariable(builder: DeclarationIrBuilder): IrStatement = with(builder) {
         // inductionVariable = inductionVariable + step
-        val plusFun = inductionVariable.type.getClass()!!.functions.first {
-            it.name.asString() == "plus" &&
+        val plusFun = inductionVariable.type.getClass()!!.functions.single {
+            it.name == OperatorNameConventions.PLUS &&
                     it.valueParameters.size == 1 &&
                     it.valueParameters[0].type == step.type
         }
@@ -81,10 +78,10 @@ internal sealed class ForLoopHeader(
         with(builder) {
             val builtIns = context.irBuiltIns
             val progressionType = headerInfo.progressionType
-            val progressionKotlinType = progressionType.elementType(builtIns).toKotlinType()
+            val progressionElementType = progressionType.elementType(builtIns)
             val compFun =
-                if (isLastInclusive) builtIns.lessOrEqualFunByOperandType[progressionKotlinType]!!
-                else builtIns.lessFunByOperandType[progressionKotlinType]!!
+                if (isLastInclusive) builtIns.lessOrEqualFunByOperandType[progressionElementType.classifierOrFail]!!
+                else builtIns.lessFunByOperandType[progressionElementType.classifierOrFail]!!
 
             // The default condition depends on the direction.
             when (headerInfo.direction) {
@@ -104,11 +101,11 @@ internal sealed class ForLoopHeader(
                     // If the direction is unknown, we check depending on the "step" value:
                     //   // (use `<` if last is exclusive)
                     //   (step > 0 && inductionVar <= last) || (step < 0 || last <= inductionVar)
-                    val stepKotlinType = progressionType.stepType(builtIns).toKotlinType()
+                    val stepType = progressionType.stepType(builtIns)
                     val isLong = progressionType == ProgressionType.LONG_PROGRESSION
                     context.oror(
                         context.andand(
-                            irCall(builtIns.greaterFunByOperandType[stepKotlinType]!!).apply {
+                            irCall(builtIns.greaterFunByOperandType[stepType.classifierOrFail]!!).apply {
                                 putValueArgument(0, irGet(step))
                                 putValueArgument(1, if (isLong) irLong(0) else irInt(0))
                             },
@@ -117,7 +114,7 @@ internal sealed class ForLoopHeader(
                                 putValueArgument(1, lastExpression)
                             }),
                         context.andand(
-                            irCall(builtIns.lessFunByOperandType[stepKotlinType]!!).apply {
+                            irCall(builtIns.lessFunByOperandType[stepType.classifierOrFail]!!).apply {
                                 putValueArgument(0, irGet(step))
                                 putValueArgument(1, if (isLong) irLong(0) else irInt(0))
                             },
@@ -265,30 +262,17 @@ internal class HeaderProcessor(
         // Get the iterable expression, e.g., `someIterable` in the following loop variable declaration:
         //
         //   val it = someIterable.iterator()
-        //
-        // If the `iterator` method is an extension method, make sure that we are calling a known extension
-        // method in the library such as `kotlin.text.StringsKt.iterator` with no value arguments. Other
-        // extension methods could return user-defined iterators.
-        val iterable = (variable.initializer as? IrCall)?.let {
-            val extensionReceiver = it.extensionReceiver
+        val iteratorCall = variable.initializer as? IrCall
+        val iterable = iteratorCall?.run {
             if (extensionReceiver != null) {
-                val function = it.symbol.owner
-                if (it.valueArgumentsCount == 0
-                    && function.isTopLevel
-                    && function.getPackageFragment()?.fqName == FqName("kotlin.text")
-                    && function.name == OperatorNameConventions.ITERATOR
-                ) {
-                    extensionReceiver
-                } else {
-                    null
-                }
+                extensionReceiver
             } else {
-                it.dispatchReceiver
+                dispatchReceiver
             }
         }
 
         // Collect loop information from the iterable expression.
-        val headerInfo = iterable?.accept(headerInfoBuilder, null)
+        val headerInfo = iterable?.accept(headerInfoBuilder, iteratorCall)
             ?: return null  // If the iterable is not supported.
 
         val builder = context.createIrBuilder(scopeOwnerSymbol(), variable.startOffset, variable.endOffset)
@@ -329,15 +313,18 @@ internal class HeaderProcessor(
                 )
             } else null
 
-            val stepVariable = scope.createTemporaryVariable(
-                ensureNotNullable(
-                    headerInfo.step.castIfNecessary(
-                        headerInfo.progressionType.stepType(context.irBuiltIns),
-                        headerInfo.progressionType.stepCastFunctionName
-                    )
-                ),
-                nameHint = "step"
-            )
+            val stepVariable = headerInfo.progressionType.stepType(context.irBuiltIns).let {
+                scope.createTemporaryVariable(
+                    ensureNotNullable(
+                        headerInfo.step.castIfNecessary(
+                            it,
+                            headerInfo.progressionType.stepCastFunctionName
+                        )
+                    ),
+                    nameHint = "step",
+                    irType = it
+                )
+            }
 
             return when (headerInfo) {
                 is IndexedGetHeaderInfo -> IndexedGetLoopHeader(

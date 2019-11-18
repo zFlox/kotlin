@@ -5,8 +5,8 @@
 
 package org.jetbrains.kotlin.fir.declarations.impl
 
-import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.declarations.FirConstructor
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationStatus
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.fir.visitors.*
  */
 
 open class FirConstructorImpl(
-    override val psi: PsiElement?,
+    override val source: FirSourceElement?,
     override val session: FirSession,
     override var returnTypeRef: FirTypeRef,
     override var receiverTypeRef: FirTypeRef?,
@@ -65,11 +65,11 @@ open class FirConstructorImpl(
 
     override fun <D> transformChildren(transformer: FirTransformer<D>, data: D): FirConstructorImpl {
         transformReturnTypeRef(transformer, data)
-        receiverTypeRef = receiverTypeRef?.transformSingle(transformer, data)
+        transformReceiverTypeRef(transformer, data)
         transformControlFlowGraphReference(transformer, data)
         transformValueParameters(transformer, data)
         body = body?.transformSingle(transformer, data)
-        status = status.transformSingle(transformer, data)
+        transformStatus(transformer, data)
         annotations.transformInplace(transformer, data)
         delegatedConstructor = delegatedConstructor?.transformSingle(transformer, data)
         return this
@@ -80,6 +80,11 @@ open class FirConstructorImpl(
         return this
     }
 
+    override fun <D> transformReceiverTypeRef(transformer: FirTransformer<D>, data: D): FirConstructorImpl {
+        receiverTypeRef = receiverTypeRef?.transformSingle(transformer, data)
+        return this
+    }
+
     override fun <D> transformControlFlowGraphReference(transformer: FirTransformer<D>, data: D): FirConstructorImpl {
         controlFlowGraphReference = controlFlowGraphReference.transformSingle(transformer, data)
         return this
@@ -87,6 +92,11 @@ open class FirConstructorImpl(
 
     override fun <D> transformValueParameters(transformer: FirTransformer<D>, data: D): FirConstructorImpl {
         valueParameters.transformInplace(transformer, data)
+        return this
+    }
+
+    override fun <D> transformStatus(transformer: FirTransformer<D>, data: D): FirConstructorImpl {
+        status = status.transformSingle(transformer, data)
         return this
     }
 

@@ -8,7 +8,7 @@ buildscript {
     extra["defaultSnapshotVersion"] = "1.3-SNAPSHOT"
     val cacheRedirectorEnabled = findProperty("cacheRedirectorEnabled")?.toString()?.toBoolean() == true
 
-    kotlinBootstrapFrom(BootstrapOption.BintrayBootstrap("1.3.60-dev-770", cacheRedirectorEnabled))
+    kotlinBootstrapFrom(BootstrapOption.BintrayBootstrap("1.3.70-dev-1416", cacheRedirectorEnabled))
 
     repositories {
         bootstrapKotlinRepo?.let(::maven)
@@ -164,12 +164,13 @@ extra["versions.org.springframework"] = "4.2.0.RELEASE"
 extra["versions.jflex"] = "1.7.0"
 extra["versions.markdown"] = "0.1.25"
 extra["versions.trove4j"] = "1.0.20181211"
+extra["versions.completion-ranking-kotlin"] = "0.0.2"
 
 // NOTE: please, also change KTOR_NAME in pathUtil.kt and all versions in corresponding jar names in daemon tests.
 extra["versions.ktor-network"] = "1.0.1"
 
 if (!project.hasProperty("versions.kotlin-native")) {
-    extra["versions.kotlin-native"] = "1.3.60-eap-12915"
+    extra["versions.kotlin-native"] = "1.3.70-dev-13235"
 }
 
 val isTeamcityBuild = project.kotlinBuildProperties.isTeamcityBuild
@@ -259,7 +260,7 @@ val coreLibProjects = listOfNotNull(
     ":kotlin-test:kotlin-test-junit",
     ":kotlin-test:kotlin-test-junit5",
     ":kotlin-test:kotlin-test-testng",
-    ":kotlin-test:kotlin-test-js",
+    ":kotlin-test:kotlin-test-js".takeIf { !kotlinBuildProperties.isInJpsBuildIdeaSync },
     ":kotlin-reflect"
 )
 
@@ -323,6 +324,7 @@ allprojects {
         maven(intellijRepo)
         maven("https://dl.bintray.com/kotlin/ktor")
         maven("https://kotlin.bintray.com/kotlin-dependencies")
+        maven("https://jetbrains.bintray.com/intellij-third-party-dependencies")
         bootstrapKotlinRepo?.let(::maven)
         internalKotlinRepo?.let(::maven)
     }
@@ -331,10 +333,9 @@ allprojects {
 
     val commonCompilerArgs = listOfNotNull(
         "-Xuse-experimental=kotlin.Experimental",
-        "-Xallow-kotlin-package",
         "-Xread-deserialized-contracts",
         "-Xjvm-default=compatibility",
-        "-Xprogressive".takeIf { hasProperty("test.progressive.mode") } // TODO: change to "-progressive" after bootstrap
+        "-progressive".takeIf { hasProperty("test.progressive.mode") }
     )
 
     tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>> {
@@ -471,7 +472,7 @@ tasks {
     register("coreLibsTest") {
         (coreLibProjects + listOf(
             ":kotlin-stdlib:samples",
-            ":kotlin-test:kotlin-test-js:kotlin-test-js-it",
+            ":kotlin-test:kotlin-test-js:kotlin-test-js-it".takeIf { !kotlinBuildProperties.isInJpsBuildIdeaSync },
             ":kotlinx-metadata-jvm",
             ":tools:binary-compatibility-validator"
         )).forEach {
@@ -534,6 +535,8 @@ tasks {
         dependsOn(":kotlin-scripting-common:test")
         dependsOn(":kotlin-scripting-jvm:test")
         dependsOn(":kotlin-scripting-jvm-host-test:test")
+        dependsOn(":kotlin-scripting-dependencies:test")
+        dependsOn(":kotlin-scripting-dependencies-maven:test")
         dependsOn(":kotlin-scripting-jsr223-test:test")
         // see comments on the task in kotlin-scripting-jvm-host-test
 //        dependsOn(":kotlin-scripting-jvm-host-test:embeddableTest")

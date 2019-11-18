@@ -19,7 +19,9 @@ convention.getPlugin(MavenPluginConvention::class.java).also {
 }
 
 dependencies {
-    archives(project(":kotlin-test:kotlin-test-js"))
+    if (!kotlinBuildProperties.isInJpsBuildIdeaSync) {
+        archives(project(":kotlin-test:kotlin-test-js"))
+    }
 }
 
 node {
@@ -52,7 +54,6 @@ tasks {
             "karma.ts",
             "karma-kotlin-reporter.js",
             "mocha-kotlin-reporter.js",
-            "nodejs-source-map-support.js",
             "package.json",
             "rollup.config.js",
             "tsconfig.json",

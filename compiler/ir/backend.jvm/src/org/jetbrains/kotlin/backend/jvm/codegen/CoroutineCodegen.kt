@@ -5,8 +5,6 @@
 
 package org.jetbrains.kotlin.backend.jvm.codegen
 
-import org.jetbrains.kotlin.backend.common.descriptors.WrappedFunctionDescriptorWithContainerSource
-import org.jetbrains.kotlin.backend.common.descriptors.WrappedSimpleFunctionDescriptor
 import org.jetbrains.kotlin.backend.common.ir.copyTo
 import org.jetbrains.kotlin.backend.common.ir.copyTypeParametersFrom
 import org.jetbrains.kotlin.backend.common.ir.isSuspend
@@ -22,6 +20,8 @@ import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.declarations.addValueParameter
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrFunctionImpl
+import org.jetbrains.kotlin.ir.descriptors.WrappedFunctionDescriptorWithContainerSource
+import org.jetbrains.kotlin.ir.descriptors.WrappedSimpleFunctionDescriptor
 import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrGetValue
@@ -108,8 +108,16 @@ internal fun IrFunction.isInvokeOfSuspendCallableReference(): Boolean = isSuspen
         (parent as? IrClass)?.origin == JvmLoweredDeclarationOrigin.FUNCTION_REFERENCE_IMPL
 
 internal fun IrFunction.isKnownToBeTailCall(): Boolean =
-    origin == IrDeclarationOrigin.FUNCTION_FOR_DEFAULT_PARAMETER || origin == JvmLoweredDeclarationOrigin.SYNTHETIC_ACCESSOR ||
-            isInvokeOfSuspendCallableReference()
+    when (origin) {
+        IrDeclarationOrigin.FUNCTION_FOR_DEFAULT_PARAMETER,
+        JvmLoweredDeclarationOrigin.SYNTHETIC_ACCESSOR,
+        JvmLoweredDeclarationOrigin.DEFAULT_IMPLS_BRIDGE,
+        JvmLoweredDeclarationOrigin.DEFAULT_IMPLS_BRIDGE_TO_SYNTHETIC,
+        IrDeclarationOrigin.BRIDGE,
+        IrDeclarationOrigin.BRIDGE_SPECIAL,
+        IrDeclarationOrigin.DELEGATED_MEMBER -> true
+        else -> isInvokeOfSuspendCallableReference()
+    }
 
 internal fun IrFunction.shouldNotContainSuspendMarkers(context: JvmBackendContext): Boolean =
     isInvokeSuspendOfContinuation(context) || isKnownToBeTailCall()
@@ -117,11 +125,9 @@ internal fun IrFunction.shouldNotContainSuspendMarkers(context: JvmBackendContex
 // Transform `suspend fun foo(params): RetType` into `fun foo(params, $completion: Continuation<RetType>): Any?`
 // the result is called 'view', just to be consistent with old backend.
 internal fun IrFunction.getOrCreateSuspendFunctionViewIfNeeded(context: JvmBackendContext): IrFunction {
-    if (!isSuspend || origin == SUSPEND_FUNCTION_VIEW) return this
+    if (!isSuspend || origin == JvmLoweredDeclarationOrigin.SUSPEND_FUNCTION_VIEW) return this
     return if (isSuspend) context.suspendFunctionViews.getOrElse(this) { suspendFunctionView(context) } else this
 }
-
-private object SUSPEND_FUNCTION_VIEW : IrDeclarationOriginImpl("SUSPEND_FUNCTION_VIEW")
 
 private fun IrFunction.suspendFunctionView(context: JvmBackendContext): IrFunction {
     require(this.isSuspend && this is IrSimpleFunction)
@@ -138,9 +144,10 @@ private fun IrFunction.suspendFunctionView(context: JvmBackendContext): IrFuncti
         else
             WrappedSimpleFunctionDescriptor(sourceElement = originalDescriptor.source)
     return IrFunctionImpl(
-        startOffset, endOffset, SUSPEND_FUNCTION_VIEW, IrSimpleFunctionSymbolImpl(descriptor),
+        startOffset, endOffset, JvmLoweredDeclarationOrigin.SUSPEND_FUNCTION_VIEW, IrSimpleFunctionSymbolImpl(descriptor),
         name, visibility, modality, context.irBuiltIns.anyNType,
-        isInline = isInline, isExternal = isExternal, isTailrec = isTailrec, isSuspend = isSuspend, isExpect = isExpect
+        isInline = isInline, isExternal = isExternal, isTailrec = isTailrec, isSuspend = isSuspend, isExpect = isExpect,
+        isFakeOverride = false
     ).also {
         descriptor.bind(it)
         it.parent = parent

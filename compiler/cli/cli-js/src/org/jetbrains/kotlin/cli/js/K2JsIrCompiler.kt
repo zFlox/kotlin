@@ -9,7 +9,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.cli.common.*
-import org.jetbrains.kotlin.cli.common.ExitCode.*
+import org.jetbrains.kotlin.cli.common.ExitCode.COMPILATION_ERROR
+import org.jetbrains.kotlin.cli.common.ExitCode.OK
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JsArgumentConstants
 import org.jetbrains.kotlin.cli.common.config.addKotlinSourceRoot
@@ -44,6 +45,7 @@ import org.jetbrains.kotlin.util.Logger
 import org.jetbrains.kotlin.utils.JsMetadataVersion
 import org.jetbrains.kotlin.utils.KotlinPaths
 import org.jetbrains.kotlin.utils.PathUtil
+import org.jetbrains.kotlin.utils.fileUtils.withReplacedExtensionOrNull
 import org.jetbrains.kotlin.utils.join
 import java.io.File
 import java.io.IOException
@@ -175,17 +177,12 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
             it.libraryFile.absolutePath in friendAbsolutePaths
         }
 
-        val produceKind = produceMap[arguments.irProduceOnly]
-        if (produceKind == null) {
-            messageCollector.report(ERROR, "Unknown produce kind: ${arguments.irProduceOnly}. Valid values are: js, klib")
-        }
-
-        if (produceKind == ProduceKind.KLIB || (produceKind == ProduceKind.DEFAULT && arguments.metaInfo)) {
+        if (arguments.irProduceKlibDir || arguments.irProduceKlibFile) {
             val outputKlibPath =
-                if (arguments.irLegacyGradlePluginCompatibility)
+                if (arguments.irProduceKlibDir)
                     File(outputFilePath).parent
                 else
-                    "$outputFilePath.klib"
+                    outputFilePath
 
             generateKLib(
                 project = config.project,
@@ -194,11 +191,11 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
                 allDependencies = resolvedLibraries,
                 friendDependencies = friendDependencies,
                 outputKlibPath = outputKlibPath,
-                nopack = arguments.irLegacyGradlePluginCompatibility
+                nopack = arguments.irProduceKlibDir
             )
         }
 
-        if (produceKind == ProduceKind.JS || produceKind == ProduceKind.DEFAULT) {
+        if (arguments.irProduceJs) {
             val phaseConfig = createPhaseConfig(jsPhases, arguments, messageCollector)
 
             val compiledModule = compile(
@@ -212,6 +209,10 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
             )
 
             outputFile.writeText(compiledModule.jsCode)
+            if (arguments.generateDts) {
+                val dtsFile = outputFile.withReplacedExtensionOrNull(outputFile.extension, "d.ts")!!
+                dtsFile.writeText(compiledModule.tsDefinitions ?: error("No ts definitions"))
+            }
         }
 
         return OK

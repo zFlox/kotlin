@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.backend.jvm.codegen
 
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
-import org.jetbrains.kotlin.backend.jvm.JvmLoweredDeclarationOrigin
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.codegen.ClassBuilderMode
 import org.jetbrains.kotlin.codegen.visitAnnotableParameterCount
@@ -78,7 +77,8 @@ open class FunctionCodegen(
             val continuationClassBuilder = context.continuationClassBuilders[irClass]
             methodVisitor = when {
                 irFunction.isSuspend &&
-                        // We do not generate continuation and state-machine for synthetic accessors, in a sense, they are tail-call
+                        // We do not generate continuation and state-machine for synthetic accessors, bridges, and delegated members,
+                        // in a sense, they are tail-call
                         !irFunction.isKnownToBeTailCall() &&
                         // TODO: We should generate two versions of inline suspend function: one with state-machine and one without
                         !irFunction.isInline ->

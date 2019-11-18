@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.backend.common.serialization
 
 import org.jetbrains.kotlin.backend.common.LoggingContext
-import org.jetbrains.kotlin.backend.common.descriptors.*
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.impl.EmptyPackageFragmentDescriptor
 import org.jetbrains.kotlin.ir.IrElement
@@ -17,7 +16,7 @@ import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.impl.IrClassImpl
 import org.jetbrains.kotlin.ir.declarations.impl.IrFileImpl
 import org.jetbrains.kotlin.ir.declarations.impl.IrModuleFragmentImpl
-import org.jetbrains.kotlin.ir.descriptors.IrBuiltIns
+import org.jetbrains.kotlin.ir.descriptors.*
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.impl.IrBlockBodyImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrErrorExpressionImpl
@@ -27,9 +26,7 @@ import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.symbols.impl.*
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.impl.IrErrorTypeImpl
-import org.jetbrains.kotlin.ir.util.IrDeserializer
-import org.jetbrains.kotlin.ir.util.NaiveSourceBasedFileEntryImpl
-import org.jetbrains.kotlin.ir.util.SymbolTable
+import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.protobuf.ExtensionRegistryLite.newInstance
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedCallableMemberDescriptor
@@ -51,7 +48,7 @@ abstract class KotlinIrLinker(
     val symbolTable: SymbolTable,
     private val exportedDependencies: List<ModuleDescriptor>,
     private val forwardModuleDescriptor: ModuleDescriptor?,
-    private val firstKnownBuiltinsIndex: Long
+    mangler: KotlinMangler
 ) : DescriptorUniqIdAware, IrDeserializer {
 
 
@@ -91,7 +88,7 @@ abstract class KotlinIrLinker(
         }
 
         class SimpleDeserializationState: DeserializationState<UniqId>() {
-            private val reachableTopLevels = mutableSetOf<UniqId>()
+            private val reachableTopLevels = LinkedHashSet<UniqId>()
 
             override fun addUniqID(key: UniqId) {
                 reachableTopLevels.add(key)
@@ -140,8 +137,11 @@ abstract class KotlinIrLinker(
         // This is a heavy initializer
         val module = deserializeIrModuleHeader()
 
-        inner class IrDeserializerForFile(private var annotations: List<ProtoConstructorCall>?, private var forcedDeclarations: List<UniqId>?, private val fileIndex: Int, onlyHeaders: Boolean) :
-            IrFileDeserializer(logger, builtIns, symbolTable) {
+        inner class IrDeserializerForFile(
+            private var annotations: List<ProtoConstructorCall>?,
+            private val fileIndex: Int,
+            onlyHeaders: Boolean
+        ) : IrFileDeserializer(logger, builtIns, symbolTable) {
 
             private var fileLoops = mutableMapOf<Int, IrLoopBase>()
 
@@ -385,10 +385,6 @@ abstract class KotlinIrLinker(
                     file.annotations.addAll(deserializeAnnotations(it))
                     annotations = null
                 }
-                forcedDeclarations?.let {
-                    it.forEach { fileLocalDeserializationState.addUniqID(it) }
-                    forcedDeclarations = null
-                }
             }
 
             fun deserializeAllFileReachableTopLevel() {
@@ -405,10 +401,14 @@ abstract class KotlinIrLinker(
 
             val fileEntry = NaiveSourceBasedFileEntryImpl(fileName, fileProto.fileEntry.lineStartOffsetsList.toIntArray())
 
-            val explicitlyExported = mutableListOf<UniqId>()
-
             val fileDeserializer =
-                IrDeserializerForFile(fileProto.annotationList, explicitlyExported, fileIndex, !deserializationStrategy.needBodies)
+                IrDeserializerForFile(fileProto.annotationList, fileIndex, !deserializationStrategy.needBodies).apply {
+                    // Explicitly exported declarations (e.g. top-level initializers) must be deserialized before all other declarations.
+                    // Thus we schedule their deserialization in deserializer's constructor.
+                    fileProto.explicitlyExportedToCompilerList.forEach {
+                        fileLocalDeserializationState.addUniqID(UniqId(loadSymbolData(it).topLevelUniqIdIndex))
+                    }
+                }
 
             val fqName = fileDeserializer.deserializeFqName(fileProto.fqNameList)
 
@@ -426,15 +426,12 @@ abstract class KotlinIrLinker(
                 moduleReversedFileIndex.getOrPut(it) { fileDeserializer }
             }
 
-            fileProto.explicitlyExportedToCompilerList.mapTo(explicitlyExported) {
-                UniqId(fileDeserializer.loadSymbolData(it).topLevelUniqIdIndex)
-            }
-
             if (deserializationStrategy.theWholeWorld) {
                 for (id in fileUniqIdIndex) {
                     assert(id.isPublic)
                     moduleDeserializationState.addUniqID(id)
                 }
+                moduleDeserializationState.enqueueFile(fileDeserializer)
             } else if (deserializationStrategy.explicitlyExported) {
                 moduleDeserializationState.enqueueFile(fileDeserializer)
             }
@@ -472,18 +469,18 @@ abstract class KotlinIrLinker(
 
     protected abstract val descriptorReferenceDeserializer: DescriptorReferenceDeserializer
 
-    protected val indexAfterKnownBuiltins = loadKnownBuiltinSymbols()
-
-    private fun loadKnownBuiltinSymbols(): Long {
-        var currentIndex = firstKnownBuiltinsIndex
+    private fun loadKnownBuiltinSymbols(mangler: KotlinMangler) {
         val mask = 1L shl 63
         val globalDeserializedSymbols = globalDeserializationState.deserializedSymbols
         builtIns.knownBuiltins.forEach {
-            globalDeserializedSymbols[UniqId(currentIndex or mask)] = it
-            assert(symbolTable.referenceSimpleFunction(it.descriptor) == it)
-            currentIndex++
+            val currentIndex = with(mangler) { it.mangle.hashMangle }
+            globalDeserializedSymbols[UniqId(currentIndex or mask)] = it.symbol
+            assert(symbolTable.referenceSimpleFunction(it.symbol.descriptor as SimpleFunctionDescriptor).owner === it)
         }
-        return currentIndex
+    }
+
+    init {
+        loadKnownBuiltinSymbols(mangler)
     }
 
     private val ByteArray.codedInputStream: org.jetbrains.kotlin.protobuf.CodedInputStream
@@ -506,6 +503,12 @@ abstract class KotlinIrLinker(
         error("Deserializer for declaration $key is not found")
     }
 
+    /**
+     * Check that descriptor shouldn't be processed by some backend-specific logic.
+     * For example, it is the case for Native interop libraries where there is no IR in libraries.
+     */
+    protected open fun DeclarationDescriptor.shouldBeDeserialized(): Boolean = true
+
     private fun deserializeAllReachableTopLevels() {
         do {
             val moduleDeserializer = modulesWithReachableTopLevels.first()
@@ -520,6 +523,9 @@ abstract class KotlinIrLinker(
 
         // This is Native specific. Try to eliminate.
         if (topLevelDescriptor.module.isForwardDeclarationModule) return null
+
+        //
+        if (!topLevelDescriptor.shouldBeDeserialized()) return null
 
         require(checkAccessibility(topLevelDescriptor)) {
             "Locally accessible declarations should not be accessed here $topLevelDescriptor"

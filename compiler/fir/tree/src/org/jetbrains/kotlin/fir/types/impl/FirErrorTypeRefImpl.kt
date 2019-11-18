@@ -5,7 +5,8 @@
 
 package org.jetbrains.kotlin.fir.types.impl
 
-import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.fir.FirSourceElement
+import org.jetbrains.kotlin.fir.diagnostics.FirDiagnostic
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
 import org.jetbrains.kotlin.fir.impl.FirAbstractAnnotatedElement
 import org.jetbrains.kotlin.fir.types.ConeClassErrorType
@@ -19,11 +20,11 @@ import org.jetbrains.kotlin.fir.visitors.*
  */
 
 class FirErrorTypeRefImpl(
-    override val psi: PsiElement?,
-    override val reason: String
+    override val source: FirSourceElement?,
+    override val diagnostic: FirDiagnostic
 ) : FirErrorTypeRef(), FirAbstractAnnotatedElement {
     override val annotations: MutableList<FirAnnotationCall> = mutableListOf()
-    override val type: ConeKotlinType = ConeClassErrorType(reason)
+    override val type: ConeKotlinType = ConeClassErrorType(diagnostic.reason)
 
     override fun <R, D> acceptChildren(visitor: FirVisitor<R, D>, data: D) {
         annotations.forEach { it.accept(visitor, data) }

@@ -12,14 +12,16 @@ import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirResolvable
 import org.jetbrains.kotlin.fir.expressions.FirStatement
 import org.jetbrains.kotlin.fir.resolve.BodyResolveComponents
+import org.jetbrains.kotlin.fir.resolve.ResolutionMode
 import org.jetbrains.kotlin.fir.resolve.calls.*
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.transformers.FirCallCompletionResultsWriterTransformer
+import org.jetbrains.kotlin.fir.resolve.transformers.InvocationKindTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.MapArguments
 import org.jetbrains.kotlin.fir.resolve.transformers.StoreType
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirAbstractBodyResolveTransformer
-import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirDeclarationsResolveTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirBodyResolveTransformer
+import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirDeclarationsResolveTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.resultType
 import org.jetbrains.kotlin.fir.resolve.typeFromCallee
 import org.jetbrains.kotlin.fir.resolvedTypeFromPrototype
@@ -70,8 +72,13 @@ class FirCallCompleter(
         val completionMode = candidate.computeCompletionMode(inferenceComponents, expectedTypeRef, initialType)
         val replacements = mutableMapOf<FirExpression, FirExpression>()
 
-        val analyzer = PostponedArgumentsAnalyzer(LambdaAnalyzerImpl(replacements), { it.resultType }, inferenceComponents)
+        val analyzer =
+            PostponedArgumentsAnalyzer(
+                LambdaAnalyzerImpl(replacements), { it.resultType }, inferenceComponents, candidate, replacements,
+                transformer.components.callResolver
+            )
 
+        call.transformSingle(InvocationKindTransformer, null)
         completer.complete(candidate.system.asConstraintSystemCompleterContext(), completionMode, listOf(call), initialType) {
             analyzer.analyze(candidate.system.asPostponedArgumentsAnalyzerContext(), it)
         }
@@ -102,13 +109,16 @@ class FirCallCompleter(
             stubsForPostponedVariables: Map<TypeVariableMarker, StubTypeMarker>
         ): Pair<List<FirExpression>, InferenceSession> {
 
+            val needItParam = lambdaArgument.valueParameters.isEmpty() && parameters.size == 1
+
             val itParam = when {
-                lambdaArgument.valueParameters.isEmpty() && parameters.size == 1 -> {
+                needItParam -> {
                     val name = Name.identifier("it")
+                    val itType = parameters.single()
                     FirValueParameterImpl(
                         null,
                         session,
-                        FirResolvedTypeRefImpl(null, parameters.single()),
+                        FirResolvedTypeRefImpl(null, itType),
                         name,
                         FirVariableSymbol(name),
                         defaultValue = null,
@@ -123,7 +133,7 @@ class FirCallCompleter(
             val expectedReturnTypeRef = expectedReturnType?.let { lambdaArgument.returnTypeRef.resolvedTypeFromPrototype(it) }
 
             val newLambdaExpression = lambdaArgument.copy(
-                receiverTypeRef = receiverType?.let { lambdaArgument.receiverTypeRef!!.resolvedTypeFromPrototype(it) },
+                receiverTypeRef = receiverType?.let { lambdaArgument.receiverTypeRef?.resolvedTypeFromPrototype(it) },
                 valueParameters = lambdaArgument.valueParameters.mapIndexed { index, parameter ->
                     parameter.transformReturnTypeRef(StoreType, parameter.returnTypeRef.resolvedTypeFromPrototype(parameters[index]))
                     parameter
@@ -132,7 +142,7 @@ class FirCallCompleter(
             )
 
             replacements[lambdaArgument] =
-                newLambdaExpression.transformSingle(transformer, FirDeclarationsResolveTransformer.LambdaResolution(expectedReturnTypeRef))
+                newLambdaExpression.transformSingle(transformer, ResolutionMode.LambdaResolution(expectedReturnTypeRef))
 
             return (newLambdaExpression.body?.returnExpressions() ?: emptyList()) to InferenceSession.default
         }

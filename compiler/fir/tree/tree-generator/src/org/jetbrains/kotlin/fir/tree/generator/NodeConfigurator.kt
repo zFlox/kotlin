@@ -35,7 +35,7 @@ import org.jetbrains.kotlin.serialization.deserialization.descriptors.Deserializ
 object NodeConfigurator : AbstractFieldConfigurator() {
     fun configureFields() = with(FirTreeBuilder) {
         AbstractFirTreeBuilder.baseFirElement.configure {
-            +field("psi", psiElementType, nullable = true)
+            +field("source", sourceElementType, nullable = true)
         }
 
         annotationContainer.configure {
@@ -59,6 +59,10 @@ object NodeConfigurator : AbstractFieldConfigurator() {
             +field("calleeReference", reference).withTransform()
         }
 
+        diagnosticHolder.configure {
+            +field("diagnostic", firDiagnosticType)
+        }
+
         declaration.configure {
             +field("session", firSessionType)
             +field("resolvePhase", resolvePhaseType, withReplace = true).apply { isMutable = true }
@@ -71,7 +75,7 @@ object NodeConfigurator : AbstractFieldConfigurator() {
         callableDeclaration.configure {
             withArg("F", "FirCallableDeclaration<F>")
             parentArg(symbolOwner, "E", "F")
-            +field("receiverTypeRef", typeRef, nullable = true)
+            +field("receiverTypeRef", typeRef, nullable = true).withTransform()
             +symbol("FirCallableSymbol", "F")
         }
 
@@ -95,13 +99,12 @@ object NodeConfigurator : AbstractFieldConfigurator() {
 
         errorFunction.configure {
             parentArg(function, "F", errorFunction)
-            +stringField("reason")
             +symbol("FirErrorFunctionSymbol")
         }
 
         memberDeclaration.configure {
             +typeParameters
-            +status
+            +status.withTransform()
         }
 
         expression.configure {
@@ -180,7 +183,7 @@ object NodeConfigurator : AbstractFieldConfigurator() {
         }
 
         functionCall.configure {
-            +typeArguments
+            +typeArguments.withTransform()
             +field("calleeReference", namedReference)
         }
 
@@ -199,25 +202,32 @@ object NodeConfigurator : AbstractFieldConfigurator() {
             needTransformOtherChildren()
         }
 
+        classLikeDeclaration.configure {
+            withArg("F", "FirClassLikeDeclaration<F>")
+            parentArg(symbolOwner, "F", "F")
+            +symbol("FirClassLikeSymbol", "F")
+        }
+
         klass.configure {
+            withArg("F", "FirClass<F>")
+            parentArg(classLikeDeclaration, "F", "F")
+            +symbol("FirClassSymbol", "F")
             +classKind
             +superTypeRefs(withReplace = true)
             +declarations
             +annotations
         }
 
-        classLikeDeclaration.configure {
-            withArg("F", "FirClassLikeDeclaration<F>")
-            parentArg(symbolOwner, "F", "F")
-            +field("supertypesComputationStatus", type("fir.declarations", "SupertypesComputationStatus"), withReplace = true).apply { isMutable = true }
-            +symbol("FirClassLikeSymbol", "F")
-        }
-
         regularClass.configure {
-            parentArg(classLikeDeclaration, "F", regularClass)
-            +symbol("FirClassSymbol")
+            parentArg(klass, "F", regularClass)
+            +symbol("FirRegularClassSymbol")
             +field("companionObject", regularClass, nullable = true)
             +superTypeRefs(withReplace = true)
+        }
+
+        anonymousObject.configure {
+            parentArg(klass, "F", anonymousObject)
+            +symbol("FirAnonymousObjectSymbol")
         }
 
         sealedClass.configure {
@@ -266,6 +276,10 @@ object NodeConfigurator : AbstractFieldConfigurator() {
             parentArg(memberFunction, "F", simpleFunction)
         }
 
+        contractDescriptionOwner.configure {
+            +field(contractDescription).withTransform()
+        }
+
         property.configure {
             parentArg(variable, "F", property)
             parentArg(callableMemberDeclaration, "F", property)
@@ -281,7 +295,7 @@ object NodeConfigurator : AbstractFieldConfigurator() {
             +symbol("FirPropertyAccessorSymbol")
             +booleanField("isGetter")
             +booleanField("isSetter")
-            +status
+            +status.withTransform()
             +annotations
         }
 
@@ -386,14 +400,14 @@ object NodeConfigurator : AbstractFieldConfigurator() {
             +intField("componentIndex")
         }
 
-        errorExpression.configure {
-            +stringField("reason")
-        }
-
         expressionWithSmartcast.configure {
             +field("originalExpression", qualifiedAccessExpression)
             +field("typesFromSmartcast", "Collection<ConeKotlinType>", null, customType = coneKotlinTypeType)
             +field("originalType", typeRef)
+        }
+
+        callableReferenceAccess.configure {
+            +field("calleeReference", namedReference)
         }
 
         getClassCall.configure {
@@ -424,7 +438,6 @@ object NodeConfigurator : AbstractFieldConfigurator() {
         variableAssignment.configure {
             +field("lValue", reference)
             +field("rValue", expression).withTransform()
-            +field("operation", operationType)
         }
 
         whenSubjectExpression.configure {
@@ -444,8 +457,12 @@ object NodeConfigurator : AbstractFieldConfigurator() {
             +field("candidateSymbol", abstractFirBasedSymbolType, "*", nullable = true)
         }
 
-        resolvedCallableReference.configure {
+        resolvedNamedReference.configure {
             +field("resolvedSymbol", abstractFirBasedSymbolType, "*")
+        }
+
+        resolvedCallableReference.configure {
+            +fieldList("inferredTypeArguments", coneKotlinTypeType)
         }
 
         delegateFieldReference.configure {
@@ -471,10 +488,6 @@ object NodeConfigurator : AbstractFieldConfigurator() {
 
         resolvedTypeRef.configure {
             +field("type", coneKotlinTypeType)
-        }
-
-        errorTypeRef.configure {
-            +stringField("reason")
         }
 
         delegatedTypeRef.configure {
@@ -513,8 +526,8 @@ object NodeConfigurator : AbstractFieldConfigurator() {
             +field(varianceType)
         }
 
-        errorNamedReference.configure {
-            +stringField("errorReason")
+        contractDescription.configure {
+            +fieldList("effects", effectDeclarationType)
         }
     }
 }

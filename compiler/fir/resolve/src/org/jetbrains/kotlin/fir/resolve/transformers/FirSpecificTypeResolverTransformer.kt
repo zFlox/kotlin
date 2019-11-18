@@ -18,10 +18,10 @@ import org.jetbrains.kotlin.fir.visitors.compose
 class FirSpecificTypeResolverTransformer(
     private val towerScope: FirScope,
     override val session: FirSession
-) : FirAbstractTreeTransformer(phase = FirResolvePhase.SUPER_TYPES) {
+) : FirAbstractTreeTransformer<Nothing?>(phase = FirResolvePhase.SUPER_TYPES) {
     override fun transformTypeRef(typeRef: FirTypeRef, data: Nothing?): CompositeTransformResult<FirTypeRef> {
         val typeResolver = FirTypeResolver.getInstance(session)
-        typeRef.transformChildren(FirSpecificTypeResolverTransformer(towerScope, session), null)
+        typeRef.transformChildren(this, null)
         return transformType(typeRef, typeResolver.resolveType(typeRef, towerScope))
     }
 
@@ -29,7 +29,7 @@ class FirSpecificTypeResolverTransformer(
         val typeResolver = FirTypeResolver.getInstance(session)
         functionTypeRef.transformChildren(this, data)
         return FirResolvedFunctionTypeRefImpl(
-            functionTypeRef.psi,
+            functionTypeRef.source,
             typeResolver.resolveType(functionTypeRef, towerScope),
             functionTypeRef.isMarkedNullable,
             functionTypeRef.receiverTypeRef,
@@ -42,7 +42,7 @@ class FirSpecificTypeResolverTransformer(
 
     private fun transformType(typeRef: FirTypeRef, resolvedType: ConeKotlinType): CompositeTransformResult<FirTypeRef> {
         return FirResolvedTypeRefImpl(
-            typeRef.psi,
+            typeRef.source,
             resolvedType
         ).apply {
             annotations += typeRef.annotations

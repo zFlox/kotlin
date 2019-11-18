@@ -5,13 +5,12 @@
 
 package org.jetbrains.kotlin.fir.declarations
 
-import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.FirSymbolOwner
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.FirStatement
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.fir.visitors.*
 
 /*
@@ -19,18 +18,12 @@ import org.jetbrains.kotlin.fir.visitors.*
  * DO NOT MODIFY IT MANUALLY
  */
 
-interface FirClassLikeDeclaration<F : FirClassLikeDeclaration<F>> : FirStatement, FirMemberDeclaration, FirSymbolOwner<F>, FirTypeParametersOwner {
-    override val psi: PsiElement?
-    override val annotations: List<FirAnnotationCall>
+interface FirClassLikeDeclaration<F : FirClassLikeDeclaration<F>> : FirDeclaration, FirStatement, FirSymbolOwner<F> {
+    override val source: FirSourceElement?
     override val session: FirSession
     override val resolvePhase: FirResolvePhase
-    override val name: Name
-    override val typeParameters: List<FirTypeParameter>
-    override val status: FirDeclarationStatus
-    val supertypesComputationStatus: SupertypesComputationStatus
+    override val annotations: List<FirAnnotationCall>
     override val symbol: FirClassLikeSymbol<F>
 
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitClassLikeDeclaration(this, data)
-
-    fun replaceSupertypesComputationStatus(newSupertypesComputationStatus: SupertypesComputationStatus)
 }

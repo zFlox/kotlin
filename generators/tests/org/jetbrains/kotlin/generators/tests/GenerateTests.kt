@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightFacadeClassTest
 import org.jetbrains.kotlin.checkers.*
 import org.jetbrains.kotlin.copyright.AbstractUpdateKotlinCopyrightTest
 import org.jetbrains.kotlin.findUsages.AbstractFindUsagesTest
+import org.jetbrains.kotlin.findUsages.AbstractFindUsagesWithDisableComponentSearchTest
 import org.jetbrains.kotlin.findUsages.AbstractKotlinFindUsagesWithLibraryTest
 import org.jetbrains.kotlin.formatter.AbstractFormatterTest
 import org.jetbrains.kotlin.formatter.AbstractTypingIndentationTestBase
@@ -140,6 +141,8 @@ import org.jetbrains.kotlin.jvm.abi.AbstractJvmAbiContentTest
 import org.jetbrains.kotlin.kapt.cli.test.AbstractArgumentParsingTest
 import org.jetbrains.kotlin.kapt.cli.test.AbstractKaptToolIntegrationTest
 import org.jetbrains.kotlin.kapt3.test.AbstractClassFileToSourceStubConverterTest
+import org.jetbrains.kotlin.kapt3.test.AbstractIrClassFileToSourceStubConverterTest
+import org.jetbrains.kotlin.kapt3.test.AbstractIrKotlinKaptContextTest
 import org.jetbrains.kotlin.kapt3.test.AbstractKotlinKaptContextTest
 import org.jetbrains.kotlin.nj2k.AbstractNewJavaToKotlinConverterMultiFileTest
 import org.jetbrains.kotlin.nj2k.AbstractNewJavaToKotlinConverterSingleFileTest
@@ -308,11 +311,11 @@ fun main(args: Array<String>) {
             model("navigation/gotoSymbol", testMethod = "doSymbolTest")
         }
 
-        testClass<AbstractNavigateToLibrarySourceTest> {
+        testClass<AbstractNavigateToLibrarySourceTest>(annotations = listOf(muteExtraSuffix(".libsrc"))) {
             model("decompiler/navigation/usercode")
         }
 
-        testClass<AbstractNavigateToLibrarySourceTestWithJS> {
+        testClass<AbstractNavigateToLibrarySourceTestWithJS>(annotations = listOf(muteExtraSuffix(".libsrcjs"))) {
             model("decompiler/navigation/usercode", testClassName = "UsercodeWithJSModule")
         }
 
@@ -517,6 +520,10 @@ fun main(args: Array<String>) {
             model("findUsages/kotlin", pattern = """^(.+)\.0\.(kt|kts)$""")
             model("findUsages/java", pattern = """^(.+)\.0\.java$""")
             model("findUsages/propertyFiles", pattern = """^(.+)\.0\.properties$""")
+        }
+
+        testClass<AbstractFindUsagesWithDisableComponentSearchTest> {
+            model("findUsages/kotlin/conventions/components", pattern = """^(.+)\.0\.(kt|kts)$""")
         }
 
         testClass<AbstractKotlinFindUsagesWithLibraryTest> {
@@ -1241,6 +1248,14 @@ fun main(args: Array<String>) {
 
         testClass<AbstractKotlinKaptContextTest> {
             model("kotlinRunner")
+        }
+
+        testClass<AbstractIrClassFileToSourceStubConverterTest> {
+            model("converter", targetBackend = TargetBackend.JVM_IR)
+        }
+
+        testClass<AbstractIrKotlinKaptContextTest> {
+            model("kotlinRunner", targetBackend = TargetBackend.JVM_IR)
         }
     }
 

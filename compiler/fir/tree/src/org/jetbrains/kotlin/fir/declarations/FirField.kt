@@ -5,9 +5,9 @@
 
 package org.jetbrains.kotlin.fir.declarations
 
-import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.fir.FirPureAbstractElement
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.symbols.impl.FirDelegateFieldSymbol
@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.fir.visitors.*
  */
 
 abstract class FirField : FirPureAbstractElement(), FirVariable<FirField>, FirCallableMemberDeclaration<FirField> {
-    abstract override val psi: PsiElement?
+    abstract override val source: FirSourceElement?
     abstract override val session: FirSession
     abstract override val resolvePhase: FirResolvePhase
     abstract override val returnTypeRef: FirTypeRef
@@ -46,9 +46,13 @@ abstract class FirField : FirPureAbstractElement(), FirVariable<FirField>, FirCa
 
     abstract override fun <D> transformReturnTypeRef(transformer: FirTransformer<D>, data: D): FirField
 
+    abstract override fun <D> transformReceiverTypeRef(transformer: FirTransformer<D>, data: D): FirField
+
     abstract override fun <D> transformGetter(transformer: FirTransformer<D>, data: D): FirField
 
     abstract override fun <D> transformSetter(transformer: FirTransformer<D>, data: D): FirField
+
+    abstract override fun <D> transformStatus(transformer: FirTransformer<D>, data: D): FirField
 
     abstract override fun <D> transformOtherChildren(transformer: FirTransformer<D>, data: D): FirField
 }

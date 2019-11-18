@@ -14,6 +14,8 @@ import org.jetbrains.kotlin.fir.declarations.impl.FirSimpleFunctionImpl
 import org.jetbrains.kotlin.fir.declarations.impl.FirPropertyImpl
 import org.jetbrains.kotlin.fir.deserialization.FirDeserializationContext
 import org.jetbrains.kotlin.fir.deserialization.deserializeClassToSymbol
+import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
+import org.jetbrains.kotlin.fir.diagnostics.FirSimpleDiagnostic
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.FirClassReferenceExpression
 import org.jetbrains.kotlin.fir.expressions.FirExpression
@@ -23,7 +25,7 @@ import org.jetbrains.kotlin.fir.java.JavaSymbolProvider
 import org.jetbrains.kotlin.fir.java.createConstant
 import org.jetbrains.kotlin.fir.java.topLevelName
 import org.jetbrains.kotlin.fir.references.impl.FirErrorNamedReferenceImpl
-import org.jetbrains.kotlin.fir.references.impl.FirResolvedCallableReferenceImpl
+import org.jetbrains.kotlin.fir.references.impl.FirResolvedNamedReferenceImpl
 import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.scopes.FirScope
 import org.jetbrains.kotlin.fir.scopes.impl.declaredMemberScope
@@ -57,8 +59,8 @@ class KotlinDeserializedJvmSymbolsProvider(
     private val javaSymbolProvider: JavaSymbolProvider,
     private val kotlinClassFinder: KotlinClassFinder,
     private val javaClassFinder: JavaClassFinder
-) : AbstractFirSymbolProvider() {
-    private val classesCache = HashMap<ClassId, FirClassSymbol>()
+) : AbstractFirSymbolProvider<FirClassLikeSymbol<*>>() {
+    private val classesCache = HashMap<ClassId, FirRegularClassSymbol>()
     private val typeAliasCache = HashMap<ClassId, FirTypeAliasSymbol?>()
     private val packagePartsCache = HashMap<FqName, Collection<PackagePartsCacheData>>()
 
@@ -142,7 +144,7 @@ class KotlinDeserializedJvmSymbolsProvider(
     ): FirScope? {
         val symbol = this.getClassLikeSymbolByFqName(classId) as? FirClassSymbol ?: return null
 
-        return symbol.fir.buildDefaultUseSiteMemberScope(session, scopeSession)
+        return (symbol.fir as FirClass<*>).buildDefaultUseSiteMemberScope(session, scopeSession)
     }
 
     override fun getClassLikeSymbolByFqName(classId: ClassId): FirClassLikeSymbol<*>? {
@@ -174,7 +176,7 @@ class KotlinDeserializedJvmSymbolsProvider(
             FirResolvedTypeRefImpl(
                 null, it.constructType(emptyList(), isNullable = false)
             )
-        } ?: FirErrorTypeRefImpl(null, "Symbol not found for $classId")
+        } ?: FirErrorTypeRefImpl(null, FirSimpleDiagnostic("Symbol not found for $classId", DiagnosticKind.Java))
 
     }
 
@@ -214,19 +216,19 @@ class KotlinDeserializedJvmSymbolsProvider(
 
                     this.calleeReference = when {
                         entryClassSymbol != null && (entryClassSymbol as? FirClassSymbol)?.fir is FirEnumEntry -> {
-                            FirResolvedCallableReferenceImpl(
+                            FirResolvedNamedReferenceImpl(
                                 null, name, entryClassSymbol
                             )
                         }
                         entryCallableSymbol != null -> {
-                            FirResolvedCallableReferenceImpl(
+                            FirResolvedNamedReferenceImpl(
                                 null, name, entryCallableSymbol
                             )
                         }
                         else -> {
                             FirErrorNamedReferenceImpl(
                                 null,
-                                errorReason = "Strange deserialized enum value: ${this@toEnumEntryReferenceExpression}.$name"
+                                FirSimpleDiagnostic("Strange deserialized enum value: ${this@toEnumEntryReferenceExpression}.$name", DiagnosticKind.Java)
                             )
                         }
                     }
@@ -304,7 +306,7 @@ class KotlinDeserializedJvmSymbolsProvider(
     private fun findAndDeserializeClass(
         classId: ClassId,
         parentContext: FirDeserializationContext? = null
-    ): FirClassSymbol? {
+    ): FirRegularClassSymbol? {
         if (!hasTopLevelClassOf(classId)) return null
         if (classesCache.containsKey(classId)) return classesCache[classId]
 
@@ -314,7 +316,7 @@ class KotlinDeserializedJvmSymbolsProvider(
             is KotlinClassFinder.Result.KotlinClass -> result.kotlinJvmBinaryClass
             is KotlinClassFinder.Result.ClassFileContent -> {
                 handledByJava.add(classId)
-                return javaSymbolProvider.getFirJavaClass(classId, result) as FirClassSymbol?
+                return javaSymbolProvider.getFirJavaClass(classId, result)
             }
             null -> null
         }
@@ -325,7 +327,7 @@ class KotlinDeserializedJvmSymbolsProvider(
             if (kotlinJvmBinaryClass.classHeader.kind != KotlinClassHeader.Kind.CLASS) return null
             val (nameResolver, classProto) = kotlinJvmBinaryClass.readClassDataFrom() ?: return null
 
-            val symbol = FirClassSymbol(classId)
+            val symbol = FirRegularClassSymbol(classId)
             deserializeClassToSymbol(
                 classId, classProto, symbol, nameResolver, session,
                 JvmBinaryAnnotationDeserializer(session),

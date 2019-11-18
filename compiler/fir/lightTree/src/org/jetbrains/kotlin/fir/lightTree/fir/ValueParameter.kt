@@ -8,10 +8,15 @@ package org.jetbrains.kotlin.fir.lightTree.fir
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.FirProperty
 import org.jetbrains.kotlin.fir.declarations.FirValueParameter
-import org.jetbrains.kotlin.fir.declarations.impl.*
+import org.jetbrains.kotlin.fir.declarations.impl.FirDeclarationStatusImpl
+import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyGetter
+import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertySetter
+import org.jetbrains.kotlin.fir.declarations.impl.FirPropertyImpl
+import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
+import org.jetbrains.kotlin.fir.diagnostics.FirSimpleDiagnostic
 import org.jetbrains.kotlin.fir.expressions.impl.FirQualifiedAccessExpressionImpl
 import org.jetbrains.kotlin.fir.lightTree.fir.modifier.Modifier
-import org.jetbrains.kotlin.fir.references.impl.FirPropertyFromParameterCallableReference
+import org.jetbrains.kotlin.fir.references.impl.FirPropertyFromParameterResolvedNamedReference
 import org.jetbrains.kotlin.fir.symbols.CallableId
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.types.FirImplicitTypeRef
@@ -32,7 +37,7 @@ class ValueParameter(
         val name = this.firValueParameter.name
         var type = this.firValueParameter.returnTypeRef
         if (type is FirImplicitTypeRef) {
-            type = FirErrorTypeRefImpl(null, "Incomplete code")
+            type = FirErrorTypeRefImpl(null, FirSimpleDiagnostic("Incomplete code", DiagnosticKind.Syntax))
         }
 
         val status = FirDeclarationStatusImpl(modifiers.getVisibility(), modifiers.getModality()).apply {
@@ -50,7 +55,7 @@ class ValueParameter(
             null,
             name,
             FirQualifiedAccessExpressionImpl(null).apply {
-                calleeReference = FirPropertyFromParameterCallableReference(
+                calleeReference = FirPropertyFromParameterResolvedNamedReference(
                     null, name, this@ValueParameter.firValueParameter.symbol
                 )
             },

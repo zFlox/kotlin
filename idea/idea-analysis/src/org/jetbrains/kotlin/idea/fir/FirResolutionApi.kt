@@ -6,10 +6,13 @@
 package org.jetbrains.kotlin.idea.fir
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.fir.*
+import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.references.*
+import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.resolve.FirProvider
+import org.jetbrains.kotlin.fir.resolve.ResolutionMode
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.FirDesignatedBodyResolveTransformer
 import org.jetbrains.kotlin.fir.resolve.transformers.runResolve
 import org.jetbrains.kotlin.fir.scopes.ProcessorAction
@@ -141,7 +144,7 @@ private fun FirDeclaration.runResolve(
             designation.iterator(), state.getSession(psi as KtElement),
             implicitTypeOnly = toPhase == FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE
         )
-        file.transform<FirFile, Nothing?>(transformer, null)
+        file.transform<FirFile, ResolutionMode>(transformer, ResolutionMode.ContextDependent)
     }
 }
 
@@ -176,7 +179,7 @@ fun KtElement.getOrBuildFir(
 
             override fun visitNamedReference(namedReference: FirNamedReference) {}
 
-            override fun visitResolvedCallableReference(resolvedCallableReference: FirResolvedCallableReference) {}
+            override fun visitResolvedNamedReference(resolvedNamedReference: FirResolvedNamedReference) {}
 
             override fun visitDelegateFieldReference(delegateFieldReference: FirDelegateFieldReference) {}
 

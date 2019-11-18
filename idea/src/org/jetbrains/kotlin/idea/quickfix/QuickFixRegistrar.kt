@@ -25,10 +25,7 @@ import org.jetbrains.kotlin.idea.inspections.AddModifierFixFactory
 import org.jetbrains.kotlin.idea.inspections.InfixCallFixActionFactory
 import org.jetbrains.kotlin.idea.inspections.PlatformUnresolvedProvider
 import org.jetbrains.kotlin.idea.inspections.RemoveAnnotationFix
-import org.jetbrains.kotlin.idea.intentions.AbstractAddAccessorsIntention
-import org.jetbrains.kotlin.idea.intentions.AddValVarToConstructorParameterAction
-import org.jetbrains.kotlin.idea.intentions.ConvertPropertyInitializerToGetterIntention
-import org.jetbrains.kotlin.idea.intentions.MoveMemberToCompanionObjectIntention
+import org.jetbrains.kotlin.idea.intentions.*
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable.*
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.CreateClassFromCallWithConstructorCalleeActionFactory
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.createClass.CreateClassFromConstructorCallActionFactory
@@ -154,6 +151,11 @@ class QuickFixRegistrar : QuickFixContributor {
         FORBIDDEN_BINARY_MOD.registerFactory(removeModifierFactory)
         FORBIDDEN_BINARY_MOD.registerFactory(RenameModToRemFix.Factory)
 
+        NO_EXPLICIT_VISIBILITY_IN_API_MODE.registerFactory(ChangeVisibilityFix.SetExplicitVisibilityFactory)
+        NO_EXPLICIT_VISIBILITY_IN_API_MODE_WARNING.registerFactory(ChangeVisibilityFix.SetExplicitVisibilityFactory)
+        NO_EXPLICIT_RETURN_TYPE_IN_API_MODE.registerActions(SpecifyTypeExplicitlyFix())
+        NO_EXPLICIT_RETURN_TYPE_IN_API_MODE_WARNING.registerActions(SpecifyTypeExplicitlyFix())
+
 
         UNRESOLVED_REFERENCE.registerFactory(ImportFix)
         UNRESOLVED_REFERENCE.registerFactory(ImportConstructorReferenceFix)
@@ -165,10 +167,13 @@ class QuickFixRegistrar : QuickFixContributor {
         CONSTANT_EXPECTED_TYPE_MISMATCH.registerFactory(ImportForMismatchingArgumentsFix)
         NAMED_PARAMETER_NOT_FOUND.registerFactory(ImportForMismatchingArgumentsFix)
         NONE_APPLICABLE.registerFactory(ImportForMismatchingArgumentsFix)
+        WRONG_NUMBER_OF_TYPE_ARGUMENTS.registerFactory(ImportForMismatchingArgumentsFix)
 
         UNRESOLVED_REFERENCE_WRONG_RECEIVER.registerFactory(ImportFix)
 
         FUNCTION_EXPECTED.registerFactory(InvokeImportFix)
+
+        ITERATOR_MISSING.registerFactory(IteratorImportFix)
 
         DELEGATE_SPECIAL_FUNCTION_MISSING.registerFactory(DelegateAccessorsImportFix)
         COMPONENT_FUNCTION_MISSING.registerFactory(ComponentsImportFix, AddDataModifierFix)

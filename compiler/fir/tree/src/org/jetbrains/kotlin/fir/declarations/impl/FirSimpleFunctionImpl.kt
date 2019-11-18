@@ -5,8 +5,10 @@
 
 package org.jetbrains.kotlin.fir.declarations.impl
 
-import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.FirSourceElement
+import org.jetbrains.kotlin.fir.contracts.FirContractDescription
+import org.jetbrains.kotlin.fir.contracts.impl.FirEmptyContractDescription
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationStatus
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
@@ -29,7 +31,7 @@ import org.jetbrains.kotlin.fir.visitors.*
  */
 
 open class FirSimpleFunctionImpl(
-    override val psi: PsiElement?,
+    override val source: FirSourceElement?,
     override val session: FirSession,
     override var returnTypeRef: FirTypeRef,
     override var receiverTypeRef: FirTypeRef?,
@@ -44,6 +46,7 @@ open class FirSimpleFunctionImpl(
     override var body: FirBlock? = null
     override var containerSource: DeserializedContainerSource? = null
     override val annotations: MutableList<FirAnnotationCall> = mutableListOf()
+    override var contractDescription: FirContractDescription = FirEmptyContractDescription
 
     init {
         symbol.bind(this)
@@ -58,22 +61,29 @@ open class FirSimpleFunctionImpl(
         body?.accept(visitor, data)
         status.accept(visitor, data)
         annotations.forEach { it.accept(visitor, data) }
+        contractDescription.accept(visitor, data)
     }
 
     override fun <D> transformChildren(transformer: FirTransformer<D>, data: D): FirSimpleFunctionImpl {
         transformReturnTypeRef(transformer, data)
-        receiverTypeRef = receiverTypeRef?.transformSingle(transformer, data)
+        transformReceiverTypeRef(transformer, data)
         transformControlFlowGraphReference(transformer, data)
         typeParameters.transformInplace(transformer, data)
         transformValueParameters(transformer, data)
         body = body?.transformSingle(transformer, data)
-        status = status.transformSingle(transformer, data)
+        transformStatus(transformer, data)
         annotations.transformInplace(transformer, data)
+        transformContractDescription(transformer, data)
         return this
     }
 
     override fun <D> transformReturnTypeRef(transformer: FirTransformer<D>, data: D): FirSimpleFunctionImpl {
         returnTypeRef = returnTypeRef.transformSingle(transformer, data)
+        return this
+    }
+
+    override fun <D> transformReceiverTypeRef(transformer: FirTransformer<D>, data: D): FirSimpleFunctionImpl {
+        receiverTypeRef = receiverTypeRef?.transformSingle(transformer, data)
         return this
     }
 
@@ -84,6 +94,16 @@ open class FirSimpleFunctionImpl(
 
     override fun <D> transformValueParameters(transformer: FirTransformer<D>, data: D): FirSimpleFunctionImpl {
         valueParameters.transformInplace(transformer, data)
+        return this
+    }
+
+    override fun <D> transformStatus(transformer: FirTransformer<D>, data: D): FirSimpleFunctionImpl {
+        status = status.transformSingle(transformer, data)
+        return this
+    }
+
+    override fun <D> transformContractDescription(transformer: FirTransformer<D>, data: D): FirSimpleFunctionImpl {
+        contractDescription = contractDescription.transformSingle(transformer, data)
         return this
     }
 

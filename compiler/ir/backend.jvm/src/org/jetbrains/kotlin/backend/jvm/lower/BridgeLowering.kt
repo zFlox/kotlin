@@ -10,9 +10,6 @@ import org.jetbrains.kotlin.backend.common.bridges.FunctionHandle
 import org.jetbrains.kotlin.backend.common.bridges.findAllReachableDeclarations
 import org.jetbrains.kotlin.backend.common.bridges.findConcreteSuperDeclaration
 import org.jetbrains.kotlin.backend.common.bridges.generateBridges
-import org.jetbrains.kotlin.backend.common.descriptors.WrappedReceiverParameterDescriptor
-import org.jetbrains.kotlin.backend.common.descriptors.WrappedSimpleFunctionDescriptor
-import org.jetbrains.kotlin.backend.common.descriptors.WrappedValueParameterDescriptor
 import org.jetbrains.kotlin.backend.common.ir.*
 import org.jetbrains.kotlin.backend.common.lower.SpecialBridgeMethods
 import org.jetbrains.kotlin.backend.common.lower.allOverridden
@@ -31,6 +28,9 @@ import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrFunctionImpl
 import org.jetbrains.kotlin.ir.declarations.impl.IrValueParameterImpl
+import org.jetbrains.kotlin.ir.descriptors.WrappedReceiverParameterDescriptor
+import org.jetbrains.kotlin.ir.descriptors.WrappedSimpleFunctionDescriptor
+import org.jetbrains.kotlin.ir.descriptors.WrappedValueParameterDescriptor
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
@@ -205,7 +205,8 @@ private class BridgeLowering(val context: JvmBackendContext) : ClassLoweringPass
                 IrSimpleFunctionSymbolImpl(newDescriptor),
                 newName,
                 visibility, modality, returnType,
-                isInline = isInline, isExternal = isExternal, isTailrec = isTailrec, isSuspend = isSuspend, isExpect = isExpect
+                isInline = isInline, isExternal = isExternal, isTailrec = isTailrec, isSuspend = isSuspend, isExpect = isExpect,
+                isFakeOverride = origin == IrDeclarationOrigin.FAKE_OVERRIDE
             ).apply {
                 newDescriptor.bind(this)
                 parent = this@copyRenamingTo.parent
@@ -239,7 +240,8 @@ private class BridgeLowering(val context: JvmBackendContext) : ClassLoweringPass
             isExternal = false,
             isTailrec = false,
             isSuspend = signatureFunction.isSuspend,
-            isExpect = false
+            isExpect = false,
+            isFakeOverride = origin == IrDeclarationOrigin.FAKE_OVERRIDE
         ).apply {
             descriptor.bind(this)
             parent = irClass
@@ -282,8 +284,7 @@ private class BridgeLowering(val context: JvmBackendContext) : ClassLoweringPass
                         IrCallImpl(
                             UNDEFINED_OFFSET, UNDEFINED_OFFSET,
                             maybeOrphanedTarget.returnType,
-                            maybeOrphanedTarget.symbol, maybeOrphanedTarget.descriptor,
-                            origin = IrStatementOrigin.BRIDGE_DELEGATION,
+                            maybeOrphanedTarget.symbol, origin = IrStatementOrigin.BRIDGE_DELEGATION,
                             superQualifierSymbol = if (invokeStatically) maybeOrphanedTarget.parentAsClass.symbol else null
                         ).apply {
                             passTypeArgumentsFrom(this@createBridgeBody)
@@ -314,7 +315,8 @@ private class BridgeLowering(val context: JvmBackendContext) : ClassLoweringPass
                     IrSimpleFunctionSymbolImpl(wrappedDescriptor),
                     Name.identifier(getJvmName()),
                     visibility, modality, returnType,
-                    isInline = isInline, isExternal = isExternal, isTailrec = isTailrec, isSuspend = isSuspend, isExpect = isExpect
+                    isInline = isInline, isExternal = isExternal, isTailrec = isTailrec, isSuspend = isSuspend, isExpect = isExpect,
+                    isFakeOverride = newOrigin == IrDeclarationOrigin.FAKE_OVERRIDE
                 ).apply {
                     wrappedDescriptor.bind(this)
                     parent = this@orphanedCopy.parent

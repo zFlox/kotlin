@@ -308,7 +308,7 @@
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.IdeScriptDependenciesProvider"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager"
-                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManagerImpl"/>
+                    serviceImplementation="org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptConfigurationManager"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.scripting.resolve.ScriptReportSink"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.IdeScriptReportSink"/>
@@ -1455,11 +1455,6 @@
     </intentionAction>
 
     <intentionAction>
-      <className>org.jetbrains.kotlin.idea.intentions.ConvertTwoComparisonsToRangeCheckIntention</className>
-      <category>Kotlin</category>
-    </intentionAction>
-
-    <intentionAction>
       <className>org.jetbrains.kotlin.idea.intentions.ConvertRangeCheckToTwoComparisonsIntention</className>
       <category>Kotlin</category>
     </intentionAction>
@@ -2370,8 +2365,8 @@
                      language="kotlin"
     />
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.intentions.ConvertTwoComparisonsToRangeCheckInspection"
-                     displayName="Convert two comparisons to 'in'"
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.ConvertTwoComparisonsToRangeCheckInspection"
+                     displayName="Two comparisons should be converted to a range check"
                      groupPath="Kotlin"
                      groupName="Style issues"
                      enabledByDefault="true"

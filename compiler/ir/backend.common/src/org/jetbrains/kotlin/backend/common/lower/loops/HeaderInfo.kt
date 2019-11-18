@@ -31,22 +31,22 @@ internal enum class ProgressionType(val elementCastFunctionName: Name, val stepC
 
     /** Returns the [IrType] of the `first`/`last` properties and elements in the progression. */
     fun elementType(builtIns: IrBuiltIns): IrType = when (this) {
-        ProgressionType.INT_PROGRESSION -> builtIns.intType
-        ProgressionType.LONG_PROGRESSION -> builtIns.longType
-        ProgressionType.CHAR_PROGRESSION -> builtIns.charType
+        INT_PROGRESSION -> builtIns.intType
+        LONG_PROGRESSION -> builtIns.longType
+        CHAR_PROGRESSION -> builtIns.charType
     }
 
     /** Returns the [IrType] of the `step` property in the progression. */
     fun stepType(builtIns: IrBuiltIns): IrType = when (this) {
-        ProgressionType.INT_PROGRESSION, ProgressionType.CHAR_PROGRESSION -> builtIns.intType
-        ProgressionType.LONG_PROGRESSION -> builtIns.longType
+        INT_PROGRESSION, CHAR_PROGRESSION -> builtIns.intType
+        LONG_PROGRESSION -> builtIns.longType
     }
 
     companion object {
         fun fromIrType(irType: IrType, symbols: Symbols<CommonBackendContext>): ProgressionType? = when {
-            irType.isSubtypeOfClass(symbols.charProgression) -> ProgressionType.CHAR_PROGRESSION
-            irType.isSubtypeOfClass(symbols.intProgression) -> ProgressionType.INT_PROGRESSION
-            irType.isSubtypeOfClass(symbols.longProgression) -> ProgressionType.LONG_PROGRESSION
+            irType.isSubtypeOfClass(symbols.charProgression) -> CHAR_PROGRESSION
+            irType.isSubtypeOfClass(symbols.intProgression) -> INT_PROGRESSION
+            irType.isSubtypeOfClass(symbols.longProgression) -> LONG_PROGRESSION
             else -> null
         }
     }
@@ -107,26 +107,49 @@ internal class ProgressionHeaderInfo(
     val canOverflow: Boolean by lazy {
         if (canOverflow != null) return@lazy canOverflow
 
-        // Induction variable can overflow if it is not a const, or is MAX/MIN_VALUE (depending on direction).
+        // We can't determine the safe limit at compile-time if "step" is not const.
+        val stepValueAsLong = step.constLongValue ?: return@lazy true
+
+        // Induction variable can NOT overflow if "last" is const and is <= (MAX/MIN_VALUE - step) (depending on direction).
+        //
+        // Examples that can NOT overflow:
+        //   - `0..10` cannot overflow (10 <= MAX_VALUE - 1)
+        //   - `0..MAX_VALUE - 1` cannot overflow (MAX_VALUE - 1 <= MAX_VALUE - 1)
+        //   - `0..MAX_VALUE - 3 step 3` cannot overflow (MAX_VALUE - 3 <= MAX_VALUE - 3)
+        //   - `0 downTo -10` cannot overflow (-10 >= MIN_VALUE - (-1))
+        //   - `0 downTo MIN_VALUE + 1` (step is -1) cannot overflow (MIN_VALUE + 1 >= MIN_VALUE - (-1))
+        //   - `0 downTo MIN_VALUE + 3 step 3` (step is -3) cannot overflow (MIN_VALUE + 3 >= MIN_VALUE - (-3))
+        //
+        // Examples that CAN overflow:
+        //   - `0..MAX_VALUE` CAN overflow (MAX_VALUE > MAX_VALUE - 1)
+        //   - `0..MAX_VALUE - 2 step 3` cannot overflow (MAX_VALUE - 2 > MAX_VALUE - 3)
+        //   - `0 downTo MIN_VALUE` (step is -1) CAN overflow (MIN_VALUE < MIN_VALUE - (-1))
+        //   - `0 downTo MIN_VALUE + 2 step 3` (step is -3) cannot overflow (MIN_VALUE + 2 < MIN_VALUE - (-3))
+        //   - `0..10 step someStep()` CAN overflow (we don't know the step and hence can't determine the safe limit)
+        //   - `0..someLast()` CAN overflow (we don't know the direction)
+        //   - `someProgression()` CAN overflow (we don't know the direction)
         val lastValueAsLong = last.constLongValue ?: return@lazy true  // If "last" is not a const Number or Char.
-        val constLimitAsLong = when (direction) {
+        when (direction) {
             ProgressionDirection.UNKNOWN ->
                 // If we don't know the direction, we can't be sure which limit to use.
-                return@lazy true
-            ProgressionDirection.DECREASING ->
-                when (progressionType) {
+                true
+            ProgressionDirection.DECREASING -> {
+                val constLimitAsLong = when (progressionType) {
                     ProgressionType.INT_PROGRESSION -> Int.MIN_VALUE.toLong()
                     ProgressionType.CHAR_PROGRESSION -> Char.MIN_VALUE.toLong()
                     ProgressionType.LONG_PROGRESSION -> Long.MIN_VALUE
                 }
-            ProgressionDirection.INCREASING ->
-                when (progressionType) {
+                lastValueAsLong < (constLimitAsLong - stepValueAsLong)
+            }
+            ProgressionDirection.INCREASING -> {
+                val constLimitAsLong = when (progressionType) {
                     ProgressionType.INT_PROGRESSION -> Int.MAX_VALUE.toLong()
                     ProgressionType.CHAR_PROGRESSION -> Char.MAX_VALUE.toLong()
                     ProgressionType.LONG_PROGRESSION -> Long.MAX_VALUE
                 }
+                lastValueAsLong > (constLimitAsLong - stepValueAsLong)
+            }
         }
-        constLimitAsLong == lastValueAsLong
     }
 
     override fun asReversed() = ProgressionHeaderInfo(
@@ -180,17 +203,25 @@ internal class IndexedGetHeaderInfo(
 
 /** Matches an iterable expression and builds a [HeaderInfo] from the expression. */
 internal interface HeaderInfoHandler<E : IrExpression, D> {
-    /** Returns true if the handler can build a [HeaderInfo] from the expression. */
-    fun match(expression: E): Boolean
+    /** Returns true if the handler can build a [HeaderInfo] from the iterable expression. */
+    fun matchIterable(expression: E): Boolean
+
+    /**
+     * Matches the `iterator()` call that produced the iterable; if the call matches (or the matcher is null),
+     * the handler can build a [HeaderInfo] from the iterable.
+     */
+    val iteratorCallMatcher: IrCallMatcher?
+        get() = null
 
     /** Builds a [HeaderInfo] from the expression. */
     fun build(expression: E, data: D, scopeOwner: IrSymbol): HeaderInfo?
 
-    fun handle(expression: E, data: D, scopeOwner: IrSymbol) = if (match(expression)) {
-        build(expression, data, scopeOwner)
-    } else {
-        null
-    }
+    fun handle(expression: E, iteratorCall: IrCall?, data: D, scopeOwner: IrSymbol) =
+        if ((iteratorCall == null || iteratorCallMatcher == null || iteratorCallMatcher!!(iteratorCall)) && matchIterable(expression)) {
+            build(expression, data, scopeOwner)
+        } else {
+            null
+        }
 }
 
 internal interface ExpressionHandler : HeaderInfoHandler<IrExpression, Nothing?> {
@@ -202,13 +233,13 @@ internal interface ExpressionHandler : HeaderInfoHandler<IrExpression, Nothing?>
 internal interface HeaderInfoFromCallHandler<D> : HeaderInfoHandler<IrCall, D> {
     val matcher: IrCallMatcher
 
-    override fun match(expression: IrCall) = matcher(expression)
+    override fun matchIterable(expression: IrCall) = matcher(expression)
 }
 
 internal typealias ProgressionHandler = HeaderInfoFromCallHandler<ProgressionType>
 
 internal class HeaderInfoBuilder(context: CommonBackendContext, private val scopeOwnerSymbol: () -> IrSymbol) :
-    IrElementVisitor<HeaderInfo?, Nothing?> {
+    IrElementVisitor<HeaderInfo?, IrCall?> {
 
     private val symbols = context.ir.symbols
 
@@ -226,7 +257,8 @@ internal class HeaderInfoBuilder(context: CommonBackendContext, private val scop
         CharSequenceIndicesHandler(context),
         UntilHandler(context, progressionElementTypes),
         DownToHandler(context, progressionElementTypes),
-        RangeToHandler(context, progressionElementTypes)
+        RangeToHandler(context, progressionElementTypes),
+        StepHandler(context, this)
     )
 
     private val reversedHandler = ReversedHandler(context, this)
@@ -240,26 +272,26 @@ internal class HeaderInfoBuilder(context: CommonBackendContext, private val scop
         CharSequenceIterationHandler(context)
     )
 
-    override fun visitElement(element: IrElement, data: Nothing?): HeaderInfo? = null
+    override fun visitElement(element: IrElement, data: IrCall?): HeaderInfo? = null
 
     /** Builds a [HeaderInfo] for iterable expressions that are calls (e.g., `.reversed()`, `.indices`. */
-    override fun visitCall(expression: IrCall, data: Nothing?): HeaderInfo? {
+    override fun visitCall(iterable: IrCall, iteratorCall: IrCall?): HeaderInfo? {
         // Return the HeaderInfo from the first successful match. First, try to match a `reversed()` call.
-        val reversedHeaderInfo = reversedHandler.handle(expression, null, scopeOwnerSymbol())
+        val reversedHeaderInfo = reversedHandler.handle(iterable, iteratorCall, null, scopeOwnerSymbol())
         if (reversedHeaderInfo != null)
             return reversedHeaderInfo
 
         // Try to match a call to build a progression (e.g., `.indices`, `downTo`).
-        val progressionType = ProgressionType.fromIrType(expression.type, symbols)
+        val progressionType = ProgressionType.fromIrType(iterable.type, symbols)
         val progressionHeaderInfo =
-            progressionType?.run { progressionHandlers.firstNotNullResult { it.handle(expression, this, scopeOwnerSymbol()) } }
+            progressionType?.run { progressionHandlers.firstNotNullResult { it.handle(iterable, iteratorCall, this, scopeOwnerSymbol()) } }
 
-        return progressionHeaderInfo ?: super.visitCall(expression, data)
+        return progressionHeaderInfo ?: super.visitCall(iterable, iteratorCall)
     }
 
     /** Builds a [HeaderInfo] for iterable expressions not handled in [visitCall]. */
-    override fun visitExpression(expression: IrExpression, data: Nothing?): HeaderInfo? {
-        return expressionHandlers.firstNotNullResult { it.handle(expression, null, scopeOwnerSymbol()) }
-            ?: super.visitExpression(expression, data)
+    override fun visitExpression(iterable: IrExpression, iteratorCall: IrCall?): HeaderInfo? {
+        return expressionHandlers.firstNotNullResult { it.handle(iterable, iteratorCall, null, scopeOwnerSymbol()) }
+            ?: super.visitExpression(iterable, iteratorCall)
     }
 }

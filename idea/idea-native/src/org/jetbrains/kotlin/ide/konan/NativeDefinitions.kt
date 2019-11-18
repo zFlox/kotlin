@@ -125,6 +125,8 @@ object NativeDefinitionsSyntaxHighlighter : SyntaxHighlighterBase() {
             NativeDefinitionsTypes.STRICT_ENUMS -> KNOWN_PROPERTIES_KEYS
             // known extensions
             NativeDefinitionsTypes.ANDROID -> KNOWN_EXTENSIONS_KEYS
+            NativeDefinitionsTypes.ANDROID_X64 -> KNOWN_EXTENSIONS_KEYS
+            NativeDefinitionsTypes.ANDROID_X86 -> KNOWN_EXTENSIONS_KEYS
             NativeDefinitionsTypes.ANDROID_ARM32 -> KNOWN_EXTENSIONS_KEYS
             NativeDefinitionsTypes.ANDROID_ARM64 -> KNOWN_EXTENSIONS_KEYS
             NativeDefinitionsTypes.ARM32 -> KNOWN_EXTENSIONS_KEYS
@@ -144,8 +146,16 @@ object NativeDefinitionsSyntaxHighlighter : SyntaxHighlighterBase() {
             NativeDefinitionsTypes.MIPS32 -> KNOWN_EXTENSIONS_KEYS
             NativeDefinitionsTypes.MIPSEL32 -> KNOWN_EXTENSIONS_KEYS
             NativeDefinitionsTypes.OSX -> KNOWN_EXTENSIONS_KEYS
+            NativeDefinitionsTypes.TVOS -> KNOWN_EXTENSIONS_KEYS
+            NativeDefinitionsTypes.TVOS_ARM64 -> KNOWN_EXTENSIONS_KEYS
+            NativeDefinitionsTypes.TVOS_X64 -> KNOWN_EXTENSIONS_KEYS
             NativeDefinitionsTypes.WASM -> KNOWN_EXTENSIONS_KEYS
             NativeDefinitionsTypes.WASM32 -> KNOWN_EXTENSIONS_KEYS
+            NativeDefinitionsTypes.WATCHOS -> KNOWN_EXTENSIONS_KEYS
+            NativeDefinitionsTypes.WATCHOS_ARM32 -> KNOWN_EXTENSIONS_KEYS
+            NativeDefinitionsTypes.WATCHOS_ARM64 -> KNOWN_EXTENSIONS_KEYS
+            NativeDefinitionsTypes.WATCHOS_X64 -> KNOWN_EXTENSIONS_KEYS
+            NativeDefinitionsTypes.WATCHOS_X86 -> KNOWN_EXTENSIONS_KEYS
             NativeDefinitionsTypes.X64 -> KNOWN_EXTENSIONS_KEYS
             else -> EMPTY_KEYS
         }

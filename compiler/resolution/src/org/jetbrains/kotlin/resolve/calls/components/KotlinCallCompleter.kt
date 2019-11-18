@@ -145,7 +145,7 @@ class KotlinCallCompleter(
 
     private fun KotlinResolutionCandidate.substitutedReturnType(): UnwrappedType? {
         val returnType = resolvedCall.candidateDescriptor.returnType?.unwrap() ?: return null
-        return resolvedCall.substitutor.safeSubstitute(returnType)
+        return resolvedCall.freshVariablesSubstitutor.safeSubstitute(returnType)
     }
 
     private fun KotlinResolutionCandidate.addExpectedTypeConstraint(

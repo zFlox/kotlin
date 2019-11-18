@@ -14,6 +14,7 @@ import com.intellij.psi.SingleRootFileViewProvider
 import com.intellij.psi.impl.PsiFileFactoryImpl
 import com.intellij.psi.stubs.PsiFileStub
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.util.PathUtil
 import org.jetbrains.kotlin.ide.konan.decompiler.KotlinNativeLoadingMetadataCache
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -41,19 +42,19 @@ fun createLoggingErrorReporter(log: Logger) = LoggingErrorReporter(log)
 internal object CachingIdeKonanLibraryMetadataLoader : PackageAccessHandler {
     override fun loadModuleHeader(library: KotlinLibrary): KlibMetadataProtoBuf.Header {
         val virtualFile = getVirtualFile(library, library.moduleHeaderFile)
-        return cache.getCachedModuleHeader(virtualFile)
+        return cache.getCachedModuleHeader(virtualFile)!!
     }
 
     override fun loadPackageFragment(library: KotlinLibrary, packageFqName: String, partName: String): ProtoBuf.PackageFragment {
         val virtualFile = getVirtualFile(library, library.packageFragmentFile(packageFqName, partName))
-        return cache.getCachedPackageFragment(virtualFile)
+        return cache.getCachedPackageFragment(virtualFile)!!
     }
 
     private fun getVirtualFile(library: KotlinLibrary, file: KFile): VirtualFile =
         if (library.isZipped) asJarFileSystemFile(library.libraryFile, file) else asLocalFile(file)
 
     private fun asJarFileSystemFile(jarFile: KFile, localFile: KFile): VirtualFile {
-        val fullPath = jarFile.absolutePath + "!" + localFile.absolutePath
+        val fullPath = jarFile.absolutePath + "!" + PathUtil.toSystemIndependentName(localFile.path)
         return StandardFileSystems.jar().findFileByPath(fullPath) ?: error("File not found: $fullPath")
     }
 

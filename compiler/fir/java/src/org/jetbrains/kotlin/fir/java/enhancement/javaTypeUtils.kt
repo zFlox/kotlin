@@ -10,7 +10,10 @@ import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.expressions.*
+import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
+import org.jetbrains.kotlin.fir.expressions.FirConstExpression
+import org.jetbrains.kotlin.fir.expressions.FirExpression
+import org.jetbrains.kotlin.fir.expressions.classId
 import org.jetbrains.kotlin.fir.expressions.impl.FirConstExpressionImpl
 import org.jetbrains.kotlin.fir.expressions.impl.FirQualifiedAccessExpressionImpl
 import org.jetbrains.kotlin.fir.java.JavaTypeParameterStack
@@ -19,12 +22,15 @@ import org.jetbrains.kotlin.fir.java.declarations.FirJavaField
 import org.jetbrains.kotlin.fir.java.toConeProjection
 import org.jetbrains.kotlin.fir.java.toNotNullConeKotlinType
 import org.jetbrains.kotlin.fir.java.types.FirJavaTypeRef
-import org.jetbrains.kotlin.fir.references.impl.FirResolvedCallableReferenceImpl
+import org.jetbrains.kotlin.fir.references.impl.FirResolvedNamedReferenceImpl
 import org.jetbrains.kotlin.fir.references.impl.FirSimpleNamedReference
 import org.jetbrains.kotlin.fir.resolve.constructType
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.resolve.toTypeProjection
-import org.jetbrains.kotlin.fir.symbols.*
+import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
+import org.jetbrains.kotlin.fir.symbols.ConeClassifierLookupTag
+import org.jetbrains.kotlin.fir.symbols.ConeTypeParameterLookupTag
+import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.ConeClassLikeLookupTagImpl
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.typeContext
@@ -85,7 +91,7 @@ private fun JavaType?.enhancePossiblyFlexible(
             )
 
             FirResolvedTypeRefImpl(
-                psi = null,
+                source = null,
                 type = coneFlexibleOrSimpleType(session, lowerResult, upperResult)
             ).apply {
                 this.annotations += annotations
@@ -93,7 +99,7 @@ private fun JavaType?.enhancePossiblyFlexible(
         }
         else -> {
             val enhanced = type.toNotNullConeKotlinType(session, javaTypeParameterStack)
-            FirResolvedTypeRefImpl(psi = null, type = enhanced).apply {
+            FirResolvedTypeRefImpl(source = null, type = enhanced).apply {
                 this.annotations += annotations
             }
         }
@@ -111,6 +117,16 @@ private fun coneFlexibleOrSimpleType(
     upperBound: ConeLookupTagBasedType
 ): ConeKotlinType {
     if (AbstractStrictEqualityTypeChecker.strictEqualTypes(session.typeContext, lowerBound, upperBound)) {
+        val lookupTag = lowerBound.lookupTag
+        if (lookupTag is ConeTypeParameterLookupTag && !lowerBound.isMarkedNullable) {
+            if (lookupTag.typeParameterSymbol.fir.bounds.any {
+                    val type = (it as FirResolvedTypeRef).type
+                    type is ConeTypeParameterType || type.isNullable
+                }
+            ) {
+                return ConeDefinitelyNotNullType.create(lowerBound)
+            }
+        }
         return lowerBound
     }
     return ConeFlexibleType(lowerBound, upperBound)
@@ -174,7 +190,8 @@ private fun JavaClassifierType.enhanceInflexibleType(
         } else {
             val argEnhancedTypeRef = arg.enhancePossiblyFlexible(session, javaTypeParameterStack, annotations, qualifiers, globalArgIndex)
             globalArgIndex += arg.subtreeSize()
-            argEnhancedTypeRef.type.type.toTypeProjection(Variance.INVARIANT)
+            // For arg == null (raw type) we take <out Any> to match everything
+            argEnhancedTypeRef.type.type.toTypeProjection(if (arg == null) Variance.OUT_VARIANCE else Variance.INVARIANT)
         }
     }
 
@@ -261,7 +278,7 @@ internal fun ConeKotlinType.lexicalCastFrom(session: FirSession, value: String):
             }
             if (firStaticProperty != null) {
                 FirQualifiedAccessExpressionImpl(null).apply {
-                    calleeReference = FirResolvedCallableReferenceImpl(
+                    calleeReference = FirResolvedNamedReferenceImpl(
                         null, name, firStaticProperty.symbol as FirCallableSymbol<*>
                     )
                 }

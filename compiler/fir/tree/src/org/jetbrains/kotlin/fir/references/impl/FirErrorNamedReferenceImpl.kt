@@ -5,7 +5,8 @@
 
 package org.jetbrains.kotlin.fir.references.impl
 
-import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.fir.FirSourceElement
+import org.jetbrains.kotlin.fir.diagnostics.FirDiagnostic
 import org.jetbrains.kotlin.fir.references.FirErrorNamedReference
 import org.jetbrains.kotlin.fir.symbols.AbstractFirBasedSymbol
 import org.jetbrains.kotlin.name.Name
@@ -17,10 +18,10 @@ import org.jetbrains.kotlin.fir.visitors.*
  */
 
 class FirErrorNamedReferenceImpl(
-    override val psi: PsiElement?,
-    override val errorReason: String
+    override val source: FirSourceElement?,
+    override val diagnostic: FirDiagnostic
 ) : FirErrorNamedReference() {
-    override val name: Name = Name.special("<$errorReason>")
+    override val name: Name = Name.special("<${diagnostic.reason}>")
     override val candidateSymbol: AbstractFirBasedSymbol<*>? get() = null
 
     override fun <R, D> acceptChildren(visitor: FirVisitor<R, D>, data: D) {}

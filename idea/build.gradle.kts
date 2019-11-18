@@ -103,12 +103,17 @@ dependencies {
         testRuntime(intellijPluginDep("java"))
     }
 
+    Platform[193].orHigher {
+        implementation(commonDep("org.jetbrains.intellij.deps.completion", "completion-ranking-kotlin"))
+    }
+
     compileOnly(commonDep("org.jetbrains", "markdown"))
     compileOnly(commonDep("com.google.code.findbugs", "jsr305"))
     compileOnly(intellijPluginDep("IntelliLang"))
     compileOnly(intellijPluginDep("copyright"))
     compileOnly(intellijPluginDep("properties"))
     compileOnly(intellijPluginDep("java-i18n"))
+    compileOnly(intellijPluginDep("gradle"))
 
     testCompileOnly(project(":kotlin-reflect-api")) // TODO: fix import (workaround for jps build)
     testCompile(project(":kotlin-test:kotlin-test-junit"))
@@ -157,6 +162,8 @@ dependencies {
     testCompile(intellijPluginDep("copyright"))
     testCompile(intellijPluginDep("properties"))
     testCompile(intellijPluginDep("java-i18n"))
+    testCompile(intellijPluginDep("junit"))
+
     testCompileOnly(intellijDep())
     testCompileOnly(commonDep("com.google.code.findbugs", "jsr305"))
     testCompileOnly(intellijPluginDep("gradle"))

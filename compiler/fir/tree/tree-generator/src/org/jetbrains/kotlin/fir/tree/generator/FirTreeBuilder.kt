@@ -39,26 +39,30 @@ object FirTreeBuilder : AbstractFirTreeBuilder() {
     val variable = element("Variable", Declaration, callableDeclaration, namedDeclaration, statement)
     val valueParameter = element("ValueParameter", Declaration, variable)
     val property = element("Property", Declaration, variable, controlFlowGraphOwner, typeParametersOwner, callableMemberDeclaration)
-    val field = element("Field", Declaration, variable, callableMemberDeclaration) // TODO: add noImpl
-    val klass = element("Class", Declaration, declaration, statement, annotationContainer)
-    val classLikeDeclaration = element("ClassLikeDeclaration", Declaration, statement, memberDeclaration, symbolOwner, typeParametersOwner)
-    val regularClass = element("RegularClass", Declaration, namedDeclaration, classLikeDeclaration, klass)
+    val field = element("Field", Declaration, variable, callableMemberDeclaration)
+    val classLikeDeclaration = element("ClassLikeDeclaration", Declaration, declaration, statement, symbolOwner)
+    val klass = element("Class", Declaration, classLikeDeclaration, statement, annotationContainer)
+    val regularClass = element("RegularClass", Declaration, memberDeclaration, typeParametersOwner, klass)
     val sealedClass = element("SealedClass", Declaration, regularClass)
-    val typeAlias = element("TypeAlias", Declaration, classLikeDeclaration)
+    val typeAlias = element("TypeAlias", Declaration, classLikeDeclaration, memberDeclaration, typeParametersOwner)
     val enumEntry = element("EnumEntry", Declaration, regularClass)
 
     val function = element("Function", Declaration, callableDeclaration, controlFlowGraphOwner, targetElement, annotationContainer, typeParametersOwner, statement)
 
+    val contractDescriptionOwner = element("ContractDescriptionOwner", Declaration)
     val memberFunction = element("MemberFunction", Declaration, function, callableMemberDeclaration)
-    val simpleFunction = element("SimpleFunction", Declaration, memberFunction)
-    val propertyAccessor = element("PropertyAccessor", Declaration, function)
+    val simpleFunction = element("SimpleFunction", Declaration, memberFunction, contractDescriptionOwner)
+    val propertyAccessor = element("PropertyAccessor", Declaration, function, contractDescriptionOwner)
     val constructor = element("Constructor", Declaration, memberFunction)
     val file = element("File", Declaration, annotationContainer, declaration)
 
     val anonymousFunction = element("AnonymousFunction", Declaration, function, expression)
     val anonymousObject = element("AnonymousObject", Declaration, klass, expression)
 
+    val diagnosticHolder = element("DiagnosticHolder", Diagnostics)
+
     val loop = element("Loop", Expression, statement, targetElement, annotationContainer)
+    val errorLoop = element("ErrorLoop", Expression, loop, diagnosticHolder)
     val doWhileLoop = element("DoWhileLoop", Expression, loop)
     val whileLoop = element("WhileLoop", Expression, loop)
 
@@ -87,8 +91,8 @@ object FirTreeBuilder : AbstractFirTreeBuilder() {
     val arrayOfCall = element("ArrayOfCall", Expression, expression, call)
     val arraySetCall = element("ArraySetCall", Expression, qualifiedAccess, call)
     val classReferenceExpression = element("ClassReferenceExpression", Expression, expression)
-    val errorExpression = element("ErrorExpression", Expression, expression)
-    val errorFunction = element("ErrorFunction", Declaration, function)
+    val errorExpression = element("ErrorExpression", Expression, expression, diagnosticHolder)
+    val errorFunction = element("ErrorFunction", Declaration, function, diagnosticHolder)
     val qualifiedAccessExpression = element("QualifiedAccessExpression", Expression, expression, qualifiedAccess)
     val functionCall = element("FunctionCall", Expression, qualifiedAccessExpression, call)
     val componentCall = element("ComponentCall", Expression, functionCall)
@@ -112,17 +116,19 @@ object FirTreeBuilder : AbstractFirTreeBuilder() {
     val wrappedDelegateExpression = element("WrappedDelegateExpression", Expression, wrappedExpression)
 
     val namedReference = element("NamedReference", Reference, reference)
-    val errorNamedReference = element("ErrorNamedReference", Reference, namedReference)
+    val errorNamedReference = element("ErrorNamedReference", Reference, namedReference, diagnosticHolder)
     val superReference = element("SuperReference", Reference, reference)
     val thisReference = element("ThisReference", Reference, reference)
     val controlFlowGraphReference = element("ControlFlowGraphReference", Reference, reference)
 
-    val resolvedCallableReference = element("ResolvedCallableReference", Reference, namedReference)
-    val delegateFieldReference = element("DelegateFieldReference", Reference, resolvedCallableReference)
-    val backingFieldReference = element("BackingFieldReference", Reference, resolvedCallableReference)
+    val resolvedNamedReference = element("ResolvedNamedReference", Reference, namedReference)
+    val delegateFieldReference = element("DelegateFieldReference", Reference, resolvedNamedReference)
+    val backingFieldReference = element("BackingFieldReference", Reference, resolvedNamedReference)
+
+    val resolvedCallableReference = element("ResolvedCallableReference", Reference, resolvedNamedReference)
 
     val resolvedTypeRef = element("ResolvedTypeRef", TypeRef, typeRef)
-    val errorTypeRef = element("ErrorTypeRef", TypeRef, resolvedTypeRef)
+    val errorTypeRef = element("ErrorTypeRef", TypeRef, resolvedTypeRef, diagnosticHolder)
     val delegatedTypeRef = element("DelegatedTypeRef", TypeRef, typeRef)
     val typeRefWithNullability = element("TypeRefWithNullability", TypeRef, typeRef)
     val userTypeRef = element("UserTypeRef", TypeRef, typeRefWithNullability)
@@ -130,4 +136,6 @@ object FirTreeBuilder : AbstractFirTreeBuilder() {
     val functionTypeRef = element("FunctionTypeRef", TypeRef, typeRefWithNullability)
     val resolvedFunctionTypeRef = element("ResolvedFunctionTypeRef", TypeRef, resolvedTypeRef, functionTypeRef)
     val implicitTypeRef = element("ImplicitTypeRef", TypeRef, typeRef)
+
+    val contractDescription = element("ContractDescription", Contracts)
 }

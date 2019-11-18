@@ -7,12 +7,11 @@ package org.jetbrains.kotlin.ir.builders.declarations
 
 import org.jetbrains.kotlin.backend.common.descriptors.*
 import org.jetbrains.kotlin.backend.common.ir.copyTo
-import org.jetbrains.kotlin.descriptors.FunctionDescriptor
-import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.descriptors.Visibilities
-import org.jetbrains.kotlin.descriptors.Visibility
+import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.declarations.impl.*
+import org.jetbrains.kotlin.ir.descriptors.*
 import org.jetbrains.kotlin.ir.symbols.impl.*
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.defaultType
@@ -45,7 +44,8 @@ fun IrFieldBuilder.buildField(): IrField {
     return IrFieldImpl(
         startOffset, endOffset, origin,
         IrFieldSymbolImpl(wrappedDescriptor),
-        name, type, visibility, isFinal, isExternal, isStatic
+        name, type, visibility, isFinal, isExternal, isStatic,
+        origin == IrDeclarationOrigin.FAKE_OVERRIDE
     ).also {
         wrappedDescriptor.bind(it)
     }
@@ -76,7 +76,8 @@ fun IrPropertyBuilder.buildProperty(): IrProperty {
         startOffset, endOffset, origin,
         IrPropertySymbolImpl(wrappedDescriptor),
         name, visibility, modality,
-        isVar = isVar, isConst = isConst, isLateinit = isLateinit, isDelegated = isDelegated, isExpect = isExpect, isExternal = isExternal
+        isVar = isVar, isConst = isConst, isLateinit = isLateinit, isDelegated = isDelegated, isExpect = isExpect, isExternal = isExternal,
+        isFakeOverride = origin == IrDeclarationOrigin.FAKE_OVERRIDE
     ).also {
         wrappedDescriptor.bind(it)
     }
@@ -115,15 +116,19 @@ inline fun IrProperty.addSetter(builder: IrFunctionBuilder.() -> Unit = {}): IrS
     }
 
 fun IrFunctionBuilder.buildFun(originalDescriptor: FunctionDescriptor? = null): IrFunctionImpl {
-    val wrappedDescriptor = if (originalDescriptor is DescriptorWithContainerSource)
-        WrappedFunctionDescriptorWithContainerSource(originalDescriptor.containerSource)
-    else
-        WrappedSimpleFunctionDescriptor()
+    val wrappedDescriptor = when(originalDescriptor) {
+        is DescriptorWithContainerSource -> WrappedFunctionDescriptorWithContainerSource(originalDescriptor.containerSource)
+        is PropertyGetterDescriptor -> WrappedPropertyGetterDescriptor(originalDescriptor.annotations, originalDescriptor.source)
+        is PropertySetterDescriptor -> WrappedPropertySetterDescriptor(originalDescriptor.annotations, originalDescriptor.source)
+        null -> WrappedSimpleFunctionDescriptor()
+        else -> WrappedSimpleFunctionDescriptor(originalDescriptor)
+    }
     return IrFunctionImpl(
         startOffset, endOffset, origin,
         IrSimpleFunctionSymbolImpl(wrappedDescriptor),
         name, visibility, modality, returnType,
-        isInline = isInline, isExternal = isExternal, isTailrec = isTailrec, isSuspend = isSuspend, isExpect = isExpect
+        isInline = isInline, isExternal = isExternal, isTailrec = isTailrec, isSuspend = isSuspend, isExpect = isExpect,
+        isFakeOverride = origin == IrDeclarationOrigin.FAKE_OVERRIDE
     ).also {
         wrappedDescriptor.bind(it)
     }

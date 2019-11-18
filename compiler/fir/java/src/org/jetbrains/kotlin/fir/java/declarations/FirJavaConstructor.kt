@@ -5,13 +5,12 @@
 
 package org.jetbrains.kotlin.fir.java.declarations
 
-import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.fir.CONSTRUCTOR_NAME
-import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirPureAbstractElement
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.impl.FirDeclarationStatusImpl
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
@@ -30,7 +29,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DeserializedContainerSource
 
 class FirJavaConstructor(
-    override val psi: PsiElement?,
+    override val source: FirSourceElement?,
     override val session: FirSession,
     override val symbol: FirConstructorSymbol,
     visibility: Visibility,
@@ -100,6 +99,15 @@ class FirJavaConstructor(
         transformValueParameters(transformer, data)
         status = status.transformSingle(transformer, data)
         annotations.transformInplace(transformer, data)
+        return this
+    }
+
+    override fun <D> transformReceiverTypeRef(transformer: FirTransformer<D>, data: D): FirJavaConstructor {
+        return this
+    }
+
+    override fun <D> transformStatus(transformer: FirTransformer<D>, data: D): FirJavaConstructor {
+        status = status.transformSingle(transformer, data)
         return this
     }
 

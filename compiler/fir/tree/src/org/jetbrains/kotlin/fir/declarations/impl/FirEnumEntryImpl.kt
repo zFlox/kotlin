@@ -5,22 +5,21 @@
 
 package org.jetbrains.kotlin.fir.declarations.impl
 
-import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.declarations.FirDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationStatus
 import org.jetbrains.kotlin.fir.declarations.FirEnumEntry
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.declarations.FirTypeParameter
-import org.jetbrains.kotlin.fir.declarations.SupertypesComputationStatus
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.impl.FirAbstractAnnotatedElement
-import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.fir.visitors.*
@@ -31,16 +30,15 @@ import org.jetbrains.kotlin.fir.visitors.*
  */
 
 class FirEnumEntryImpl(
-    override val psi: PsiElement?,
+    override val source: FirSourceElement?,
     override val session: FirSession,
     override val name: Name,
-    override val symbol: FirClassSymbol
-) : FirEnumEntry(), FirModifiableClass, FirModifiableTypeParametersOwner, FirAbstractAnnotatedElement {
+    override val symbol: FirRegularClassSymbol
+) : FirEnumEntry(), FirModifiableClass<FirRegularClass>, FirModifiableTypeParametersOwner, FirAbstractAnnotatedElement {
     override var resolvePhase: FirResolvePhase = FirResolvePhase.RAW_FIR
     override val annotations: MutableList<FirAnnotationCall> = mutableListOf()
     override val typeParameters: MutableList<FirTypeParameter> = mutableListOf()
     override var status: FirDeclarationStatus = FirDeclarationStatusImpl(Visibilities.UNKNOWN, Modality.FINAL)
-    override var supertypesComputationStatus: SupertypesComputationStatus = SupertypesComputationStatus.NOT_COMPUTED
     override val classKind: ClassKind get() = ClassKind.ENUM_ENTRY
     override val declarations: MutableList<FirDeclaration> = mutableListOf()
     override val companionObject: FirRegularClass? get() = null
@@ -65,11 +63,16 @@ class FirEnumEntryImpl(
     override fun <D> transformChildren(transformer: FirTransformer<D>, data: D): FirEnumEntryImpl {
         annotations.transformInplace(transformer, data)
         typeParameters.transformInplace(transformer, data)
-        status = status.transformSingle(transformer, data)
+        transformStatus(transformer, data)
         declarations.transformInplace(transformer, data)
         superTypeRefs.transformInplace(transformer, data)
         transformArguments(transformer, data)
         typeRef = typeRef.transformSingle(transformer, data)
+        return this
+    }
+
+    override fun <D> transformStatus(transformer: FirTransformer<D>, data: D): FirEnumEntryImpl {
+        status = status.transformSingle(transformer, data)
         return this
     }
 
@@ -80,10 +83,6 @@ class FirEnumEntryImpl(
 
     override fun replaceResolvePhase(newResolvePhase: FirResolvePhase) {
         resolvePhase = newResolvePhase
-    }
-
-    override fun replaceSupertypesComputationStatus(newSupertypesComputationStatus: SupertypesComputationStatus) {
-        supertypesComputationStatus = newSupertypesComputationStatus
     }
 
     override fun replaceSuperTypeRefs(newSuperTypeRefs: List<FirTypeRef>) {

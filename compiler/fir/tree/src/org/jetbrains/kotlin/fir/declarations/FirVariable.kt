@@ -5,8 +5,8 @@
 
 package org.jetbrains.kotlin.fir.declarations
 
-import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.expressions.FirStatement
@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.fir.visitors.*
  */
 
 interface FirVariable<F : FirVariable<F>> : FirCallableDeclaration<F>, FirNamedDeclaration, FirStatement {
-    override val psi: PsiElement?
+    override val source: FirSourceElement?
     override val session: FirSession
     override val resolvePhase: FirResolvePhase
     override val returnTypeRef: FirTypeRef
@@ -41,6 +41,8 @@ interface FirVariable<F : FirVariable<F>> : FirCallableDeclaration<F>, FirNamedD
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitVariable(this, data)
 
     override fun <D> transformReturnTypeRef(transformer: FirTransformer<D>, data: D): FirVariable<F>
+
+    override fun <D> transformReceiverTypeRef(transformer: FirTransformer<D>, data: D): FirVariable<F>
 
     fun <D> transformGetter(transformer: FirTransformer<D>, data: D): FirVariable<F>
 

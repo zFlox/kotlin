@@ -7,6 +7,8 @@ package org.jetbrains.kotlin.fir.types
 
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.FirSessionComponent
+import org.jetbrains.kotlin.fir.declarations.FirClassLikeDeclaration
+import org.jetbrains.kotlin.fir.declarations.FirTypeParametersOwner
 import org.jetbrains.kotlin.fir.resolve.constructClassType
 import org.jetbrains.kotlin.fir.resolve.constructType
 import org.jetbrains.kotlin.fir.resolve.toSymbol
@@ -17,7 +19,7 @@ import org.jetbrains.kotlin.types.model.SimpleTypeMarker
 import org.jetbrains.kotlin.types.model.TypeConstructorMarker
 
 class FirCorrespondingSupertypesCache(private val session: FirSession) : FirSessionComponent {
-    private val context = ConeTypeCheckerContext(false, session)
+    private val context = ConeTypeCheckerContext(isErrorTypeEqualsToAnything = false, isStubTypeEqualsToAnything = true, session = session)
     private val cache = HashMap<FirClassLikeSymbol<*>, Map<FirClassLikeSymbol<*>, List<ConeClassLikeType>>?>(1000, 0.5f)
 
     fun getCorrespondingSupertypes(
@@ -52,15 +54,15 @@ class FirCorrespondingSupertypesCache(private val session: FirSession) : FirSess
     ): Map<FirClassLikeSymbol<*>, List<ConeClassLikeType>>? {
         val resultingMap = HashMap<FirClassLikeSymbol<*>, List<ConeClassLikeType>>()
 
-        val subtypeClassSymbol = with(context) {
+        val subtypeClassSymbol: FirClassLikeSymbol<*> = with(context) {
             subtype.typeConstructor() as? FirClassLikeSymbol<*> ?: return null
         }
-        val subtypeFirClass = subtypeClassSymbol.fir
+        val subtypeFirClass: FirClassLikeDeclaration<*> = subtypeClassSymbol.fir
 
         val defaultType = subtypeClassSymbol.toLookupTag().constructClassType(
-            subtypeFirClass.typeParameters.map {
+            (subtypeFirClass as? FirTypeParametersOwner)?.typeParameters?.map {
                 it.symbol.toLookupTag().constructType(emptyArray(), isNullable = false)
-            }.toTypedArray(),
+            }?.toTypedArray().orEmpty(),
             isNullable = false
         )
 

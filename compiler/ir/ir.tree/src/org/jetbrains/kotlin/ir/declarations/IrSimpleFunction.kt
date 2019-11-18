@@ -28,9 +28,7 @@ interface IrSimpleFunction :
     val modality: Modality
     val isTailrec: Boolean
     val isSuspend: Boolean
-
-    @Deprecated("Use correspondingPropertySymbol")
-    var correspondingProperty: IrProperty?
+    val isFakeOverride: Boolean
 
     var correspondingPropertySymbol: IrPropertySymbol?
 }

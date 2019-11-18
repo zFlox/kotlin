@@ -5,8 +5,8 @@
 
 package org.jetbrains.kotlin.fir.declarations
 
-import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.FirBlock
 import org.jetbrains.kotlin.fir.references.FirControlFlowGraphReference
@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.fir.visitors.*
  */
 
 interface FirMemberFunction<F : FirMemberFunction<F>> : FirFunction<F>, FirCallableMemberDeclaration<F> {
-    override val psi: PsiElement?
+    override val source: FirSourceElement?
     override val session: FirSession
     override val resolvePhase: FirResolvePhase
     override val returnTypeRef: FirTypeRef
@@ -41,7 +41,11 @@ interface FirMemberFunction<F : FirMemberFunction<F>> : FirFunction<F>, FirCalla
 
     override fun <D> transformReturnTypeRef(transformer: FirTransformer<D>, data: D): FirMemberFunction<F>
 
+    override fun <D> transformReceiverTypeRef(transformer: FirTransformer<D>, data: D): FirMemberFunction<F>
+
     override fun <D> transformControlFlowGraphReference(transformer: FirTransformer<D>, data: D): FirMemberFunction<F>
 
     override fun <D> transformValueParameters(transformer: FirTransformer<D>, data: D): FirMemberFunction<F>
+
+    override fun <D> transformStatus(transformer: FirTransformer<D>, data: D): FirMemberFunction<F>
 }

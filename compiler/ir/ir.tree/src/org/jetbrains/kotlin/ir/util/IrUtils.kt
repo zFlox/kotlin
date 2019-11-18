@@ -26,7 +26,6 @@ import org.jetbrains.kotlin.resolve.source.PsiSourceElement
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.utils.DFS
-import java.util.*
 
 /**
  * Binds the arguments explicitly represented in the IR to the parameters of the accessed function.
@@ -34,7 +33,7 @@ import java.util.*
  */
 fun IrMemberAccessExpression.getArguments(): List<Pair<ParameterDescriptor, IrExpression>> {
     val res = mutableListOf<Pair<ParameterDescriptor, IrExpression>>()
-    val descriptor = descriptor
+    val descriptor = symbol.descriptor as CallableDescriptor
 
     // TODO: ensure the order below corresponds to the one defined in Kotlin specs.
 
@@ -91,6 +90,10 @@ fun IrMemberAccessExpression.getArgumentsWithIr(): List<Pair<IrValueParameter, I
     val irFunction = when (this) {
         is IrFunctionAccessExpression -> this.symbol.owner
         is IrFunctionReference -> this.symbol.owner
+        is IrPropertyReference -> {
+            assert(this.field == null) { "Field should be null to use `getArgumentsWithIr` on IrPropertyReference: ${this.dump()}}" }
+            this.getter!!.owner
+        }
         else -> error(this)
     }
 
@@ -116,6 +119,7 @@ fun IrMemberAccessExpression.getArgumentsWithIr(): List<Pair<IrValueParameter, I
  * Sets arguments that are specified by given mapping of parameters.
  */
 fun IrMemberAccessExpression.addArguments(args: Map<ParameterDescriptor, IrExpression>) {
+    val descriptor = symbol.descriptor as CallableDescriptor
     descriptor.dispatchReceiverParameter?.let {
         val arg = args[it]
         if (arg != null) {
@@ -174,7 +178,7 @@ fun IrExpression.coerceToUnitIfNeeded(valueType: IrType, irBuiltIns: IrBuiltIns)
 }
 
 fun IrMemberAccessExpression.usesDefaultArguments(): Boolean =
-    this.descriptor.valueParameters.any { this.getValueArgument(it) == null }
+    (symbol.descriptor as CallableDescriptor).valueParameters.any { this.getValueArgument(it) == null }
 
 val DeclarationDescriptorWithSource.startOffset: Int? get() = (this.source as? PsiSourceElement)?.psi?.startOffset
 val DeclarationDescriptorWithSource.endOffset: Int? get() = (this.source as? PsiSourceElement)?.psi?.endOffset
@@ -221,7 +225,13 @@ val IrSimpleFunction.isSynthesized: Boolean get() = descriptor.kind == CallableM
 
 val IrDeclaration.isReal: Boolean get() = !isFakeOverride
 
-val IrDeclaration.isFakeOverride: Boolean get() = origin == IrDeclarationOrigin.FAKE_OVERRIDE
+val IrDeclaration.isFakeOverride: Boolean
+    get() = when (this) {
+        is IrSimpleFunction -> isFakeOverride
+        is IrProperty -> isFakeOverride
+        is IrField -> isFakeOverride
+        else -> false
+    }
 
 fun IrClass.isSubclassOf(ancestor: IrClass): Boolean {
 
@@ -368,13 +378,13 @@ fun IrFunction.isFakeOverriddenFromAny(): Boolean {
     return (this as IrSimpleFunction).overriddenSymbols.all { it.owner.isFakeOverriddenFromAny() }
 }
 
-fun IrCall.isSuperToAny() = superQualifier?.let { this.symbol.owner.isFakeOverriddenFromAny() } ?: false
+fun IrCall.isSuperToAny() = superQualifierSymbol?.let { this.symbol.owner.isFakeOverriddenFromAny() } ?: false
 
 fun IrDeclaration.isEffectivelyExternal(): Boolean {
 
     fun IrFunction.effectiveParentDeclaration(): IrDeclaration? =
         when (this) {
-            is IrSimpleFunction -> correspondingProperty ?: parent as? IrDeclaration
+            is IrSimpleFunction -> correspondingPropertySymbol?.owner ?: parent as? IrDeclaration
             else -> parent as? IrDeclaration
         }
 
@@ -473,7 +483,6 @@ fun irConstructorCall(
             endOffset,
             type,
             newSymbol,
-            newSymbol.descriptor,
             typeArgumentsCount,
             0,
             call.valueArgumentsCount,
@@ -512,7 +521,6 @@ fun irCall(
             endOffset,
             type,
             newSymbol,
-            newSymbol.descriptor,
             typeArgumentsCount,
             origin
         ).apply {

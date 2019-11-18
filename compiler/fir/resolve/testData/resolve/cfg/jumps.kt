@@ -13,7 +13,7 @@ fun test_2(x: Int?) {
     } else {
         x
     }
-    y.inc()
+    y.<!AMBIGUITY!>inc<!>()
 }
 
 fun test_3(x: Int?) {
@@ -40,7 +40,7 @@ fun test_5(b: Boolean) {
     }
 }
 
-fun run(block: () -> Unit) {
+inline fun run(block: () -> Unit) {
     block()
 }
 

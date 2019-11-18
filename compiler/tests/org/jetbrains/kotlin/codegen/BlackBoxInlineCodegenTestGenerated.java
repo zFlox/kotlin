@@ -211,6 +211,11 @@ public class BlackBoxInlineCodegenTestGenerated extends AbstractBlackBoxInlineCo
             runTest("compiler/testData/codegen/boxInline/anonymousObject/kt19723.kt");
         }
 
+        @TestMetadata("kt34656.kt")
+        public void testKt34656() throws Exception {
+            runTest("compiler/testData/codegen/boxInline/anonymousObject/kt34656.kt");
+        }
+
         @TestMetadata("kt6552.kt")
         public void testKt6552() throws Exception {
             runTest("compiler/testData/codegen/boxInline/anonymousObject/kt6552.kt");
@@ -264,6 +269,11 @@ public class BlackBoxInlineCodegenTestGenerated extends AbstractBlackBoxInlineCo
         @TestMetadata("sam.kt")
         public void testSam() throws Exception {
             runTest("compiler/testData/codegen/boxInline/anonymousObject/sam.kt");
+        }
+
+        @TestMetadata("superConstructorWithObjectParameter.kt")
+        public void testSuperConstructorWithObjectParameter() throws Exception {
+            runTest("compiler/testData/codegen/boxInline/anonymousObject/superConstructorWithObjectParameter.kt");
         }
 
         @TestMetadata("compiler/testData/codegen/boxInline/anonymousObject/enumWhen")
@@ -425,6 +435,11 @@ public class BlackBoxInlineCodegenTestGenerated extends AbstractBlackBoxInlineCo
 
             public void testAllFilesPresentInSam() throws Exception {
                 KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/boxInline/anonymousObject/sam"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JVM, true);
+            }
+
+            @TestMetadata("anonymousObjectToSam.kt")
+            public void testAnonymousObjectToSam() throws Exception {
+                runTest("compiler/testData/codegen/boxInline/anonymousObject/sam/anonymousObjectToSam.kt");
             }
 
             @TestMetadata("kt17091.kt")
@@ -3000,6 +3015,11 @@ public class BlackBoxInlineCodegenTestGenerated extends AbstractBlackBoxInlineCo
 
         public void testAllFilesPresentInSimple() throws Exception {
             KotlinTestUtils.assertAllTestsPresentByMetadata(this.getClass(), new File("compiler/testData/codegen/boxInline/simple"), Pattern.compile("^(.+)\\.kt$"), TargetBackend.JVM, true);
+        }
+
+        @TestMetadata("captureAndArgumentIncompatibleTypes.kt")
+        public void testCaptureAndArgumentIncompatibleTypes() throws Exception {
+            runTest("compiler/testData/codegen/boxInline/simple/captureAndArgumentIncompatibleTypes.kt");
         }
 
         @TestMetadata("classObject.kt")

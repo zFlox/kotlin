@@ -75,6 +75,7 @@ abstract class AbstractConeSubstitutor : ConeSubstitutor() {
             is ConeCapturedType -> return null
             is ConeDefinitelyNotNullType -> this.substituteOriginal()
             is ConeIntersectionType -> this.substituteIntersectedTypes()
+            is ConeStubType -> return null
         }
     }
 
@@ -92,7 +93,7 @@ abstract class AbstractConeSubstitutor : ConeSubstitutor() {
     }
 
     private fun ConeDefinitelyNotNullType.substituteOriginal(): ConeDefinitelyNotNullType? {
-        TODO()
+        return ConeDefinitelyNotNullType.create(substituteType(original) ?: original)
     }
 
     private fun ConeFlexibleType.substituteBounds(): ConeFlexibleType? {

@@ -5,7 +5,7 @@
 
 package org.jetbrains.kotlin.fir.expressions.impl
 
-import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.fir.FirSourceElement
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.FirComponentCall
 import org.jetbrains.kotlin.fir.expressions.FirExpression
@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.fir.visitors.*
  */
 
 class FirComponentCallImpl(
-    override val psi: PsiElement?,
+    override val source: FirSourceElement?,
     override var explicitReceiver: FirExpression,
     override val componentIndex: Int
 ) : FirComponentCall(), FirCallWithArgumentList, FirAbstractAnnotatedElement {
@@ -35,7 +35,7 @@ class FirComponentCallImpl(
     override val extensionReceiver: FirExpression get() = FirNoReceiverExpression
     override val arguments: MutableList<FirExpression> = mutableListOf()
     override val typeArguments: MutableList<FirTypeProjection> = mutableListOf()
-    override var calleeReference: FirNamedReference = FirSimpleNamedReference(psi, Name.identifier("component$componentIndex"), null)
+    override var calleeReference: FirNamedReference = FirSimpleNamedReference(source, Name.identifier("component$componentIndex"), null)
 
     override fun <R, D> acceptChildren(visitor: FirVisitor<R, D>, data: D) {
         typeRef.accept(visitor, data)
@@ -56,7 +56,7 @@ class FirComponentCallImpl(
         typeRef = typeRef.transformSingle(transformer, data)
         annotations.transformInplace(transformer, data)
         transformArguments(transformer, data)
-        typeArguments.transformInplace(transformer, data)
+        transformTypeArguments(transformer, data)
         transformCalleeReference(transformer, data)
         explicitReceiver = explicitReceiver.transformSingle(transformer, data)
         return this
@@ -72,6 +72,11 @@ class FirComponentCallImpl(
 
     override fun <D> transformArguments(transformer: FirTransformer<D>, data: D): FirComponentCallImpl {
         arguments.transformInplace(transformer, data)
+        return this
+    }
+
+    override fun <D> transformTypeArguments(transformer: FirTransformer<D>, data: D): FirComponentCallImpl {
+        typeArguments.transformInplace(transformer, data)
         return this
     }
 

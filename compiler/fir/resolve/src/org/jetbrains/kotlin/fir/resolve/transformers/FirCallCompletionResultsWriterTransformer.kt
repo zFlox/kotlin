@@ -8,8 +8,12 @@ package org.jetbrains.kotlin.fir.resolve.transformers
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.copy
 import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.diagnostics.FirSimpleDiagnostic
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.references.impl.FirResolvedCallableReferenceImpl
+import org.jetbrains.kotlin.fir.references.impl.FirResolvedNamedReferenceImpl
+import org.jetbrains.kotlin.fir.render
+import org.jetbrains.kotlin.fir.resolve.calls.Candidate
 import org.jetbrains.kotlin.fir.resolve.calls.FirNamedReferenceWithCandidate
 import org.jetbrains.kotlin.fir.resolve.calls.candidate
 import org.jetbrains.kotlin.fir.resolve.constructFunctionalTypeRef
@@ -20,6 +24,7 @@ import org.jetbrains.kotlin.fir.resolve.withNullability
 import org.jetbrains.kotlin.fir.scopes.impl.withReplacedConeType
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.impl.ConeTypeParameterTypeImpl
+import org.jetbrains.kotlin.fir.types.impl.FirErrorTypeRefImpl
 import org.jetbrains.kotlin.fir.types.impl.FirResolvedTypeRefImpl
 import org.jetbrains.kotlin.fir.types.impl.FirTypeProjectionWithVarianceImpl
 import org.jetbrains.kotlin.fir.visitors.CompositeTransformResult
@@ -30,7 +35,7 @@ class FirCallCompletionResultsWriterTransformer(
     override val session: FirSession,
     private val finalSubstitutor: ConeSubstitutor,
     private val typeCalculator: ReturnTypeCalculator
-) : FirAbstractTreeTransformer(phase = FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE) {
+) : FirAbstractTreeTransformer<Nothing?>(phase = FirResolvePhase.IMPLICIT_TYPES_BODY_RESOLVE) {
 
     override fun transformQualifiedAccessExpression(
         qualifiedAccessExpression: FirQualifiedAccessExpression,
@@ -40,7 +45,13 @@ class FirCallCompletionResultsWriterTransformer(
             qualifiedAccessExpression.calleeReference as? FirNamedReferenceWithCandidate ?: return qualifiedAccessExpression.compose()
         calleeReference.candidate.substitutor
 
-        val typeRef = typeCalculator.tryCalculateReturnType(calleeReference.candidateSymbol.phasedFir as FirTypedDeclaration)
+        val candidateFir = calleeReference.candidateSymbol.phasedFir
+        val typeRef = (candidateFir as? FirTypedDeclaration)?.let {
+            typeCalculator.tryCalculateReturnType(it)
+        } ?: FirErrorTypeRefImpl(
+            calleeReference.source,
+            FirSimpleDiagnostic("Callee reference to candidate without return type: ${candidateFir.render()}")
+        )
 
         val initialType = calleeReference.candidate.substitutor.substituteOrNull(typeRef.type)
         val finalType = finalSubstitutor.substituteOrNull(initialType)
@@ -50,11 +61,39 @@ class FirCallCompletionResultsWriterTransformer(
 
         return qualifiedAccessExpression.transformCalleeReference(
             StoreCalleeReference,
-            FirResolvedCallableReferenceImpl(
-                calleeReference.psi,
+            FirResolvedNamedReferenceImpl(
+                calleeReference.source,
                 calleeReference.name,
                 calleeReference.candidateSymbol
             )
+        ).compose()
+    }
+
+    override fun transformCallableReferenceAccess(
+        callableReferenceAccess: FirCallableReferenceAccess,
+        data: Nothing?
+    ): CompositeTransformResult<FirStatement> {
+
+        val calleeReference =
+            callableReferenceAccess.calleeReference as? FirNamedReferenceWithCandidate ?: return callableReferenceAccess.compose()
+
+        val typeRef = callableReferenceAccess.typeRef as FirResolvedTypeRef
+
+        val initialType = calleeReference.candidate.substitutor.substituteOrSelf(typeRef.type)
+        val finalType = finalSubstitutor.substituteOrSelf(initialType)
+
+        val resultType = typeRef.withReplacedConeType(finalType)
+        callableReferenceAccess.replaceTypeRef(resultType)
+
+        return callableReferenceAccess.transformCalleeReference(
+            StoreCalleeReference,
+            FirResolvedCallableReferenceImpl(
+                calleeReference.source,
+                calleeReference.name,
+                calleeReference.candidateSymbol
+            ).apply {
+                inferredTypeArguments.addAll(computeTypeArguments(calleeReference.candidate))
+            }
         ).compose()
     }
 
@@ -66,8 +105,8 @@ class FirCallCompletionResultsWriterTransformer(
             ?: return variableAssignment.compose()
         return variableAssignment.transformCalleeReference(
             StoreCalleeReference,
-            FirResolvedCallableReferenceImpl(
-                calleeReference.psi,
+            FirResolvedNamedReferenceImpl(
+                calleeReference.source,
                 calleeReference.name,
                 calleeReference.candidateSymbol
             )
@@ -80,22 +119,20 @@ class FirCallCompletionResultsWriterTransformer(
 
         val subCandidate = calleeReference.candidate
         val declaration = subCandidate.symbol.phasedFir as FirCallableMemberDeclaration<*>
-        val newTypeParameters = declaration.typeParameters.map { ConeTypeParameterTypeImpl(it.symbol.toLookupTag(), false) }
-            .map { subCandidate.substitutor.substituteOrSelf(it) }
-            .map { finalSubstitutor.substituteOrSelf(it) }
+        val typeArguments = computeTypeArguments(subCandidate)
             .mapIndexed { index, type ->
                 when (val argument = functionCall.typeArguments.getOrNull(index)) {
                     is FirTypeProjectionWithVariance -> {
                         val typeRef = argument.typeRef as FirResolvedTypeRef
                         FirTypeProjectionWithVarianceImpl(
-                            argument.psi,
+                            argument.source,
                             typeRef.withReplacedConeType(type),
                             argument.variance
                         )
                     }
                     else -> {
                         FirTypeProjectionWithVarianceImpl(
-                            argument?.psi,
+                            argument?.source,
                             FirResolvedTypeRefImpl(null, type),
                             Variance.INVARIANT
                         )
@@ -119,9 +156,9 @@ class FirCallCompletionResultsWriterTransformer(
 
         return functionCall.copy(
             resultType = resultType,
-            typeArguments = newTypeParameters,
-            calleeReference = FirResolvedCallableReferenceImpl(
-                calleeReference.psi,
+            typeArguments = typeArguments,
+            calleeReference = FirResolvedNamedReferenceImpl(
+                calleeReference.source,
                 calleeReference.name,
                 calleeReference.candidateSymbol
             ),
@@ -129,6 +166,16 @@ class FirCallCompletionResultsWriterTransformer(
             extensionReceiver = subCandidate.extensionReceiverExpression()
         ).compose()
 
+    }
+
+    private fun computeTypeArguments(
+        candidate: Candidate
+    ): List<ConeKotlinType> {
+        val declaration = candidate.symbol.phasedFir as? FirCallableMemberDeclaration<*> ?: return emptyList()
+
+        return declaration.typeParameters.map { ConeTypeParameterTypeImpl(it.symbol.toLookupTag(), false) }
+            .map { candidate.substitutor.substituteOrSelf(it) }
+            .map { finalSubstitutor.substituteOrSelf(it) }
     }
 
     override fun transformAnonymousFunction(
@@ -176,8 +223,8 @@ class FirCallCompletionResultsWriterTransformer(
 
         return whenExpression.copy(
             resultType = resultType,
-            calleeReference = FirResolvedCallableReferenceImpl(
-                calleeReference.psi,
+            calleeReference = FirResolvedNamedReferenceImpl(
+                calleeReference.source,
                 calleeReference.name,
                 calleeReference.candidateSymbol
             )
@@ -202,8 +249,8 @@ class FirCallCompletionResultsWriterTransformer(
 
         return tryExpression.copy(
             resultType = resultType,
-            calleeReference = FirResolvedCallableReferenceImpl(
-                calleeReference.psi,
+            calleeReference = FirResolvedNamedReferenceImpl(
+                calleeReference.source,
                 calleeReference.name,
                 calleeReference.candidateSymbol
             )

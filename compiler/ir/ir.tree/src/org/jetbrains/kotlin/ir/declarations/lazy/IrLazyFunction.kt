@@ -34,6 +34,7 @@ class IrLazyFunction(
     override val isTailrec: Boolean,
     override val isSuspend: Boolean,
     isExpect: Boolean,
+    override val isFakeOverride: Boolean,
     stubGenerator: DeclarationStubGenerator,
     typeTranslator: TypeTranslator
 ) :
@@ -57,6 +58,7 @@ class IrLazyFunction(
         isTailrec = symbol.descriptor.isTailrec,
         isSuspend = symbol.descriptor.isSuspend,
         isExpect = symbol.descriptor.isExpect,
+        isFakeOverride = origin == IrDeclarationOrigin.FAKE_OVERRIDE,
         stubGenerator = stubGenerator,
         typeTranslator = TypeTranslator
     )
@@ -86,13 +88,6 @@ class IrLazyFunction(
             stubGenerator.generateFunctionStub(it.original).symbol
         }
     }
-
-    @Suppress("OverridingDeprecatedMember")
-    override var correspondingProperty: IrProperty?
-        get() = correspondingPropertySymbol?.owner
-        set(value) {
-            correspondingPropertySymbol = value?.symbol
-        }
 
     override var correspondingPropertySymbol: IrPropertySymbol? = null
 

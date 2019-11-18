@@ -23,23 +23,19 @@ import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
-import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.descriptors.IrBuiltIns
 import org.jetbrains.kotlin.ir.expressions.IrExpression
-import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
-import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
-import org.jetbrains.kotlin.ir.symbols.IrLocalDelegatedPropertySymbol
-import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
+import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.util.ReferenceSymbolTable
 import org.jetbrains.kotlin.ir.util.SymbolTable
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi2ir.PsiSourceManager
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
+import org.jetbrains.org.objectweb.asm.Type
 
 class JvmBackendContext(
     val state: GenerationState,
@@ -47,12 +43,12 @@ class JvmBackendContext(
     override val irBuiltIns: IrBuiltIns,
     irModuleFragment: IrModuleFragment,
     symbolTable: SymbolTable,
-    val phaseConfig: PhaseConfig,
-    private val firMode: Boolean
+    val phaseConfig: PhaseConfig
 ) : CommonBackendContext {
     override val transformedFunction: MutableMap<IrFunctionSymbol, IrSimpleFunctionSymbol>
         get() = TODO("not implemented")
     override val scriptMode: Boolean = false
+    override val lateinitNullableFields = mutableMapOf<IrField, IrField>()
 
     override val builtIns = state.module.builtIns
     val typeMapper = IrTypeMapper(this)
@@ -66,17 +62,16 @@ class JvmBackendContext(
 
     val irIntrinsics = IrIntrinsicMethods(irBuiltIns, ir.symbols)
 
-    // TODO: also store info for EnclosingMethod
-    internal class LocalClassInfo(val internalName: String)
+    private val localClassType = mutableMapOf<IrAttributeContainer, Type>()
 
-    private val localClassInfo = mutableMapOf<IrAttributeContainer, LocalClassInfo>()
+    internal fun getLocalClassType(container: IrAttributeContainer): Type? =
+        localClassType[container.attributeOwnerId]
 
-    internal fun getLocalClassInfo(container: IrAttributeContainer): LocalClassInfo? =
-        localClassInfo[container.attributeOwnerId]
-
-    internal fun putLocalClassInfo(container: IrAttributeContainer, value: LocalClassInfo) {
-        localClassInfo[container.attributeOwnerId] = value
+    internal fun putLocalClassType(container: IrAttributeContainer, value: Type) {
+        localClassType[container.attributeOwnerId] = value
     }
+
+    internal val customEnclosingFunction = mutableMapOf<IrAttributeContainer, IrFunction>()
 
     // TODO cache these at ClassCodegen level. Currently, sharing this map between classes in a module is required
     //      because IrSourceCompilerForInline constructs a new (Fake)ClassCodegen for every call to
@@ -86,6 +81,10 @@ class JvmBackendContext(
     internal val regeneratedObjectNameGenerators = mutableMapOf<Pair<IrClass, Name>, NameGenerator>()
 
     internal val localDelegatedProperties = mutableMapOf<IrClass, List<IrLocalDelegatedPropertySymbol>>()
+
+    // If the JVM fqname of a class differs from what is implied by its parent, e.g. if it's a file class
+    // annotated with @JvmPackageName, the correct name is recorded here.
+    internal lateinit var classNameOverride: MutableMap<IrClass, JvmClassName>
 
     internal val multifileFacadesToAdd = mutableMapOf<JvmClassName, MutableList<IrClass>>()
     internal val multifileFacadeForPart = mutableMapOf<IrClass, JvmClassName>()
@@ -106,13 +105,6 @@ class JvmBackendContext(
     val staticDefaultStubs = mutableMapOf<IrFunctionSymbol, IrFunction>()
 
     val inlineClassReplacements = MemoizedInlineClassReplacements()
-
-    internal fun getTopLevelClass(fqName: FqName): IrClassSymbol {
-        val descriptor = state.module.getPackage(fqName.parent()).memberScope.getContributedClassifier(
-            fqName.shortName(), NoLookupLocation.FROM_BACKEND
-        ) as ClassDescriptor? ?: error("Class is not found: $fqName")
-        return referenceClass(descriptor)
-    }
 
     internal fun referenceClass(descriptor: ClassDescriptor): IrClassSymbol =
         symbolTable.referenceClass(descriptor)
@@ -142,7 +134,7 @@ class JvmBackendContext(
         irModuleFragment: IrModuleFragment,
         symbolTable: ReferenceSymbolTable
     ) : Ir<JvmBackendContext>(this, irModuleFragment) {
-        override val symbols = JvmSymbols(this@JvmBackendContext, symbolTable, firMode)
+        override val symbols = JvmSymbols(this@JvmBackendContext, symbolTable)
 
         override fun unfoldInlineClassType(irType: IrType): IrType? {
             return InlineClassAbi.unboxType(irType)

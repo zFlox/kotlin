@@ -6,11 +6,9 @@
 package org.jetbrains.kotlin.backend.jvm.lower
 
 import org.jetbrains.kotlin.backend.common.FileLoweringPass
-import org.jetbrains.kotlin.backend.common.deepCopyWithWrappedDescriptors
 import org.jetbrains.kotlin.backend.common.ir.createImplicitParameterDeclarationWithWrappedDescriptor
 import org.jetbrains.kotlin.backend.common.ir.passTypeArgumentsFrom
 import org.jetbrains.kotlin.backend.common.lower
-import org.jetbrains.kotlin.backend.common.lower.InitializersLowering
 import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
 import org.jetbrains.kotlin.backend.common.phaser.PhaseConfig
 import org.jetbrains.kotlin.backend.common.phaser.PhaserState
@@ -22,9 +20,7 @@ import org.jetbrains.kotlin.backend.jvm.codegen.fileParent
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.impl.EmptyPackageFragmentDescriptor
-import org.jetbrains.kotlin.ir.SourceManager
-import org.jetbrains.kotlin.ir.SourceRangeInfo
-import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
+import org.jetbrains.kotlin.ir.*
 import org.jetbrains.kotlin.ir.builders.declarations.buildClass
 import org.jetbrains.kotlin.ir.builders.irBlockBody
 import org.jetbrains.kotlin.ir.builders.irCall
@@ -42,8 +38,9 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrGetFieldImpl
 import org.jetbrains.kotlin.ir.symbols.IrFieldSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.util.deepCopyWithSymbols
-import org.jetbrains.kotlin.ir.util.dump
+import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
 import org.jetbrains.kotlin.ir.util.transformFlat
+import org.jetbrains.kotlin.ir.visitors.IrElementTransformer
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
@@ -103,14 +100,27 @@ private fun generateMultifileFacades(
     functionDelegates: MutableMap<IrFunctionSymbol, IrFunctionSymbol>
 ): List<IrFile> =
     context.multifileFacadesToAdd.map { (jvmClassName, partClasses) ->
+        val kotlinPackageFqName = partClasses.first().fqNameWhenAvailable!!.parent()
+        if (!partClasses.all { it.fqNameWhenAvailable!!.parent() == kotlinPackageFqName }) {
+            throw UnsupportedOperationException(
+                "Multi-file parts of a facade with JvmPackageName should all lie in the same Kotlin package:\n  " +
+                        partClasses.joinToString("\n  ") { klass ->
+                            "Class ${klass.fqNameWhenAvailable}, JVM name ${context.classNameOverride[klass]}"
+                        }
+            )
+        }
+
         val fileEntry = MultifileFacadeFileEntry(jvmClassName, partClasses.map(IrClass::fileParent))
-        val file = IrFileImpl(fileEntry, EmptyPackageFragmentDescriptor(module, jvmClassName.packageFqName))
+        val file = IrFileImpl(fileEntry, EmptyPackageFragmentDescriptor(module, kotlinPackageFqName))
 
         val facadeClass = buildClass {
             name = jvmClassName.fqNameForTopLevelClassMaybeWithDollars.shortName()
         }.apply {
             parent = file
             createImplicitParameterDeclarationWithWrappedDescriptor()
+            if (jvmClassName.packageFqName != kotlinPackageFqName) {
+                context.classNameOverride[this] = jvmClassName
+            }
         }
         file.declarations.add(facadeClass)
 
@@ -156,15 +166,14 @@ private fun IrField.shouldMoveToFacade(): Boolean {
 
 private fun IrFunction.createMultifileDelegateIfNeeded(context: JvmBackendContext, facadeClass: IrClass): IrFunction? {
     if (Visibilities.isPrivate(visibility) ||
-        name == InitializersLowering.clinitName ||
+        name == StaticInitializersLowering.clinitName ||
         origin == JvmLoweredDeclarationOrigin.SYNTHETIC_ACCESSOR
     ) return null
 
     // TODO: perform copy of the signature only, without body
     val function = deepCopyWithSymbols(facadeClass)
-    function.body = context.createIrBuilder(symbol).irBlockBody {
-        val functionForCall = computeFunctionForCall()
-        +irReturn(irCall(functionForCall).also { call ->
+    function.body = context.createIrBuilder(function.symbol).irBlockBody {
+        +irReturn(irCall(this@createMultifileDelegateIfNeeded).also { call ->
             call.passTypeArgumentsFrom(function)
             function.extensionReceiverParameter?.let { parameter ->
                 call.extensionReceiver = irGet(parameter)
@@ -179,22 +188,6 @@ private fun IrFunction.createMultifileDelegateIfNeeded(context: JvmBackendContex
     facadeClass.declarations.add(function)
 
     return function
-}
-
-// This deep copy is needed while we still use KotlinTypeMapper to map signatures in method calls. Without it, KotlinTypeMapper takes
-// the descriptor and assumes that a call to that function must go through the public facade (see mapOwner call in mapToCallableMethod),
-// which results in endless recursion here. With this copy, we trick it into thinking that the function is actually a static function
-// in a class whose name is the name of the multi-file part, as opposed to being top level.
-private fun IrFunction.computeFunctionForCall(): IrFunction {
-    val property = (this as? IrSimpleFunction)?.correspondingPropertySymbol?.owner
-        ?: return deepCopyWithWrappedDescriptors(parent)
-
-    val propertyCopy = property.deepCopyWithWrappedDescriptors(property.parent)
-    return when (this) {
-        property.getter -> propertyCopy.getter!!
-        property.setter -> propertyCopy.setter!!
-        else -> error("Property accessor must be getter or setter: ${dump()}")
-    }
 }
 
 private class UpdateFieldCallSites(
@@ -214,13 +207,21 @@ private class UpdateFieldCallSites(
 
 private class UpdateFunctionCallSites(
     private val functionDelegates: MutableMap<IrFunctionSymbol, IrFunctionSymbol>
-) : FileLoweringPass, IrElementTransformerVoid() {
+) : FileLoweringPass, IrElementTransformer<IrFunction?> {
     override fun lower(irFile: IrFile) {
-        irFile.transformChildrenVoid(this)
+        irFile.transformChildren(this, null)
     }
 
-    override fun visitCall(expression: IrCall): IrExpression {
-        val newFunction = functionDelegates[expression.symbol] ?: return super.visitCall(expression)
+    override fun visitFunction(declaration: IrFunction, data: IrFunction?): IrStatement =
+        super.visitFunction(declaration, declaration)
+
+    override fun visitCall(expression: IrCall, data: IrFunction?): IrElement {
+        if (data?.origin == JvmLoweredDeclarationOrigin.MULTIFILE_BRIDGE)
+            return super.visitCall(expression, data)
+
+        val newFunction = functionDelegates[expression.symbol]
+            ?: return super.visitCall(expression, data)
+
         return expression.run {
             // TODO: deduplicate this with ReplaceKFunctionInvokeWithFunctionInvoke
             IrCallImpl(startOffset, endOffset, type, newFunction).apply {

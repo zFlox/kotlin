@@ -128,6 +128,11 @@ public class IrCompileKotlinAgainstKotlinTestGenerated extends AbstractIrCompile
         runTest("compiler/testData/compileKotlinAgainstKotlin/inlineClassFromBinaryDependencies.kt");
     }
 
+    @TestMetadata("inlineClassInlineProperty.kt")
+    public void testInlineClassInlineProperty() throws Exception {
+        runTest("compiler/testData/compileKotlinAgainstKotlin/inlineClassInlineProperty.kt");
+    }
+
     @TestMetadata("inlinedConstants.kt")
     public void testInlinedConstants() throws Exception {
         runTest("compiler/testData/compileKotlinAgainstKotlin/inlinedConstants.kt");
@@ -216,6 +221,11 @@ public class IrCompileKotlinAgainstKotlinTestGenerated extends AbstractIrCompile
     @TestMetadata("kt21775.kt")
     public void testKt21775() throws Exception {
         runTest("compiler/testData/compileKotlinAgainstKotlin/kt21775.kt");
+    }
+
+    @TestMetadata("metadataForMembersInLocalClassInInitializer.kt")
+    public void testMetadataForMembersInLocalClassInInitializer() throws Exception {
+        runTest("compiler/testData/compileKotlinAgainstKotlin/metadataForMembersInLocalClassInInitializer.kt");
     }
 
     @TestMetadata("multifileClassInlineFunctionAccessingProperty.kt")

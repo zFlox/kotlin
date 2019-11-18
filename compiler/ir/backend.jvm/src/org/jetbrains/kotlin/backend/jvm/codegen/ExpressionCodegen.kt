@@ -150,11 +150,7 @@ class ExpressionCodegen(
         if (fileEntry != null) {
             val lineNumber = fileEntry.getLineNumber(offset) + 1
             assert(lineNumber > 0)
-            // State-machine builder splits the sequence of instructions into states inside state-machine, adding additional LINENUMBERs
-            // between them for debugger to stop on suspension. Thus, it requires as much LINENUMBER information as possible to be present,
-            // otherwise, any exception will have incorrect line number. See elvisLineNumber.kt test.
-            // TODO: Remove unneeded LINENUMBERs after building the state-machine.
-            if (lastLineNumber != lineNumber || irFunction.isSuspend || irFunction.isInvokeSuspendOfLambda(context)) {
+            if (lastLineNumber != lineNumber) {
                 lastLineNumber = lineNumber
                 mv.visitLineNumber(lineNumber, markNewLabel())
             }
@@ -220,10 +216,19 @@ class ExpressionCodegen(
                 irFunction.origin == JvmLoweredDeclarationOrigin.DEFAULT_IMPLS_BRIDGE ||
                 irFunction.origin == JvmLoweredDeclarationOrigin.JVM_STATIC_WRAPPER ||
                 irFunction.origin == JvmLoweredDeclarationOrigin.MULTIFILE_BRIDGE
-        if (!notCallableFromJava) {
-            irFunction.extensionReceiverParameter?.let { generateNonNullAssertion(it) }
-            irFunction.valueParameters.forEach(::generateNonNullAssertion)
-        }
+
+        if (notCallableFromJava)
+            return
+
+        // Do not generate non-null checks for suspend function views. When resumed the arguments
+        // will be null and the actual values are taken from the continuation.
+        val isSuspendFunctionView = irFunction.origin == JvmLoweredDeclarationOrigin.SUSPEND_FUNCTION_VIEW
+
+        if (isSuspendFunctionView)
+            return
+
+        irFunction.extensionReceiverParameter?.let { generateNonNullAssertion(it) }
+        irFunction.valueParameters.forEach(::generateNonNullAssertion)
     }
 
     private fun generateNonNullAssertion(param: IrValueParameter) {
@@ -356,14 +361,14 @@ class ExpressionCodegen(
                     }
                 }
             }
-            expression.descriptor is ConstructorDescriptor ->
+            expression.symbol.descriptor is ConstructorDescriptor ->
                 throw AssertionError("IrCall with ConstructorDescriptor: ${expression.javaClass.simpleName}")
             callee.isSuspend && !irFunction.shouldNotContainSuspendMarkers(classCodegen.context) ->
                 addInlineMarker(mv, isStartNotEnd = true)
         }
 
         expression.dispatchReceiver?.let { receiver ->
-            val type = if ((expression as? IrCall)?.superQualifier != null) receiver.asmType else callable.owner
+            val type = if ((expression as? IrCall)?.superQualifierSymbol != null) receiver.asmType else callable.owner
             callGenerator.genValueAndPut(callee.dispatchReceiverParameter!!, receiver, type, this, data)
         }
 
@@ -514,7 +519,7 @@ class ExpressionCodegen(
     override fun visitSetVariable(expression: IrSetVariable, data: BlockInfo): PromisedValue {
         expression.markLineNumber(startOffset = true)
         setVariable(expression.symbol, expression.value, data)
-        return defaultValue(expression.type)
+        return immaterialUnitValue
     }
 
     fun setVariable(symbol: IrValueSymbol, value: IrExpression, data: BlockInfo) {
@@ -551,7 +556,7 @@ class ExpressionCodegen(
         )
 
     override fun visitClass(declaration: IrClass, data: BlockInfo): PromisedValue {
-        classCodegen.generateLocalClass(declaration, generateSequence(this) { it.inlinedInto }.any { it.irFunction.isInline }).also {
+        classCodegen.generateLocalClass(declaration, generateSequence(this) { it.inlinedInto }.last().irFunction).also {
             closureReifiedMarkers[declaration] = it
         }
         return immaterialUnitValue
@@ -594,7 +599,10 @@ class ExpressionCodegen(
         SwitchGenerator(expression, data, this).generate()?.let { return it }
 
         val endLabel = Label()
-        val exhaustive = expression.branches.any { it.condition.isTrueConst() }
+        val exhaustive = expression.branches.any { it.condition.isTrueConst() } && !expression.type.isUnit()
+        assert(exhaustive || expression.type.isUnit()) {
+            "non-exhaustive conditional should return Unit: ${expression.dump()}"
+        }
         for (branch in expression.branches) {
             val elseLabel = Label()
             if (branch.condition.isFalseConst() || branch.condition.isTrueConst()) {
@@ -609,26 +617,21 @@ class ExpressionCodegen(
             } else {
                 branch.condition.accept(this, data).coerceToBoolean().jumpIfFalse(elseLabel)
             }
-            val result = branch.result.accept(this, data).coerce(expression.type).materialized
+            val result = branch.result.accept(this, data)
             if (!exhaustive) {
                 result.discard()
-            } else if (branch.condition.isTrueConst()) {
-                // The rest of the expression is dead code.
-                mv.mark(endLabel)
-                return result
+            } else {
+                val materializedResult = result.coerce(expression.type).materialized
+                if (branch.condition.isTrueConst()) {
+                    // The rest of the expression is dead code.
+                    mv.mark(endLabel)
+                    return materializedResult
+                }
             }
             mv.goTo(endLabel)
             mv.mark(elseLabel)
         }
         mv.mark(endLabel)
-        // NOTE: using a non-exhaustive if/when as an expression is invalid, so it should theoretically
-        //       always return Unit. However, with the current frontend this is not always the case.
-        //       Most notably, 1. when all branches return/break/continue, the type is Nothing;
-        //       2. the frontend may sometimes infer Any instead of Unit, probably due to a bug
-        //       (see compiler/testData/codegen/box/controlStructures/ifIncompatibleBranches.kt).
-        //       It should still be safe to produce a soon-to-be-discarded Unit. (What is not ok is
-        //       inserting *any* code here, though, as its line number will be that of the last line
-        //       of the last branch.)
         return immaterialUnitValue
     }
 
@@ -748,7 +751,7 @@ class ExpressionCodegen(
         mv.nop()
         val tryAsmType = aTry.asmType
         val tryResult = aTry.tryResult.accept(this, data)
-        val isExpression = true //TODO: more wise check is required
+        val isExpression = !aTry.type.isUnit()
         var savedValue: Int? = null
         if (isExpression) {
             tryResult.coerce(tryAsmType, aTry.type).materialize()
@@ -962,9 +965,8 @@ class ExpressionCodegen(
             }
         }
 
-        val original = (callee as? IrSimpleFunction)?.resolveFakeOverride() ?: irFunction
         val methodOwner = callee.parent.safeAs<IrClass>()?.let(typeMapper::mapClass) ?: MethodSignatureMapper.FAKE_OWNER_TYPE
-        val sourceCompiler = IrSourceCompilerForInline(state, element, original, this, data)
+        val sourceCompiler = IrSourceCompilerForInline(state, element, callee, this, data)
 
         val reifiedTypeInliner = ReifiedTypeInliner(mappings, object : ReifiedTypeInliner.IntrinsicsSupport<IrType> {
             override fun putClassInstance(v: InstructionAdapter, type: IrType) {
@@ -974,9 +976,7 @@ class ExpressionCodegen(
             override fun toKotlinType(type: IrType): KotlinType = type.toKotlinType()
         }, IrTypeCheckerContext(context.irBuiltIns), state.languageVersionSettings)
 
-        return IrInlineCodegen(
-            this, state, original.descriptor, methodOwner, signature, mappings, sourceCompiler, reifiedTypeInliner
-        )
+        return IrInlineCodegen(this, state, callee.descriptor, methodOwner, signature, mappings, sourceCompiler, reifiedTypeInliner)
     }
 
     override fun consumeReifiedOperationMarker(typeParameter: TypeParameterMarker) {

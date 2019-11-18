@@ -569,16 +569,13 @@ public final class OptionalUser : java/lang/Object {
           LDC ()
           LDC ()
           INVOKESPECIAL (User, <init>, (Ljava/lang/String;Ljava/lang/String;)V)
-          GOTO (L2)
+          ASTORE (1)
         LABEL (L1)
-          ALOAD (1)
-        LABEL (L2)
-          ASTORE (4)
           ALOAD (0)
-          ALOAD (4)
+          ALOAD (1)
           INVOKESPECIAL (OptionalUser, <init>, (LUser;)V)
           RETURN
-        LABEL (L3)
+        LABEL (L2)
     }
 
     public void <init>(int seen1, User user, kotlinx.serialization.SerializationConstructorMarker serializationConstructorMarker) {
@@ -932,27 +929,25 @@ public final class User : java/lang/Object {
           PUTFIELD (firstName, Ljava/lang/String;)
         LABEL (L3)
         LINENUMBER (7)
-          NOP
-        LABEL (L4)
         LINENUMBER (6)
           ICONST_0
           ILOAD (1)
           ICONST_2
           IAND
-          IF_ICMPNE (L5)
+          IF_ICMPNE (L4)
           NEW
           DUP
           LDC (lastName)
           INVOKESPECIAL (kotlinx/serialization/MissingFieldException, <init>, (Ljava/lang/String;)V)
           ATHROW
-        LABEL (L5)
+        LABEL (L4)
           ALOAD (0)
           ALOAD (3)
           PUTFIELD (lastName, Ljava/lang/String;)
-        LABEL (L6)
+        LABEL (L5)
         LINENUMBER (7)
           RETURN
-        LABEL (L7)
+        LABEL (L6)
     }
 
     public final static java.lang.String access$prop$getFirstName$0(User $this)

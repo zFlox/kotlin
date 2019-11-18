@@ -21,10 +21,7 @@ import org.jetbrains.kotlin.resolve.calls.inference.components.NewTypeSubstituto
 import org.jetbrains.kotlin.resolve.calls.inference.model.ConstraintStorage
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.types.*
-import org.jetbrains.kotlin.types.model.StubTypeMarker
-import org.jetbrains.kotlin.types.model.TypeConstructorMarker
-import org.jetbrains.kotlin.types.model.TypeSubstitutorMarker
-import org.jetbrains.kotlin.types.model.TypeSystemInferenceExtensionContext
+import org.jetbrains.kotlin.types.model.*
 
 fun ConstraintStorage.buildCurrentSubstitutor(
     context: TypeSystemInferenceExtensionContext,
@@ -50,6 +47,11 @@ fun ConstraintStorage.buildAbstractResultingSubstitutor(context: TypeSystemInfer
         return context.typeSubstitutorByTypeConstructor(currentSubstitutorMap + uninferredSubstitutorMap)
     }
 
+fun ConstraintStorage.buildNotFixedVariablesToNonSubtypableTypesSubstitutor(context: TypeSystemInferenceExtensionContext) =
+    context.typeSubstitutorByTypeConstructor(
+        notFixedTypeVariables.mapValues { context.createStubType(it.value.typeVariable) }
+    )
+
 fun ConstraintStorage.buildResultingSubstitutor(context: TypeSystemInferenceExtensionContext): NewTypeSubstitutor {
     return buildAbstractResultingSubstitutor(context) as NewTypeSubstitutor
 }
@@ -71,7 +73,7 @@ fun CallableDescriptor.substitute(substitutor: NewTypeSubstitutor): CallableDesc
     return substitute(TypeSubstitutor.create(wrappedSubstitution))
 }
 
-fun CallableDescriptor.substituteAndApproximateCapturedTypes(
+fun CallableDescriptor.substituteAndApproximateTypes(
     substitutor: NewTypeSubstitutor,
     typeApproximator: TypeApproximator
 ): CallableDescriptor {
@@ -80,8 +82,10 @@ fun CallableDescriptor.substituteAndApproximateCapturedTypes(
 
         override fun prepareTopLevelType(topLevelType: KotlinType, position: Variance) =
             substitutor.safeSubstitute(topLevelType.unwrap()).let { substitutedType ->
-                typeApproximator.approximateToSuperType(substitutedType, TypeApproximatorConfiguration.CapturedAndIntegerLiteralsTypesApproximation)
-                    ?: substitutedType
+                typeApproximator.approximateToSuperType(
+                    substitutedType,
+                    TypeApproximatorConfiguration.FinalApproximationAfterResolutionAndInference
+                ) ?: substitutedType
             }
     }
 

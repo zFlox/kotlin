@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.fir.backend
 
-import org.jetbrains.kotlin.backend.common.descriptors.WrappedValueParameterDescriptor
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.*
@@ -17,10 +16,13 @@ import org.jetbrains.kotlin.fir.expressions.impl.FirElseIfTrueCondition
 import org.jetbrains.kotlin.fir.expressions.impl.FirNoReceiverExpression
 import org.jetbrains.kotlin.fir.expressions.impl.FirUnitExpression
 import org.jetbrains.kotlin.fir.references.FirReference
-import org.jetbrains.kotlin.fir.references.FirResolvedCallableReference
-import org.jetbrains.kotlin.fir.references.impl.FirPropertyFromParameterCallableReference
-import org.jetbrains.kotlin.fir.resolve.*
+import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
+import org.jetbrains.kotlin.fir.references.impl.FirPropertyFromParameterResolvedNamedReference
+import org.jetbrains.kotlin.fir.resolve.ScopeSession
+import org.jetbrains.kotlin.fir.resolve.buildUseSiteMemberScope
 import org.jetbrains.kotlin.fir.resolve.calls.SyntheticPropertySymbol
+import org.jetbrains.kotlin.fir.resolve.firSymbolProvider
+import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.scopes.ProcessorAction
 import org.jetbrains.kotlin.fir.scopes.impl.FirClassSubstitutionScope
 import org.jetbrains.kotlin.fir.symbols.impl.*
@@ -34,10 +36,12 @@ import org.jetbrains.kotlin.ir.declarations.impl.IrFieldImpl
 import org.jetbrains.kotlin.ir.declarations.impl.IrFileImpl
 import org.jetbrains.kotlin.ir.declarations.impl.IrValueParameterImpl
 import org.jetbrains.kotlin.ir.descriptors.IrBuiltIns
+import org.jetbrains.kotlin.ir.descriptors.WrappedValueParameterDescriptor
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.*
 import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.classifierOrFail
 import org.jetbrains.kotlin.ir.types.classifierOrNull
 import org.jetbrains.kotlin.ir.types.impl.IrErrorTypeImpl
 import org.jetbrains.kotlin.ir.types.makeNullable
@@ -164,7 +168,7 @@ class Fir2IrVisitor(
             if (superType is ConeClassLikeType) {
                 when (val superSymbol = superType.lookupTag.toSymbol(this@Fir2IrVisitor.session)) {
                     is FirClassSymbol -> {
-                        val superClass = superSymbol.fir
+                        val superClass = superSymbol.fir as FirClass<*>
                         for (declaration in superClass.declarations) {
                             if (declaration is FirMemberDeclaration && (declaration is FirSimpleFunction || declaration is FirProperty)) {
                                 result += declaration.name
@@ -182,17 +186,17 @@ class Fir2IrVisitor(
         return result
     }
 
-    private fun FirClass.collectCallableNamesFromSupertypes(result: MutableList<Name> = mutableListOf()): List<Name> {
+    private fun FirClass<*>.collectCallableNamesFromSupertypes(result: MutableList<Name> = mutableListOf()): List<Name> {
         for (superTypeRef in superTypeRefs) {
             superTypeRef.collectCallableNamesFromThisAndSupertypes(result)
         }
         return result
     }
 
-    private fun FirClass.getPrimaryConstructorIfAny(): FirConstructor? =
+    private fun FirClass<*>.getPrimaryConstructorIfAny(): FirConstructor? =
         declarations.filterIsInstance<FirConstructor>().firstOrNull()?.takeIf { it.isPrimary }
 
-    private fun IrClass.addFakeOverrides(klass: FirClass, processedCallableNames: MutableList<Name>) {
+    private fun IrClass.addFakeOverrides(klass: FirClass<*>, processedCallableNames: MutableList<Name>) {
         if (fakeOverrideMode == FakeOverrideMode.NONE) return
         val superTypesCallableNames = klass.collectCallableNamesFromSupertypes()
         val useSiteMemberScope = (klass as? FirRegularClass)?.buildUseSiteMemberScope(session, ScopeSession()) ?: return
@@ -259,7 +263,7 @@ class Fir2IrVisitor(
         }
     }
 
-    private fun IrClass.setClassContent(klass: FirClass) {
+    private fun IrClass.setClassContent(klass: FirClass<*>) {
         declarationStorage.enterScope(descriptor)
         val primaryConstructor = klass.getPrimaryConstructorIfAny()
         val irPrimaryConstructor = primaryConstructor?.accept(this@Fir2IrVisitor, null) as IrConstructor?
@@ -338,7 +342,7 @@ class Fir2IrVisitor(
                     if (classLikeSymbol !is FirClassSymbol) {
                         lastClass
                     } else {
-                        val firClass = classLikeSymbol.fir
+                        val firClass = classLikeSymbol.fir as FirClass<*>
                         declarationStorage.getIrClass(firClass, setParent = false)
                     }
                 }
@@ -357,31 +361,17 @@ class Fir2IrVisitor(
                     overriddenSymbols += overriddenSymbol
                 }
             }
-            body = firFunction?.body?.convertToIrBlockBody()
-            if (this !is IrConstructor) {
-                // Scope for primary constructor should be left after class declaration
-                // Scope for secondary constructor should be left after delegating call
-                declarationStorage.leaveScope(descriptor)
-            }
-        }
-        return this
-    }
-
-    override fun visitConstructor(constructor: FirConstructor, data: Any?): IrElement {
-        val irConstructor = declarationStorage.getIrConstructor(
-            constructor, irParent = parentStack.last() as? IrClass
-        )
-        return irConstructor.setParentByParentStack().withFunction {
-            setFunctionContent(irConstructor.descriptor, constructor)
-        }.withParent {
-            if (!parentAsClass.isAnnotationClass) {
-                val body = this.body as IrBlockBody? ?: IrBlockBodyImpl(startOffset, endOffset)
-                val delegatedConstructor = constructor.delegatedConstructor
+            var body = firFunction?.body?.convertToIrBlockBody()
+            if (firFunction is FirConstructor && this is IrConstructor && !parentAsClass.isAnnotationClass) {
+                if (body == null) {
+                    body = IrBlockBodyImpl(startOffset, endOffset)
+                }
+                val delegatedConstructor = firFunction.delegatedConstructor
                 if (delegatedConstructor != null) {
                     val irDelegatingConstructorCall = delegatedConstructor.toIrDelegatingConstructorCall()
                     body.statements += irDelegatingConstructorCall ?: delegatedConstructor.convertWithOffsets { startOffset, endOffset ->
                         IrErrorCallExpressionImpl(
-                            startOffset, endOffset, irConstructor.returnType, "Cannot find delegated constructor call"
+                            startOffset, endOffset, returnType, "Cannot find delegated constructor call"
                         )
                     }
                 }
@@ -394,10 +384,23 @@ class Fir2IrVisitor(
                 if (body.statements.isNotEmpty()) {
                     this.body = body
                 }
+            } else if (this !is IrConstructor) {
+                this.body = body
             }
-            if (!constructor.isPrimary) {
-                declarationStorage.leaveScope(irConstructor.descriptor)
+            if (this !is IrConstructor || !this.isPrimary) {
+                // Scope for primary constructor should be left after class declaration
+                declarationStorage.leaveScope(descriptor)
             }
+        }
+        return this
+    }
+
+    override fun visitConstructor(constructor: FirConstructor, data: Any?): IrElement {
+        val irConstructor = declarationStorage.getIrConstructor(
+            constructor, irParent = parentStack.last() as? IrClass
+        )
+        return irConstructor.setParentByParentStack().withFunction {
+            setFunctionContent(irConstructor.descriptor, constructor)
         }
     }
 
@@ -418,13 +421,12 @@ class Fir2IrVisitor(
     private fun FirDelegatedConstructorCall.toIrDelegatingConstructorCall(): IrDelegatingConstructorCall? {
         val constructedClassSymbol = with(typeContext) {
             (constructedTypeRef as FirResolvedTypeRef).type.typeConstructor()
-        } as? FirClassSymbol ?: return null
+        } as? FirClassSymbol<*> ?: return null
         val constructedIrType = constructedTypeRef.toIrType(this@Fir2IrVisitor.session, declarationStorage)
         // TODO: find delegated constructor correctly
         val classId = constructedClassSymbol.classId
-        val provider = this@Fir2IrVisitor.session.firSymbolProvider
         var constructorSymbol: FirConstructorSymbol? = null
-        provider.getClassUseSiteMemberScope(classId, this@Fir2IrVisitor.session, ScopeSession())!!.processFunctionsByName(
+        constructedClassSymbol.buildUseSiteMemberScope(this@Fir2IrVisitor.session, ScopeSession())!!.processFunctionsByName(
             classId.shortClassName
         ) {
             when {
@@ -508,7 +510,8 @@ class Fir2IrVisitor(
                 startOffset, endOffset, origin, symbol,
                 name, inferredType,
                 visibility, isFinal = isFinal, isExternal = false,
-                isStatic = property.isStatic || parent !is IrClass
+                isStatic = property.isStatic || parent !is IrClass,
+                isFakeOverride = origin == IrDeclarationOrigin.FAKE_OVERRIDE
             )
         }.setParentByParentStack().withParent {
             declarationStorage.enterScope(descriptor)
@@ -523,6 +526,7 @@ class Fir2IrVisitor(
         property: FirProperty,
         firOverriddenSymbol: FirPropertySymbol? = null
     ): IrProperty {
+        declarationStorage.enterScope(descriptor)
         val initializer = property.initializer
         val delegate = property.delegate
         val irParent = this.parent
@@ -569,6 +573,7 @@ class Fir2IrVisitor(
         property.annotations.forEach {
             annotations += it.accept(this@Fir2IrVisitor, null) as IrConstructorCall
         }
+        declarationStorage.leaveScope(descriptor)
         return this
     }
 
@@ -660,8 +665,8 @@ class Fir2IrVisitor(
 
     private fun FirReference.statementOrigin(): IrStatementOrigin? {
         return when (this) {
-            is FirPropertyFromParameterCallableReference -> IrStatementOrigin.INITIALIZE_PROPERTY_FROM_PARAMETER
-            is FirResolvedCallableReference -> when (resolvedSymbol) {
+            is FirPropertyFromParameterResolvedNamedReference -> IrStatementOrigin.INITIALIZE_PROPERTY_FROM_PARAMETER
+            is FirResolvedNamedReference -> when (resolvedSymbol) {
                 is FirAccessorSymbol, is SyntheticPropertySymbol -> IrStatementOrigin.GET_PROPERTY
                 else -> null
             }
@@ -676,8 +681,7 @@ class Fir2IrVisitor(
             when {
                 symbol is IrConstructorSymbol -> IrConstructorCallImpl.fromSymbolOwner(startOffset, endOffset, type, symbol)
                 symbol is IrSimpleFunctionSymbol -> IrCallImpl(
-                    startOffset, endOffset, type, symbol, symbol.descriptor,
-                    origin = calleeReference.statementOrigin()
+                    startOffset, endOffset, type, symbol, origin = calleeReference.statementOrigin()
                 )
                 symbol is IrPropertySymbol && symbol.isBound -> {
                     val getter = symbol.owner.getter
@@ -706,7 +710,8 @@ class Fir2IrVisitor(
             when (symbol) {
                 is IrClassSymbol -> {
                     val irClass = symbol.owner
-                    val irConstructor = firSymbol?.fir?.getPrimaryConstructorIfAny()?.let { firConstructor ->
+                    val fir = firSymbol?.fir as? FirClass<*>
+                    val irConstructor = fir?.getPrimaryConstructorIfAny()?.let { firConstructor ->
                         declarationStorage.getIrConstructor(firConstructor, irParent = irClass, shouldLeaveScope = true)
                     }?.apply {
                         this.parent = irClass
@@ -822,7 +827,7 @@ class Fir2IrVisitor(
                 is IrFunctionSymbol -> {
                     IrFunctionReferenceImpl(
                         startOffset, endOffset, type, symbol,
-                        symbol.descriptor, 0
+                        0
                     )
                 }
                 else -> {
@@ -899,7 +904,7 @@ class Fir2IrVisitor(
                 listOf(
                     anonymousClass,
                     IrConstructorCallImpl.fromSymbolOwner(
-                        startOffset, endOffset, anonymousClassType, anonymousClass.constructors.first().symbol
+                        startOffset, endOffset, anonymousClassType, anonymousClass.constructors.first().symbol, anonymousClass.typeParameters.size
                     )
                 )
             )
@@ -964,7 +969,7 @@ class Fir2IrVisitor(
             IrErrorExpressionImpl(
                 startOffset, endOffset,
                 errorExpression.typeRef.toIrType(session, declarationStorage),
-                errorExpression.reason
+                errorExpression.diagnostic.reason
             )
         }
     }
@@ -1140,21 +1145,22 @@ class Fir2IrVisitor(
         }
         // TODO: it's temporary hack which should be refactored
         val simpleType = when (val classId = (firstType.type as? ConeClassLikeType)?.lookupTag?.classId) {
-            ClassId(FqName("kotlin"), FqName("Long"), false) -> irBuiltIns.builtIns.longType
-            ClassId(FqName("kotlin"), FqName("Int"), false) -> irBuiltIns.builtIns.intType
-            ClassId(FqName("kotlin"), FqName("Float"), false) -> irBuiltIns.builtIns.floatType
-            ClassId(FqName("kotlin"), FqName("Double"), false) -> irBuiltIns.builtIns.doubleType
+            ClassId(FqName("kotlin"), FqName("Long"), false) -> irBuiltIns.longType
+            ClassId(FqName("kotlin"), FqName("Int"), false) -> irBuiltIns.intType
+            ClassId(FqName("kotlin"), FqName("Float"), false) -> irBuiltIns.floatType
+            ClassId(FqName("kotlin"), FqName("Double"), false) -> irBuiltIns.doubleType
             else -> {
                 return IrErrorCallExpressionImpl(
                     startOffset, endOffset, booleanType, "Comparison of arguments with unsupported type: $classId"
                 )
             }
         }
+        val classifier = simpleType.classifierOrFail
         val (symbol, origin) = when (operation) {
-            FirOperation.LT -> irBuiltIns.lessFunByOperandType[simpleType] to IrStatementOrigin.LT
-            FirOperation.GT -> irBuiltIns.greaterFunByOperandType[simpleType] to IrStatementOrigin.GT
-            FirOperation.LT_EQ -> irBuiltIns.lessOrEqualFunByOperandType[simpleType] to IrStatementOrigin.LTEQ
-            FirOperation.GT_EQ -> irBuiltIns.greaterOrEqualFunByOperandType[simpleType] to IrStatementOrigin.GTEQ
+            FirOperation.LT -> irBuiltIns.lessFunByOperandType[classifier] to IrStatementOrigin.LT
+            FirOperation.GT -> irBuiltIns.greaterFunByOperandType[classifier] to IrStatementOrigin.GT
+            FirOperation.LT_EQ -> irBuiltIns.lessOrEqualFunByOperandType[classifier] to IrStatementOrigin.LTEQ
+            FirOperation.GT_EQ -> irBuiltIns.greaterOrEqualFunByOperandType[classifier] to IrStatementOrigin.GTEQ
             else -> throw AssertionError("Unexpected comparison operation: $operation")
         }
         return primitiveOp2(startOffset, endOffset, symbol!!, booleanType, origin, first.toIrExpression(), second.toIrExpression())

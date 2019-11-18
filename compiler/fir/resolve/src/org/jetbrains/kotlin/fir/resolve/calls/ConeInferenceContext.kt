@@ -85,9 +85,11 @@ interface ConeInferenceContext : TypeSystemInferenceExtensionContext,
         return ConeStarProjection
     }
 
-    override fun newBaseTypeCheckerContext(errorTypesEqualToAnything: Boolean): AbstractTypeCheckerContext {
-        return ConeTypeCheckerContext(errorTypesEqualToAnything, session)
-    }
+    override fun newBaseTypeCheckerContext(
+        errorTypesEqualToAnything: Boolean,
+        stubTypesEqualToAnything: Boolean
+    ): AbstractTypeCheckerContext =
+        ConeTypeCheckerContext(errorTypesEqualToAnything, stubTypesEqualToAnything, session)
 
     override fun KotlinTypeMarker.canHaveUndefinedNullability(): Boolean {
         require(this is ConeKotlinType)
@@ -167,7 +169,7 @@ interface ConeInferenceContext : TypeSystemInferenceExtensionContext,
     override fun Collection<KotlinTypeMarker>.singleBestRepresentative(): KotlinTypeMarker? {
         if (this.size == 1) return this.first()
 
-        val context = newBaseTypeCheckerContext(true)
+        val context = newBaseTypeCheckerContext(errorTypesEqualToAnything = true, stubTypesEqualToAnything = true)
         return this.firstOrNull { candidate ->
             this.all { other ->
                 // We consider error types equal to anything here, so that intersections like
@@ -211,7 +213,8 @@ interface ConeInferenceContext : TypeSystemInferenceExtensionContext,
     }
 
     override fun createStubType(typeVariable: TypeVariableMarker): StubTypeMarker {
-        TODO("not implemented")
+        require(typeVariable is ConeTypeVariable) { "$typeVariable should subtype of ${ConeTypeVariable::class.qualifiedName}" }
+        return ConeStubType(typeVariable, ConeNullability.create(typeVariable.defaultType().isMarkedNullable()))
     }
 
     override fun KotlinTypeMarker.removeAnnotations(): KotlinTypeMarker {
@@ -248,7 +251,7 @@ interface ConeInferenceContext : TypeSystemInferenceExtensionContext,
 
     override fun DefinitelyNotNullTypeMarker.original(): SimpleTypeMarker {
         require(this is ConeDefinitelyNotNullType)
-        return this.original()
+        return this.original as SimpleTypeMarker
     }
 
     override fun typeSubstitutorByTypeConstructor(map: Map<TypeConstructorMarker, KotlinTypeMarker>): TypeSubstitutorMarker {
