@@ -1,10 +1,11 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="IDEA" type="GradleRunConfiguration" factoryName="Gradle" singleton="true">
+    <log_file alias="IDE log" path="$PROJECT_DIR$/local/ideaSandbox/log/idea.log" />
     <ExternalSystemSettings>
       <option name="executionName" />
       <option name="externalProjectPath" value="$PROJECT_DIR$" />
       <option name="externalSystemIdString" value="GRADLE" />
-      <option name="scriptParameters" value="" />
+      <option name="scriptParameters" value="--stacktrace" />
       <option name="taskDescriptions">
         <list />
       </option>
@@ -15,6 +16,7 @@
       </option>
       <option name="vmOptions" value="" />
     </ExternalSystemSettings>
-    <method />
+    <GradleScriptDebugEnabled>true</GradleScriptDebugEnabled>
+    <method v="2" />
   </configuration>
 </component>
