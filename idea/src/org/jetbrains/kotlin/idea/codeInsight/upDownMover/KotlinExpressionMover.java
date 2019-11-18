@@ -487,6 +487,8 @@ public class KotlinExpressionMover extends AbstractKotlinUpDownMover {
             return element;
         }
 
+        if (getParentFileAnnotationEntry(element) != null) return null;
+
         //noinspection unchecked
         PsiElement movableElement = PsiUtilsKt.getParentOfTypesAndPredicate(
                 element,

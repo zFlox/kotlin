@@ -140,6 +140,8 @@ public class KotlinDeclarationMover extends AbstractKotlinUpDownMover {
     private static KtDeclaration getMovableDeclaration(@Nullable PsiElement element) {
         if (element == null) return null;
 
+        if (getParentFileAnnotationEntry(element) != null) return null;
+
         KtDeclaration declaration = PsiTreeUtil.getParentOfType(element, KtDeclaration.class, false);
         if (declaration instanceof KtParameter) return null;
         if (declaration instanceof KtTypeParameter) {

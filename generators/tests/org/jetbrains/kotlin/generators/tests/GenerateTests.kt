@@ -431,6 +431,7 @@ fun main(args: Array<String>) {
             model("codeInsight/moveUpDown/classBodyDeclarations", pattern = KT_OR_KTS, testMethod = "doTestClassBodyDeclaration")
             model("codeInsight/moveUpDown/closingBraces", testMethod = "doTestExpression")
             model("codeInsight/moveUpDown/expressions", pattern = KT_OR_KTS, testMethod = "doTestExpression")
+            model("codeInsight/moveUpDown/line", testMethod = "doTestLine")
             model("codeInsight/moveUpDown/parametersAndArguments", testMethod = "doTestExpression")
         }
 
