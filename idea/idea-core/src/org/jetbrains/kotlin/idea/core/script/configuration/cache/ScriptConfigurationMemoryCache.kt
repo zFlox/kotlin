@@ -37,14 +37,26 @@ open class ScriptConfigurationMemoryCache(
     }
 
     @Synchronized
-    override fun markOutOfDate(file: VirtualFile) {
-        val old = memoryCache[file] ?: ScriptConfigurationState()
-        memoryCache.put(
-            file, old.copy(
-                applied = old.applied?.copy(inputs = CachedConfigurationInputs.OutOfDate),
-                loaded = old.loaded?.copy(inputs = CachedConfigurationInputs.OutOfDate)
-            )
-        )
+    override fun markOutOfDate(scope: ScriptConfigurationCacheScope) {
+        when (scope) {
+            is ScriptConfigurationCacheScope.File -> {
+                val file = scope.file.originalFile.virtualFile
+                memoryCache.markFileOutOfDate(file)
+            }
+            is ScriptConfigurationCacheScope.Except -> {
+                val file = scope.file.originalFile.virtualFile
+                memoryCache.entrySet().forEach {
+                    if (it.key != file) {
+                        memoryCache.markFileOutOfDate(it.key)
+                    }
+                }
+            }
+            is ScriptConfigurationCacheScope.All ->{
+                memoryCache.entrySet().forEach {
+                    memoryCache.markFileOutOfDate(it.key)
+                }
+            }
+        }
     }
 
     @Synchronized
@@ -58,5 +70,16 @@ open class ScriptConfigurationMemoryCache(
     @Synchronized
     override fun clear() {
         memoryCache.clear()
+    }
+
+    @Synchronized
+    private fun SLRUMap<VirtualFile, ScriptConfigurationState>.markFileOutOfDate(file: VirtualFile) {
+        val old = memoryCache[file] ?: return
+        put(
+            file, old.copy(
+                applied = old.applied?.copy(inputs = CachedConfigurationInputs.OutOfDate),
+                loaded = old.loaded?.copy(inputs = CachedConfigurationInputs.OutOfDate)
+            )
+        )
     }
 }
