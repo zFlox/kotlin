@@ -9,9 +9,6 @@ import org.gradle.api.internal.tasks.testing.*
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.testing.Test
-import org.gradle.api.tasks.testing.TestFilter
-import org.jetbrains.kotlin.gradle.plugin.KotlinTarget
-import org.jetbrains.kotlin.gradle.plugin.KotlinTestRun
 
 open class KotlinJvmTest : Test() {
     @Input
@@ -32,14 +29,19 @@ open class KotlinJvmTest : Test() {
         override fun execute(testExecutionSpec: JvmTestExecutionSpec, testResultProcessor: TestResultProcessor) {
             delegate.execute(testExecutionSpec, object : TestResultProcessor by testResultProcessor {
                 override fun started(test: TestDescriptorInternal, event: TestStartEvent) {
-                    val myTest = object : TestDescriptorInternal by test {
-                        override fun getDisplayName(): String = "${test.displayName}[$targetName]"
-                        override fun getClassName(): String? = test.className?.replace('$', '.')
-                        override fun getClassDisplayName(): String? = test.classDisplayName?.replace('$', '.')
-                    }
-                    testResultProcessor.started(myTest, event)
+                    testResultProcessor.started(
+                        if (test is DefaultTestDescriptor) KotlinTestDescriptorWrapper(test) else test,
+                        event
+                    )
                 }
             })
+        }
+
+        inner class KotlinTestDescriptorWrapper(private val delegate: DefaultTestDescriptor) : TestDescriptorInternal by delegate {
+            override fun getName(): String = displayName
+            override fun getDisplayName(): String = "${delegate.displayName}[$targetName]"
+            override fun getClassName(): String? = delegate.className?.replace('$', '.')
+            override fun getClassDisplayName(): String? = delegate.classDisplayName?.replace('$', '.')
         }
     }
 }
