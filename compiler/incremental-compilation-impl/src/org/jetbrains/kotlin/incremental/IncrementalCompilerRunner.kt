@@ -222,7 +222,7 @@ abstract class IncrementalCompilerRunner<
             val expectActualTracker = ExpectActualTrackerImpl()
             val (sourcesToCompile, removedKotlinSources) = dirtySources.partition(File::exists)
 
-            allSourcesToCompile.addAll(sourcesToCompile)
+            allSourcesToCompile.addAll(dirtySources)
             val text = allSourcesToCompile.joinToString(separator = System.getProperty("line.separator")) { it.canonicalPath }
             dirtySourcesSinceLastTimeFile.writeText(text)
 
