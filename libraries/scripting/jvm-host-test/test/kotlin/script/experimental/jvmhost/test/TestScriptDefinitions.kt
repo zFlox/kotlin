@@ -31,6 +31,21 @@ abstract class ScriptWithProvidedProperties
 @KotlinScript(fileExtension = "withreceiver.kts", compilationConfiguration = ImplicitReceiverConfiguration::class)
 abstract class ScriptWithImplicitReceiver
 
+@DslMarker
+private annotation class ScriptDslMarker
+
+@ScriptDslMarker
+data class ScriptWithDslMarkerRunner(var n: Int)
+
+@ScriptDslMarker
+open class ScriptWithDslMarkerBase {
+    @ScriptDslMarker
+    fun bar(name: String, init: ScriptWithDslMarkerRunner.() -> Unit) { }
+}
+
+@KotlinScript(fileExtension = "withdslmarker.kts")
+abstract class ScriptWithDslMarker : ScriptWithDslMarkerBase()
+
 object ReceiverAndPropertiesConfiguration : ScriptCompilationConfiguration(
     {
         updateClasspath(classpathFromClass<ScriptWithBoth>())

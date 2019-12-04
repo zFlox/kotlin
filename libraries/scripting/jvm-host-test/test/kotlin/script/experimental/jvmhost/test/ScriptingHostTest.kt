@@ -238,6 +238,19 @@ class ScriptingHostTest : TestCase() {
         Assert.assertEquals(greeting, output)
     }
 
+    @Test
+    fun testScriptWithDslMarker() {
+        val greeting = listOf("success")
+        val script = File(TEST_DATA_DIR, "test.withdslmarker.kts").toScriptSource()
+        val compilationConfiguration = createJvmCompilationConfigurationFromTemplate<ScriptWithDslMarker> {
+            updateClasspath(classpathFromClass<ScriptingHostTest>())
+        }
+        val output = captureOut {
+            BasicJvmScriptingHost().eval(script, compilationConfiguration, null).throwOnFailure()
+        }.lines()
+        Assert.assertEquals(greeting, output)
+    }
+
     private fun doDiamondImportTest(evaluationConfiguration: ScriptEvaluationConfiguration? = null): List<String> {
         val mainScript = "sharedVar += 1\nprintln(\"sharedVar == \$sharedVar\")".toScriptSource("main.kts")
         val middleScript = File(TEST_DATA_DIR, "importTest/diamondImportMiddle.kts").toScriptSource()
