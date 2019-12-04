@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
 import org.jetbrains.kotlin.resolve.lazy.ResolveSession
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 
@@ -68,7 +69,9 @@ abstract class AbstractOutOfBlockModificationTest : KotlinLightCodeInsightFixtur
     }
 
     private fun checkForUnexpectedErrors(ktFile: KtFile) {
-        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile) { it.analyzeWithAllCompilerChecks().bindingContext.diagnostics }
+        val diagnosticsProvider: (KtFile) -> Diagnostics = { it.analyzeWithAllCompilerChecks().bindingContext.diagnostics }
+        DirectiveBasedActionUtils.checkForUnexpectedWarnings(ktFile, diagnosticsProvider)
+        DirectiveBasedActionUtils.checkForUnexpectedErrors(ktFile, diagnosticsProvider)
     }
 
     private fun checkOOBWithDescriptorsResolve(expectedOutOfBlock: Boolean) {
