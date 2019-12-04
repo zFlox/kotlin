@@ -31,7 +31,6 @@ import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.idea.IdeaModule;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.ClassSetProjectImportExtraModelProvider;
 import org.jetbrains.plugins.gradle.model.ExternalProject;
 import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
@@ -61,7 +60,7 @@ import static org.junit.Assume.assumeThat;
 @RunWith(value = Parameterized.class)
 public abstract class AbstractModelBuilderTest {
 
-    public static final Object[][] SUPPORTED_GRADLE_VERSIONS = {{"4.9"}, {"5.6.4"}, {"6.0.1"}};
+    public static final Object[][] SUPPORTED_GRADLE_VERSIONS = PlatformKt.getSUPPORTED_GRADLE_VERSIONS();
 
     private static final Pattern TEST_METHOD_NAME_PATTERN = Pattern.compile("(.*)\\[(\\d*: with Gradle-.*)\\]");
 
@@ -141,7 +140,7 @@ public abstract class AbstractModelBuilderTest {
 
         try {
             ProjectImportAction projectImportAction = new ProjectImportAction(false);
-            projectImportAction.addProjectImportExtraModelProvider(new ClassSetProjectImportExtraModelProvider(getModels()));
+            PlatformKt.addExtraProjectModelClasses(projectImportAction, getModels());
             BuildActionExecuter<ProjectImportAction.AllModels> buildActionExecutor = connection.action(projectImportAction);
             File initScript = GradleExecutionHelper.generateInitScript(false, getToolingExtensionClasses());
             assertNotNull(initScript);
@@ -186,7 +185,7 @@ public abstract class AbstractModelBuilderTest {
         }
     }
 
-    protected abstract Set<Class> getModels();
+    protected abstract Set<Class<?>> getModels();
 
 
     private <T> Map<String, T> getModulesMap(final Class<T> aClass) {
