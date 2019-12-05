@@ -108,6 +108,7 @@ private fun scriptDefinitionsFromDependencies(project: Project): TemplatesWithCp
     }
 
     project.allModules().forEach { module ->
+        if (module.isDisposed) return@forEach
         // assuming that all libraries are placed into classes roots
         // TODO: extract exact library dependencies instead of putting all module dependencies into classpath
         OrderEnumerator.orderEntries(module).withoutDepModules().withoutSdk().classesRoots.forEach { root ->
