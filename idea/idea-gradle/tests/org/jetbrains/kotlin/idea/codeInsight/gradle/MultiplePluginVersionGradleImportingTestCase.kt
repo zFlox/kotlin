@@ -34,7 +34,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : GradleImportingTes
 
     @JvmField
     @Parameterized.Parameter(1)
-    var gradleKotlinPluginVersionType: String = LATEST_SUPPORTED_VERSION//MINIMAL_SUPPORTED_VERSION
+    var gradleKotlinPluginVersionType: String = LATEST_STABLE_VERSUON//MINIMAL_SUPPORTED_VERSION
 
     val gradleKotlinPluginVersion: String
         get() = KOTLIN_GRADLE_PLUGIN_VERSION_DESCRIPTION_TO_VERSION[gradleKotlinPluginVersionType] ?: gradleKotlinPluginVersionType
@@ -67,7 +67,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : GradleImportingTes
                 listOf(
                     arrayOf<Any>(
                         gradleVersion[0],
-                        LATEST_SUPPORTED_VERSION
+                        LATEST_STABLE_VERSUON
                     )
                 )
 //                KOTLIN_GRADLE_PLUGIN_VERSIONS.map { kotlinVersion ->
