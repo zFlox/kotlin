@@ -476,7 +476,7 @@ class LiftAssignmentInspectionBasedProcessing :
         } ?: false
 
     override fun apply(element: KtExpression) {
-        BranchedFoldingUtils.foldToAssignment(element)
+        BranchedFoldingUtils.tryFoldToAssignment(element)
     }
 }
 
