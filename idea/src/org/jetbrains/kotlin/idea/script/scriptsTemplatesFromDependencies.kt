@@ -98,6 +98,7 @@ private fun scriptDefinitionsFromDependencies(project: Project): TemplatesWithCp
 
     // processing source roots from the same project first since the resources are copied to the classes roots only on compilation
     project.allModules().forEach { module ->
+        if (module.isDisposed) return@forEach
         OrderEnumerator.orderEntries(module).withoutDepModules().withoutLibraries().withoutSdk().sourceRoots.forEach { root ->
             if (addTemplatesFromRoot(root)) {
                 classpath.addAll(OrderEnumerator.orderEntries(module).withoutSdk().classesRoots.mapNotNull {
