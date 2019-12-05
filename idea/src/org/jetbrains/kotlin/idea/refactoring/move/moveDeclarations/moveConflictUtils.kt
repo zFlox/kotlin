@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations
 
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.module.impl.scopes.JdkScope
@@ -459,9 +460,10 @@ class MoveConflictChecker(
                         val target = ref.resolve() ?: return@forEach
                         if (isToBeMoved(target)) return@forEach
 
-                        val targetDescriptor = when (target) {
-                            is KtDeclaration -> target.unsafeResolveToDescriptor()
-                            is PsiMember -> target.getJavaMemberDescriptor()
+                        val targetDescriptor = when {
+                            target is KtDeclaration -> target.unsafeResolveToDescriptor()
+                            target is PsiMember && target.language == JavaLanguage.INSTANCE ->
+                                target.getJavaMemberDescriptor()
                             else -> null
                         } as? DeclarationDescriptorWithVisibility ?: return@forEach
 
