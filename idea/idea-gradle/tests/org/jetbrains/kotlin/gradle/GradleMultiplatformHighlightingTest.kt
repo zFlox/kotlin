@@ -18,11 +18,13 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleImportingTestCase
+import org.jetbrains.kotlin.idea.codeInsight.gradle.MultiplePluginVersionGradleImportingTestCase
+import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Assert
 import org.junit.Test
 
-class GradleMultiplatformHighlightingTest : GradleImportingTestCase() {
+class GradleMultiplatformHighlightingTest : MultiplePluginVersionGradleImportingTestCase() {
 
     @TargetVersions("4.7+")
     @Test

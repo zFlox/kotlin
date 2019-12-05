@@ -34,7 +34,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : GradleImportingTes
 
     @JvmField
     @Parameterized.Parameter(1)
-    var gradleKotlinPluginVersionType: String = MINIMAL_SUPPORTED_VERSION
+    var gradleKotlinPluginVersionType: String = LATEST_SUPPORTED_VERSION//MINIMAL_SUPPORTED_VERSION
 
     val gradleKotlinPluginVersion: String
         get() = KOTLIN_GRADLE_PLUGIN_VERSION_DESCRIPTION_TO_VERSION[gradleKotlinPluginVersionType] ?: gradleKotlinPluginVersionType
@@ -53,21 +53,29 @@ abstract class MultiplePluginVersionGradleImportingTestCase : GradleImportingTes
         )
 
         private fun readPluginVersion() =
-            File("libraries/tools/kotlin-gradle-plugin/build/libs").listFiles()?.map { it.name }?.firstOrNull { it.contains("-original.jar") }?.replace(
-                "kotlin-gradle-plugin-",
-                ""
-            )?.replace("-original.jar", "") ?: "1.3-SNAPSHOT"
+            File("libraries/tools/kotlin-gradle-plugin/build/libs")
+                .listFiles()
+                ?.map { it.name }
+                ?.firstOrNull { it.contains("-original.jar") }?.replace("kotlin-gradle-plugin-","")
+                ?.replace("-original.jar", "")
+                ?: "1.3-SNAPSHOT"
 
         @JvmStatic
         @Parameterized.Parameters(name = "{index}: Gradle-{0}, KotlinGradlePlugin-{1}")
         fun data(): Collection<Array<Any>> {
             return AbstractModelBuilderTest.SUPPORTED_GRADLE_VERSIONS.flatMap { gradleVersion ->
-                KOTLIN_GRADLE_PLUGIN_VERSIONS.map { kotlinVersion ->
+                listOf(
                     arrayOf<Any>(
                         gradleVersion[0],
-                        kotlinVersion
+                        LATEST_SUPPORTED_VERSION
                     )
-                }
+                )
+//                KOTLIN_GRADLE_PLUGIN_VERSIONS.map { kotlinVersion ->
+//                    arrayOf<Any>(
+//                        gradleVersion[0],
+//                        kotlinVersion
+//                    )
+//                }
             }.toList()
         }
     }
@@ -85,7 +93,8 @@ abstract class MultiplePluginVersionGradleImportingTestCase : GradleImportingTes
             "konan/utils/build/libs"
         )
         val customRepositories = arrayOf("https://dl.bintray.com/kotlin/kotlin-dev", "http://dl.bintray.com/kotlin/kotlin-eap")
-        val customMavenRepositories = customRepositories.map { if (useKts) "maven { setUrl(\"$it\") }" else "maven { url '$it' } " }.joinToString("\n")
+        val customMavenRepositories =
+            customRepositories.map { if (useKts) "maven { setUrl(\"$it\") }" else "maven { url '$it' } " }.joinToString("\n")
         val baseFolder = File(".").absolutePath.replace("\\", "/")
         val quote = if (useKts) '"' else '\''
         val flatDirRepositories = if (useMaster)

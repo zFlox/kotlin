@@ -1,8 +1,23 @@
 // NO_ERRORS_EXPECTED
 
-plugins {
-    id 'kotlin-multiplatform' version '1.3.0'
+buildscript {
+    repositories {
+        {{kotlin_plugin_repositories}}
+    }
+    dependencies {
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:{{kotlin_plugin_version}}")
+                {{extraPluginDependencies}}
+    }
 }
+
+allprojects {
+    repositories {
+        {{kotlin_plugin_repositories}}
+    }
+}
+
+apply plugin: 'kotlin-multiplatform'
+
 repositories {
     mavenCentral()
     jcenter()
