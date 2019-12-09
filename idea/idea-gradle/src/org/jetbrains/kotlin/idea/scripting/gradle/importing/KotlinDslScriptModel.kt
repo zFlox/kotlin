@@ -55,17 +55,17 @@ fun KotlinDslScriptsModel.toListOfBuildScriptData(): List<GradleKotlinBuildScrip
         model.editorReports.forEach {
             messages.add(
                 GradleKotlinBuildScriptData.Message(
-                when (it.severity) {
-                    EditorReportSeverity.WARNING -> GradleKotlinBuildScriptData.Severity.WARNING
-                    else -> GradleKotlinBuildScriptData.Severity
-                        .ERROR
-                },
-                it.message,
-                it.position?.let { position ->
-                    GradleKotlinBuildScriptData
-                        .Position(position.line, position.column)
-                }
-            ))
+                    when (it.severity) {
+                        EditorReportSeverity.WARNING -> GradleKotlinBuildScriptData.Severity.WARNING
+                        else -> GradleKotlinBuildScriptData.Severity
+                            .ERROR
+                    },
+                    it.message,
+                    it.position?.let { position ->
+                        GradleKotlinBuildScriptData
+                            .Position(position.line, position.column)
+                    }
+                ))
         }
 
         GradleKotlinBuildScriptData(
