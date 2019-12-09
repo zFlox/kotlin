@@ -3,7 +3,7 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.idea.configuration
+package org.jetbrains.kotlin.idea.scripting.gradle.importing
 
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ProjectData
@@ -40,25 +40,30 @@ data class GradleKotlinBuildScriptData(
 }
 
 @Suppress("unused")
-fun KotlinGradleBuildScriptsResolver.copy(model: KotlinDslScriptsModel): List<GradleKotlinBuildScriptData> {
-    return model.scriptModels.map { (file, model) ->
+fun KotlinDslScriptsModel.toListOfBuildScriptData(): List<GradleKotlinBuildScriptData> {
+    return scriptModels.map { (file, model) ->
         val messages = mutableListOf<GradleKotlinBuildScriptData.Message>()
 
         model.exceptions.forEach {
             messages.add(
-                GradleKotlinBuildScriptData.Message(GradleKotlinBuildScriptData.Severity.ERROR, it)
+                GradleKotlinBuildScriptData.Message(
+                    GradleKotlinBuildScriptData.Severity.ERROR, it
+                )
             )
         }
 
         model.editorReports.forEach {
-            messages.add(GradleKotlinBuildScriptData.Message(
+            messages.add(
+                GradleKotlinBuildScriptData.Message(
                 when (it.severity) {
                     EditorReportSeverity.WARNING -> GradleKotlinBuildScriptData.Severity.WARNING
-                    else -> GradleKotlinBuildScriptData.Severity.ERROR
+                    else -> GradleKotlinBuildScriptData.Severity
+                        .ERROR
                 },
                 it.message,
                 it.position?.let { position ->
-                    GradleKotlinBuildScriptData.Position(position.line, position.column)
+                    GradleKotlinBuildScriptData
+                        .Position(position.line, position.column)
                 }
             ))
         }
