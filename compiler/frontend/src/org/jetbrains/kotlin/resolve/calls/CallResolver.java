@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.resolve.calls;
 import com.intellij.psi.PsiElement;
 import kotlin.Pair;
 import kotlin.collections.CollectionsKt;
+import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.builtins.FunctionTypesKt;
@@ -54,6 +55,7 @@ import javax.inject.Inject;
 import java.util.*;
 
 import static org.jetbrains.kotlin.diagnostics.Errors.*;
+import static org.jetbrains.kotlin.progress.CancelationStatusKt.runWithCheckCancellation;
 import static org.jetbrains.kotlin.resolve.calls.results.OverloadResolutionResults.Code.INCOMPLETE_TYPE_INFERENCE;
 import static org.jetbrains.kotlin.types.TypeUtils.NO_EXPECTED_TYPE;
 
@@ -663,51 +665,53 @@ public class CallResolver {
             @NotNull ResolutionTask<D> resolutionTask,
             @NotNull TracingStrategy tracing
     ) {
-        DataFlowInfo initialInfo = context.dataFlowInfoForArguments.getResultInfo();
-        if (context.checkArguments == CheckArgumentTypesMode.CHECK_VALUE_ARGUMENTS) {
-            argumentTypeResolver.analyzeArgumentsAndRecordTypes(context, ResolveArgumentsMode.SHAPE_FUNCTION_ARGUMENTS);
-        }
-
-        List<KtTypeProjection> typeArguments = context.call.getTypeArguments();
-        for (KtTypeProjection projection : typeArguments) {
-            if (projection.getProjectionKind() != KtProjectionKind.NONE) {
-                context.trace.report(PROJECTION_ON_NON_CLASS_TYPE_ARGUMENT.on(projection));
-                ModifierCheckerCore.INSTANCE.check(projection, context.trace, null, languageVersionSettings);
+        return runWithCheckCancellation((Function0<OverloadResolutionResultsImpl<D>>) () -> {
+            DataFlowInfo initialInfo = context.dataFlowInfoForArguments.getResultInfo();
+            if (context.checkArguments == CheckArgumentTypesMode.CHECK_VALUE_ARGUMENTS) {
+                argumentTypeResolver.analyzeArgumentsAndRecordTypes(context, ResolveArgumentsMode.SHAPE_FUNCTION_ARGUMENTS);
             }
-            KotlinType type = argumentTypeResolver.resolveTypeRefWithDefault(
-                    projection.getTypeReference(), context.scope, context.trace,
-                    null);
-            if (type != null) {
-                ForceResolveUtil.forceResolveAllContents(type);
-            }
-        }
 
-        OverloadResolutionResultsImpl<D> result;
-        if (!(resolutionTask.resolutionKind instanceof NewResolutionOldInference.ResolutionKind.GivenCandidates)) {
-            assert resolutionTask.name != null;
-            result = newResolutionOldInference.runResolution(context, resolutionTask.name, resolutionTask.resolutionKind, tracing);
-        }
-        else {
-            assert resolutionTask.givenCandidates != null;
-            result = newResolutionOldInference.runResolutionForGivenCandidates(context, tracing, resolutionTask.givenCandidates);
-        }
-
-        // in code like
-        //   assert(a!!.isEmpty())
-        //   a.length
-        // we should ignore data flow info from assert argument, since assertions can be disabled and
-        // thus it will lead to NPE in runtime otherwise
-        if (languageVersionSettings.getFlag(AnalysisFlags.getIgnoreDataFlowInAssert()) && result.isSingleResult()) {
-            D descriptor = result.getResultingDescriptor();
-            if (descriptor.getName().equals(Name.identifier("assert"))) {
-                DeclarationDescriptor declaration = descriptor.getContainingDeclaration();
-                if (declaration instanceof PackageFragmentDescriptor &&
-                    ((PackageFragmentDescriptor) declaration).getFqName().asString().equals("kotlin")) {
-                    context.dataFlowInfoForArguments.updateInfo(context.call.getValueArguments().get(0), initialInfo);
+            List<KtTypeProjection> typeArguments = context.call.getTypeArguments();
+            for (KtTypeProjection projection : typeArguments) {
+                if (projection.getProjectionKind() != KtProjectionKind.NONE) {
+                    context.trace.report(PROJECTION_ON_NON_CLASS_TYPE_ARGUMENT.on(projection));
+                    ModifierCheckerCore.INSTANCE.check(projection, context.trace, null, languageVersionSettings);
+                }
+                KotlinType type = argumentTypeResolver.resolveTypeRefWithDefault(
+                        projection.getTypeReference(), context.scope, context.trace,
+                        null);
+                if (type != null) {
+                    ForceResolveUtil.forceResolveAllContents(type);
                 }
             }
-        }
-        return result;
+
+            OverloadResolutionResultsImpl<D> result;
+            if (!(resolutionTask.resolutionKind instanceof NewResolutionOldInference.ResolutionKind.GivenCandidates)) {
+                assert resolutionTask.name != null;
+                result = newResolutionOldInference.runResolution(context, resolutionTask.name, resolutionTask.resolutionKind, tracing);
+            }
+            else {
+                assert resolutionTask.givenCandidates != null;
+                result = newResolutionOldInference.runResolutionForGivenCandidates(context, tracing, resolutionTask.givenCandidates);
+            }
+
+            // in code like
+            //   assert(a!!.isEmpty())
+            //   a.length
+            // we should ignore data flow info from assert argument, since assertions can be disabled and
+            // thus it will lead to NPE in runtime otherwise
+            if (languageVersionSettings.getFlag(AnalysisFlags.getIgnoreDataFlowInAssert()) && result.isSingleResult()) {
+                D descriptor = result.getResultingDescriptor();
+                if (descriptor.getName().equals(Name.identifier("assert"))) {
+                    DeclarationDescriptor declaration = descriptor.getContainingDeclaration();
+                    if (declaration instanceof PackageFragmentDescriptor &&
+                        ((PackageFragmentDescriptor) declaration).getFqName().asString().equals("kotlin")) {
+                        context.dataFlowInfoForArguments.updateInfo(context.call.getValueArguments().get(0), initialInfo);
+                    }
+                }
+            }
+            return result;
+        });
     }
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

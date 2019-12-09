@@ -22,19 +22,77 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider
 class CompilationCanceledException : ProcessCanceledException()
 
 interface CompilationCanceledStatus {
-    fun checkCanceled(): Unit
+    fun checkCanceled()
 }
 
 object ProgressIndicatorAndCompilationCanceledStatus {
+
     private var canceledStatus: CompilationCanceledStatus? = null
 
     @JvmStatic
-    @Synchronized fun setCompilationCanceledStatus(newCanceledStatus: CompilationCanceledStatus?): Unit {
+    @Synchronized
+    fun setCompilationCanceledStatus(newCanceledStatus: CompilationCanceledStatus?) {
         canceledStatus = newCanceledStatus
     }
 
-    @JvmStatic fun checkCanceled(): Unit {
+    @JvmStatic
+    fun checkCanceled() {
         ProgressIndicatorProvider.checkCanceled()
         canceledStatus?.checkCanceled()
+    }
+
+
+}
+
+private data class CanceledStatusRecord(var enabled: Boolean = false, var timestamp: Long = System.currentTimeMillis())
+
+class CompilationCanceledStatusHelper {
+    companion object {
+        @JvmStatic
+        private val statusRecord: ThreadLocal<CanceledStatusRecord> = ThreadLocal.withInitial { CanceledStatusRecord() }
+
+        @JvmStatic
+        private val threshold: Long = System.getProperty("idea.CheckCancelThreshold", "1000").toLong()
+
+        @JvmStatic
+        fun isEnabled() = statusRecord.get().enabled
+
+        @JvmStatic
+        fun checkCancellationDiff() {
+            val record = statusRecord.get()
+            if (record.enabled) {
+                val now = System.currentTimeMillis()
+                val diff = now - record.timestamp
+                if (diff > threshold) {
+                    try {
+                        throw RuntimeException("${Thread.currentThread().name} checkCanceled: $diff ms")
+                    } catch (e: Exception) {
+                        e.printStackTrace()
+                    }
+                }
+                record.timestamp = now
+            }
+        }
+
+        @JvmStatic
+        internal fun enableCancellationTimer(enabled: Boolean) {
+            val record = statusRecord.get()
+            record.enabled = enabled
+            record.timestamp = System.currentTimeMillis()
+        }
+
+    }
+}
+
+fun <T> runWithCheckCancellation(block: () -> T): T {
+    // checkCancel check is already enabled
+    if (CompilationCanceledStatusHelper.isEnabled()) return block()
+
+    CompilationCanceledStatusHelper.enableCancellationTimer(true)
+    try {
+        return block()
+    } finally {
+        CompilationCanceledStatusHelper.checkCancellationDiff()
+        CompilationCanceledStatusHelper.enableCancellationTimer(false)
     }
 }

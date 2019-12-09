@@ -19,11 +19,12 @@ import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
+import org.jetbrains.kotlin.platform.TargetPlatform
+import org.jetbrains.kotlin.progress.runWithCheckCancellation
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 
@@ -40,25 +41,33 @@ private class ResolutionFacadeWithDebugInfo(
 
     override fun analyze(element: KtElement, bodyResolveMode: BodyResolveMode): BindingContext {
         return wrapExceptions({ ResolvingWhat(listOf(element), bodyResolveMode) }) {
-            delegate.analyze(element, bodyResolveMode)
+            return runWithCheckCancellation {
+                delegate.analyze(element, bodyResolveMode)
+            }
         }
     }
 
     override fun analyze(elements: Collection<KtElement>, bodyResolveMode: BodyResolveMode): BindingContext {
         return wrapExceptions({ ResolvingWhat(elements, bodyResolveMode) }) {
-            delegate.analyze(elements, bodyResolveMode)
+            return runWithCheckCancellation {
+                delegate.analyze(elements, bodyResolveMode)
+            }
         }
     }
 
     override fun analyzeWithAllCompilerChecks(elements: Collection<KtElement>): AnalysisResult {
         return wrapExceptions({ ResolvingWhat(elements) }) {
-            delegate.analyzeWithAllCompilerChecks(elements)
+            return runWithCheckCancellation {
+                delegate.analyzeWithAllCompilerChecks(elements)
+            }
         }
     }
 
     override fun resolveToDescriptor(declaration: KtDeclaration, bodyResolveMode: BodyResolveMode): DeclarationDescriptor {
         return wrapExceptions({ ResolvingWhat(listOf(declaration), bodyResolveMode) }) {
-            delegate.resolveToDescriptor(declaration, bodyResolveMode)
+            return runWithCheckCancellation {
+                delegate.resolveToDescriptor(declaration, bodyResolveMode)
+            }
         }
     }
 
