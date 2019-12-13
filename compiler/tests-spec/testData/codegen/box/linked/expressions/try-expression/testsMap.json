@@ -1,0 +1,82 @@
+{
+  "2": {
+    "neg": {
+      "2": [
+        {
+          "specVersion": "0.1-218",
+          "casesNumber": 0,
+          "description": "catch block is evaluated immediately after the exception is thrown and the exception itself is passed inside the catch block as the corresponding parameter.",
+          "unexpectedBehaviour": false
+        }
+      ],
+      "1": [
+        {
+          "specVersion": "0.1-218",
+          "casesNumber": 0,
+          "description": "catch block is evaluated immediately after the exception is thrown and the exception itself is passed inside the catch block as the corresponding parameter.",
+          "path": "compiler/tests-spec/testData/codegen/box/linked/expressions/try-expression/p-2/neg/2.1.kt",
+          "unexpectedBehaviour": false
+        }
+      ]
+    },
+    "pos": {
+      "2": [
+        {
+          "specVersion": "0.1-218",
+          "casesNumber": 0,
+          "description": "catch block is evaluated immediately after the exception is thrown and the exception itself is passed inside the catch block as the corresponding parameter.",
+          "unexpectedBehaviour": false
+        },
+        {
+          "specVersion": "0.1-218",
+          "casesNumber": 0,
+          "description": "catch block is evaluated immediately after the exception is thrown and the exception itself is passed inside the catch block as the corresponding parameter.",
+          "unexpectedBehaviour": false
+        },
+        {
+          "specVersion": "0.1-218",
+          "casesNumber": 0,
+          "description": "catch block is evaluated immediately after the exception is thrown and the exception itself is passed inside the catch block as the corresponding parameter.",
+          "unexpectedBehaviour": false
+        }
+      ],
+      "1": [
+        {
+          "specVersion": "0.1-218",
+          "casesNumber": 0,
+          "description": "catch block is evaluated immediately after the exception is thrown and the exception itself is passed inside the catch block as the corresponding parameter.",
+          "path": "compiler/tests-spec/testData/codegen/box/linked/expressions/try-expression/p-2/pos/2.1.kt",
+          "unexpectedBehaviour": false
+        },
+        {
+          "specVersion": "0.1-218",
+          "casesNumber": 0,
+          "description": "catch block is evaluated immediately after the exception is thrown and the exception itself is passed inside the catch block as the corresponding parameter.",
+          "path": "compiler/tests-spec/testData/codegen/box/linked/expressions/try-expression/p-2/pos/2.3.kt",
+          "unexpectedBehaviour": false
+        },
+        {
+          "specVersion": "0.1-218",
+          "casesNumber": 0,
+          "description": "catch block is evaluated immediately after the exception is thrown and the exception itself is passed inside the catch block as the corresponding parameter.",
+          "path": "compiler/tests-spec/testData/codegen/box/linked/expressions/try-expression/p-2/pos/2.2.kt",
+          "unexpectedBehaviour": false
+        }
+      ],
+      "3": [
+        {
+          "specVersion": "0.1-218",
+          "casesNumber": 0,
+          "description": "If there are several catch blocks which match the exception type, the first one is picked.",
+          "unexpectedBehaviour": false
+        },
+        {
+          "specVersion": "0.1-218",
+          "casesNumber": 0,
+          "description": "If there are several catch blocks which match the exception type, the first one is picked.",
+          "unexpectedBehaviour": false
+        }
+      ]
+    }
+  }
+}
