@@ -86,7 +86,8 @@ fun getGradleScriptInputsStamp(
                     }
                 }
 
-            GradleKotlinScriptConfigurationInputs(result.toString(), file.timeStamp)
+            val relatedFilesTimeStamp = project.service<GradleScriptInputsWatcher>().lastModifiedFileTimeStamp(file)
+            GradleKotlinScriptConfigurationInputs(result.toString(), file.timeStamp, relatedFilesTimeStamp)
         } else null
     }
 }
