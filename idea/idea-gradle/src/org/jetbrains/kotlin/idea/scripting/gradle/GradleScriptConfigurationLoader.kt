@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.idea.scripting.gradle
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -40,8 +39,7 @@ class GradleScriptConfigurationLoader(project: Project) : DefaultScriptConfigura
             return true
         }
 
-        // todo: provide special loader in tests to avoid isUnitTestMode usage
-        if (!isLinkedWithGradleProject(ktFile.project, ktFile.originalFile.virtualFile) && !ApplicationManager.getApplication().isUnitTestMode) {
+        if (!isInAffectedGradleProjectFiles(ktFile.project, ktFile.originalFile.virtualFile)) {
             // todo: provide an action to load configuration through scripting API: KT-34625
             return true
         }

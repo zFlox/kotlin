@@ -5,12 +5,8 @@
 
 package org.jetbrains.kotlin.idea.scripting.gradle
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChangeListener
-import org.jetbrains.kotlin.idea.core.script.isScriptChangesNotifierDisabled
 import org.jetbrains.kotlin.idea.script.AbstractScriptConfigurationLoadingTest
-import org.jetbrains.kotlin.idea.script.addExtensionPointInTest
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
@@ -26,17 +22,11 @@ class GradleScriptInputsWatcherTest : AbstractScriptConfigurationLoadingTest() {
     override fun setUp() {
         super.setUp()
 
-        ApplicationManager.getApplication().isScriptChangesNotifierDisabled = false
+        // should be initialized explicitly because we do not have a real Gradle Project in this test
+        GradleScriptInputsWatcher.getInstance(project).startWatching()
     }
 
     override fun setUpTestProject() {
-        addExtensionPointInTest(
-            ScriptChangeListener.LISTENER,
-            project,
-            TestGradleScriptListener(project),
-            testRootDisposable
-        )
-
         val rootDir = "idea/testData/script/definition/loading/gradle/"
 
         val settings: KtFile = addFileToProject(rootDir + GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME)
@@ -176,6 +166,18 @@ class GradleScriptInputsWatcherTest : AbstractScriptConfigurationLoadingTest() {
         scriptConfigurationManager.clearConfigurationCachesAndRehighlight()
 
         changeSettingsKtsOutsideSections()
+
+        assertConfigurationUpToDate(testFiles.settings)
+        assertConfigurationUpdateWasDone(testFiles.buildKts)
+    }
+
+    fun testConfigurationUpdateAfterProjectClosing() {
+        assertAndLoadInitialConfiguration(testFiles.buildKts)
+        assertAndLoadInitialConfiguration(testFiles.settings)
+
+        changeSettingsKtsOutsideSections()
+
+        GradleScriptInputsWatcher.getInstance(project).clearAndRefillState()
 
         assertConfigurationUpToDate(testFiles.settings)
         assertConfigurationUpdateWasDone(testFiles.buildKts)

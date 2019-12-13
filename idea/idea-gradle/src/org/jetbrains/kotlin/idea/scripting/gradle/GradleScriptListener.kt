@@ -12,6 +12,10 @@ import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptChange
 import org.jetbrains.kotlin.idea.core.script.configuration.listener.ScriptConfigurationUpdater
 
 open class GradleScriptListener(project: Project) : ScriptChangeListener(project) {
+    init {
+        // initialize GradleScriptInputsWatcher to track changes in gradle-configuration related files
+        GradleScriptInputsWatcher.getInstance(project).startWatching()
+    }
 
     override fun editorActivated(vFile: VirtualFile, updater: ScriptConfigurationUpdater) {
         if (!isGradleKotlinScript(vFile)) return
@@ -30,10 +34,11 @@ open class GradleScriptListener(project: Project) : ScriptChangeListener(project
             // *.gradle.kts file was changed
             updater.ensureUpToDatedConfigurationSuggested(file)
         }
-        project.service<GradleScriptInputsWatcher>().addToStorage(vFile)
     }
 
     override fun isApplicable(vFile: VirtualFile): Boolean {
-        return isLinkedWithGradleProject(project, vFile)
+        if (!isGradleKotlinScript(vFile)) return false
+
+        return isInAffectedGradleProjectFiles(project, vFile)
     }
 }
