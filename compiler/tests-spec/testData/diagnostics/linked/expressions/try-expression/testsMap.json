@@ -160,5 +160,45 @@
         }
       ]
     }
+  },
+  "5": {
+    "pos": {
+      "2": [
+        {
+          "specVersion": "0.1-218",
+          "casesNumber": 1,
+          "description": "If an exception was thrown, but no catch block matched its type, the finally block is evaluated before propagating the exception up the call stack.",
+          "unexpectedBehaviour": true
+        }
+      ],
+      "1": [
+        {
+          "specVersion": "0.1-218",
+          "casesNumber": 1,
+          "description": "If no exception is thrown during the evaluation of the try body, no catch blocks are executed, the finally block is evaluated after the try body, and the program execution continues as normal.",
+          "unexpectedBehaviour": false
+        }
+      ]
+    }
+  },
+  "4": {
+    "pos": {
+      "1": [
+        {
+          "specVersion": "0.1-218",
+          "casesNumber": 1,
+          "description": "If an exception was thrown, but no catch block matched its type, the finally block is evaluated before propagating the exception up the call stack.",
+          "path": "compiler/tests-spec/testData/diagnostics/linked/expressions/try-expression/p-5/pos/2.1.kt",
+          "unexpectedBehaviour": true
+        },
+        {
+          "specVersion": "0.1-218",
+          "casesNumber": 1,
+          "description": "If no exception is thrown during the evaluation of the try body, no catch blocks are executed, the finally block is evaluated after the try body, and the program execution continues as normal.",
+          "path": "compiler/tests-spec/testData/diagnostics/linked/expressions/try-expression/p-5/pos/1.1.kt",
+          "unexpectedBehaviour": false
+        }
+      ]
+    }
   }
 }
