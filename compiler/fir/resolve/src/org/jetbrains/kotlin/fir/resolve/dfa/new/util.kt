@@ -75,21 +75,6 @@ internal inline fun <K, V> MutableMap<K, V>.put(key: K, value: V, remappingFunct
     }
 }
 
-internal val FirElement.symbol: AbstractFirBasedSymbol<*>?
-    get() = when (this) {
-        is FirResolvable -> symbol
-        is FirSymbolOwner<*> -> symbol
-        else -> null
-    }
-
-internal val FirResolvable.symbol: AbstractFirBasedSymbol<*>?
-    get() = when (val reference = calleeReference) {
-        is FirExplicitThisReference -> reference.boundSymbol
-        is FirResolvedNamedReference -> reference.resolvedSymbol
-        is FirNamedReferenceWithCandidate -> reference.candidateSymbol
-        else -> null
-    }
-
 internal val FirExpression.coneType: ConeKotlinType get() = typeRef.coneTypeUnsafe()
 
 internal fun FirOperation.invert(): FirOperation = when (this) {

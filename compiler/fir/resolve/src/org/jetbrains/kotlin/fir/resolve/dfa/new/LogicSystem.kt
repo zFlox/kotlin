@@ -30,29 +30,6 @@ abstract class LogicSystem(private val context: UniversalConeInferenceContext) {
 
     abstract fun removeAllAboutVariable(flow: Flow, variable: RealVariable)
 
-    /*
-     *  used for:
-     *   1. val b = x is String
-     *   2. b = x is String
-     *   3. !b | b.not()   for Booleans
-     */
-    fun replaceConditionalVariableInStatements(
-        flow: Flow,
-        originalVariable: DataFlowVariable,
-        newVariable: DataFlowVariable,
-        filter: (LogicStatement) -> Boolean = { true },
-        transform: (LogicStatement) -> LogicStatement = { it }
-    ) {
-        translateConditionalVariableInStatements(
-            flow,
-            originalVariable,
-            newVariable,
-            shouldRemoveOriginalStatements = true,
-            filter,
-            transform
-        )
-    }
-
     abstract fun translateConditionalVariableInStatements(
         flow: Flow,
         originalVariable: DataFlowVariable,
@@ -117,7 +94,7 @@ abstract class LogicSystem(private val context: UniversalConeInferenceContext) {
     /**
       * Recursively collects all DataFlowInfos approved by [predicate] and all predicates
       *   that has been implied by it
-     *   TODO: or not recursively?
+      *   TODO: or not recursively?
       */
     abstract fun approvePredicate(flow: Flow, predicate: Predicate): List<DataFlowInfo>
 
@@ -153,4 +130,27 @@ abstract class LogicSystem(private val context: UniversalConeInferenceContext) {
         context.commonSuperTypeOrNull(differentTypes.toList())?.let { commonTypes += it }
         return commonTypes
     }
+}
+
+/*
+ *  used for:
+ *   1. val b = x is String
+ *   2. b = x is String
+ *   3. !b | b.not()   for Booleans
+ */
+fun LogicSystem.replaceConditionalVariableInStatements(
+    flow: Flow,
+    originalVariable: DataFlowVariable,
+    newVariable: DataFlowVariable,
+    filter: (LogicStatement) -> Boolean = { true },
+    transform: (LogicStatement) -> LogicStatement = { it }
+) {
+    translateConditionalVariableInStatements(
+        flow,
+        originalVariable,
+        newVariable,
+        shouldRemoveOriginalStatements = true,
+        filter,
+        transform
+    )
 }

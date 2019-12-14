@@ -7,12 +7,12 @@ package org.jetbrains.kotlin.fir.resolve.dfa.new
 
 import com.google.common.collect.Multimap
 import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.declarations.modality
 import org.jetbrains.kotlin.fir.expressions.FirExpression
 import org.jetbrains.kotlin.fir.resolve.dfa.Condition
 import org.jetbrains.kotlin.fir.symbols.AbstractFirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
-import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 
 // --------------------------------------- Variables ---------------------------------------
@@ -66,7 +66,7 @@ class RealVariable(
     }
 }
 
-class SyntheticVariable(val expression: FirExpression, variableIndexForDebug: Int) : DataFlowVariable(variableIndexForDebug) {
+class SyntheticVariable(val fir: FirElement, variableIndexForDebug: Int) : DataFlowVariable(variableIndexForDebug) {
     override val isStable: Boolean get() = true
 
     override fun equals(other: Any?): Boolean {
@@ -75,13 +75,13 @@ class SyntheticVariable(val expression: FirExpression, variableIndexForDebug: In
 
         other as SyntheticVariable
 
-        if (expression != other.expression) return false
+        if (fir != other.fir) return false
 
         return true
     }
 
     override fun hashCode(): Int {
-        return expression.hashCode()
+        return fir.hashCode()
     }
 }
 

@@ -597,7 +597,7 @@ class FirDataFlowAnalyzer(private val components: FirAbstractBodyResolveTransfor
             }
             is RealVariable -> {
                 if (rhsVariable.isStable) {
-                    variableStorage.attachSymbolToVariable(lValueSymbol, rhsVariable, lhsVariable)
+                    variableStorage.attachSymbolToVariable(lValueSymbol, rhsVariable)
                 } else {
                     flow.addLogicStatement((rhsVariable notEq null) implies (lhsVariable notEq null))
                 }
