@@ -31,7 +31,10 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.types.AbstractTypeChecker
 import kotlin.IllegalArgumentException
 
-class FirDataFlowAnalyzer(private val components: FirAbstractBodyResolveTransformer.BodyResolveTransformerComponents) {
+class FirDataFlowAnalyzer<FLOW : Flow>(
+    private val components: FirAbstractBodyResolveTransformer.BodyResolveTransformerComponents,
+    private val logicSystem: LogicSystem<FLOW>
+) {
     companion object {
         internal val KOTLIN_BOOLEAN_NOT = CallableId(FqName("kotlin"), FqName("Boolean"), Name.identifier("not"))
     }
@@ -40,9 +43,8 @@ class FirDataFlowAnalyzer(private val components: FirAbstractBodyResolveTransfor
     private val receiverStack: ImplicitReceiverStackImpl = components.implicitReceiverStack as ImplicitReceiverStackImpl
 
     private val graphBuilder = ControlFlowGraphBuilder()
-    private val logicSystem: LogicSystem = TODO()
     private val variableStorage = VariableStorage()
-    private val flowOnNodes = mutableMapOf<CFGNode<*>, Flow>()
+    private val flowOnNodes = mutableMapOf<CFGNode<*>, FLOW>()
 
     private val variablesForWhenConditions = mutableMapOf<WhenBranchConditionExitNode, DataFlowVariable>()
 
@@ -738,7 +740,7 @@ class FirDataFlowAnalyzer(private val components: FirAbstractBodyResolveTransfor
 
     // ------------------------------------------------------ Utils ------------------------------------------------------
 
-    private var CFGNode<*>.flow: Flow
+    private var CFGNode<*>.flow: FLOW
         get() = flowOnNodes.getValue(this.origin)
         set(value) {
             flowOnNodes[this.origin] = value
@@ -751,15 +753,15 @@ class FirDataFlowAnalyzer(private val components: FirAbstractBodyResolveTransfor
         node.flow = logicSystem.joinFlow(previousFlows)
     }
 
-    private fun Flow.addLogicStatement(statement: LogicStatement) {
+    private fun FLOW.addLogicStatement(statement: LogicStatement) {
         logicSystem.addLogicStatement(this, statement)
     }
 
-    private fun Flow.addKnownInfo(info: DataFlowInfo) {
+    private fun FLOW.addKnownInfo(info: DataFlowInfo) {
         logicSystem.addKnownInfo(this, info)
     }
 
-    private fun Flow.removeAllAboutVariable(variable: RealVariable) {
+    private fun FLOW.removeAllAboutVariable(variable: RealVariable) {
         logicSystem.removeAllAboutVariable(this, variable)
     }
 }

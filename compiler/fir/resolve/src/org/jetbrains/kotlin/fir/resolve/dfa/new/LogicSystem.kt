@@ -8,30 +8,30 @@ package org.jetbrains.kotlin.fir.resolve.dfa.new
 import org.jetbrains.kotlin.fir.resolve.transformers.body.resolve.UniversalConeInferenceContext
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 
-interface Flow {
-    fun getKnownInfo(variable: RealVariable): DataFlowInfo?
-    fun getDfaConditions(variable: DataFlowVariable): Collection<LogicStatement>
-    fun getVariablesInKnownInfos(): Collection<RealVariable>
-    fun removeConditions(variable: DataFlowVariable): Collection<LogicStatement>
+abstract class Flow {
+    abstract fun getKnownInfo(variable: RealVariable): DataFlowInfo?
+    abstract fun getDfaConditions(variable: DataFlowVariable): Collection<LogicStatement>
+    abstract fun getVariablesInKnownInfos(): Collection<RealVariable>
+    abstract fun removeConditions(variable: DataFlowVariable): Collection<LogicStatement>
 }
 
 fun KnownInfos.intersect(other: KnownInfos): MutableKnownFacts = TODO()
 
-abstract class LogicSystem(private val context: UniversalConeInferenceContext) {
+abstract class LogicSystem<FLOW : Flow>(private val context: UniversalConeInferenceContext) {
     // ------------------------------- Flow operations -------------------------------
 
-    abstract fun createEmptyFlow(): Flow
-    abstract fun forkFlow(flow: Flow): Flow
-    abstract fun joinFlow(flows: Collection<Flow>): Flow
+    abstract fun createEmptyFlow(): FLOW
+    abstract fun forkFlow(flow: FLOW): FLOW
+    abstract fun joinFlow(flows: Collection<FLOW>): FLOW
 
-    abstract fun addKnownInfo(flow: Flow, info: DataFlowInfo)
+    abstract fun addKnownInfo(flow: FLOW, info: DataFlowInfo)
 
-    abstract fun addLogicStatement(flow: Flow, statement: LogicStatement)
+    abstract fun addLogicStatement(flow: FLOW, statement: LogicStatement)
 
-    abstract fun removeAllAboutVariable(flow: Flow, variable: RealVariable)
+    abstract fun removeAllAboutVariable(flow: FLOW, variable: RealVariable)
 
     abstract fun translateConditionalVariableInStatements(
-        flow: Flow,
+        flow: FLOW,
         originalVariable: DataFlowVariable,
         newVariable: DataFlowVariable,
         shouldRemoveOriginalStatements: Boolean,
@@ -40,21 +40,16 @@ abstract class LogicSystem(private val context: UniversalConeInferenceContext) {
     )
 
     abstract fun approveStatementsInsideFlow(
-        flow: Flow,
+        flow: FLOW,
         predicate: Predicate,
         shouldForkFlow: Boolean,
         shouldRemoveSynthetics: Boolean
-    ): Flow
+    ): FLOW
 
     // ------------------------------- Callbacks for updating implicit receiver stack -------------------------------
 
-    abstract fun processUpdatedReceiverVariable(flow: Flow, variable: RealVariable)
-    abstract fun updateAllReceivers(flow: Flow)
-
-    // ------------------------------- Accessors to flow implementation -------------------------------
-
-    protected abstract val Flow.knownFacts: MutableKnownFacts
-    protected abstract val Flow.logicStatements: LogicStatements
+    abstract fun processUpdatedReceiverVariable(flow: FLOW, variable: RealVariable)
+    abstract fun updateAllReceivers(flow: FLOW)
 
     // ------------------------------- Public DataFlowInfo util functions -------------------------------
 
@@ -65,11 +60,24 @@ abstract class LogicSystem(private val context: UniversalConeInferenceContext) {
     )
 
     abstract fun collectInfoForBooleanOperator(
-        leftFlow: Flow,
+        leftFlow: FLOW,
         leftVariable: DataFlowVariable,
-        rightFlow: Flow,
+        rightFlow: FLOW,
         rightVariable: DataFlowVariable
     ): InfoForBooleanOperator
+
+    abstract fun approvePredicate(destination: MutableKnownFacts, predicate: Predicate, flow: FLOW)
+
+    abstract fun approvePredicate(destination: MutableKnownFacts, predicate: Predicate, notApprovedFacts: Collection<LogicStatement>)
+
+    abstract fun approvePredicate(predicate: Predicate, statements: Collection<LogicStatement>): MutableKnownFacts
+
+    /**
+     * Recursively collects all DataFlowInfos approved by [predicate] and all predicates
+     *   that has been implied by it
+     *   TODO: or not recursively?
+     */
+    abstract fun approvePredicate(flow: FLOW, predicate: Predicate): List<DataFlowInfo>
 
     fun orForVerifiedFacts(
         left: KnownInfos,
@@ -84,19 +92,6 @@ abstract class LogicSystem(private val context: UniversalConeInferenceContext) {
         }
         return map
     }
-
-    abstract fun approvePredicate(destination: MutableKnownFacts, predicate: Predicate, flow: Flow)
-
-    abstract fun approvePredicate(destination: MutableKnownFacts, predicate: Predicate, notApprovedFacts: Collection<LogicStatement>)
-
-    abstract fun approvePredicate(predicate: Predicate, statements: Collection<LogicStatement>): MutableKnownFacts
-
-    /**
-      * Recursively collects all DataFlowInfos approved by [predicate] and all predicates
-      *   that has been implied by it
-      *   TODO: or not recursively?
-      */
-    abstract fun approvePredicate(flow: Flow, predicate: Predicate): List<DataFlowInfo>
 
     // ------------------------------- Util functions -------------------------------
 
@@ -138,8 +133,8 @@ abstract class LogicSystem(private val context: UniversalConeInferenceContext) {
  *   2. b = x is String
  *   3. !b | b.not()   for Booleans
  */
-fun LogicSystem.replaceConditionalVariableInStatements(
-    flow: Flow,
+fun <F : Flow> LogicSystem<F>.replaceConditionalVariableInStatements(
+    flow: F,
     originalVariable: DataFlowVariable,
     newVariable: DataFlowVariable,
     filter: (LogicStatement) -> Boolean = { true },
