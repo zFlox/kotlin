@@ -153,31 +153,59 @@ class FirDataFlowAnalyzer<FLOW : Flow>(
         val node = graphBuilder.exitTypeOperatorCall(typeOperatorCall).mergeIncomingFlow()
         if (typeOperatorCall.operation !in FirOperation.TYPES) return
         val type = typeOperatorCall.conversionTypeRef.coneTypeUnsafe<ConeKotlinType>()
-        val operandVariable = variableStorage.getOrCreateRealVariable(typeOperatorCall.argument.symbol) ?: return
+        val operandVariable = variableStorage.getOrCreateVariable(typeOperatorCall.argument)
         val flow = node.flow
 
-        when (typeOperatorCall.operation) {
+        when (val operation = typeOperatorCall.operation) {
             FirOperation.IS, FirOperation.NOT_IS -> {
                 val expressionVariable = variableStorage.createSyntheticVariable(typeOperatorCall.argument)
+                val isNotNullCheck = operation == FirOperation.IS && type.nullability == ConeNullability.NOT_NULL
+                if (operandVariable.isReal()) {
+                    val hasTypeInfo = operandVariable has type
+                    val hasNotTypeInfo = operandVariable hasNot type
 
-                val hasTypeInfo = operandVariable has type
-                val hasNotTypeInfo = operandVariable hasNot type
+                    fun chooseInfo(trueBranch: Boolean) =
+                        if ((typeOperatorCall.operation == FirOperation.IS) == trueBranch) hasTypeInfo else hasNotTypeInfo
 
-                fun chooseInfo(trueBranch: Boolean) =
-                    if ((typeOperatorCall.operation == FirOperation.IS) == trueBranch) hasTypeInfo else hasNotTypeInfo
+                    flow.addLogicStatement((expressionVariable eq true) implies chooseInfo(true))
+                    flow.addLogicStatement((expressionVariable eq false) implies chooseInfo(false))
 
-                flow.addLogicStatement((expressionVariable eq true) implies chooseInfo(true))
-                flow.addLogicStatement((expressionVariable eq false) implies chooseInfo(false))
+                    if (operation == FirOperation.NOT_IS && type == nullableNothing) {
+                        flow.addKnownInfo(operandVariable has any)
+                    }
+                    if (isNotNullCheck) {
+                        flow.addLogicStatement((expressionVariable eq true) implies (operandVariable has any)) }
+
+                } else {
+                    if (isNotNullCheck) {
+                        flow.addLogicStatement((expressionVariable eq true) implies (operandVariable notEq null))
+                    }
+                }
             }
 
             FirOperation.AS -> {
-                flow.addKnownInfo(operandVariable has type)
+                if (operandVariable.isReal()) {
+                    flow.addKnownInfo(operandVariable has type)
+                } else {
+                    logicSystem.approveStatementsInsideFlow(
+                        flow,
+                        operandVariable notEq null,
+                        shouldRemoveSynthetics = true,
+                        shouldForkFlow = false
+                    )
+                }
             }
 
             FirOperation.SAFE_AS -> {
                 val expressionVariable = variableStorage.createSyntheticVariable(typeOperatorCall.argument)
-                flow.addLogicStatement((expressionVariable notEq null) implies (operandVariable has type))
-                flow.addLogicStatement((expressionVariable eq null) implies (operandVariable hasNot type))
+                if (operandVariable.isReal()) {
+                    flow.addLogicStatement((expressionVariable notEq null) implies (operandVariable has type))
+                    flow.addLogicStatement((expressionVariable eq null) implies (operandVariable hasNot type))
+                } else {
+                    if (type.nullability == ConeNullability.NOT_NULL) {
+                        flow.addLogicStatement((expressionVariable notEq null) implies (operandVariable notEq null))
+                    }
+                }
             }
 
             else -> throw IllegalStateException()
@@ -214,7 +242,10 @@ class FirDataFlowAnalyzer<FLOW : Flow>(
         val flow = node.flow
         val operandVariable = variableStorage.getOrCreateVariable(operand)
         // expression == const -> expression != null
-        flow.addLogicStatement((expressionVariable eq isEq) implies (operandVariable has any))
+        flow.addLogicStatement((expressionVariable eq isEq) implies (operandVariable notEq null))
+        if (operandVariable is RealVariable) {
+            flow.addLogicStatement((expressionVariable eq isEq) implies (operandVariable has any))
+        }
 
         // propagating facts for (... == true) and (... == false)
         if (const.kind == FirConstKind.Boolean) {
@@ -681,8 +712,8 @@ class FirDataFlowAnalyzer<FLOW : Flow>(
         // left && right == True
         // left || right == False
         val approvedIfTrue: MutableKnownFacts = mutableMapOf()
-        logicSystem.approvePredicate(approvedIfTrue, leftVariable eq bothEvaluated, conditionalFromLeft)
-        logicSystem.approvePredicate(approvedIfTrue, rightVariable eq bothEvaluated, conditionalFromRight)
+        logicSystem.approvePredicateTo(approvedIfTrue, flowFromRight, leftVariable eq bothEvaluated, conditionalFromLeft)
+        logicSystem.approvePredicateTo(approvedIfTrue, flowFromRight, rightVariable eq bothEvaluated, conditionalFromRight)
         approvedFromRight.forEach { (variable, info) ->
             approvedIfTrue.addInfo(variable, info)
         }
@@ -693,8 +724,8 @@ class FirDataFlowAnalyzer<FLOW : Flow>(
         // left && right == False
         // left || right == True
         val approvedIfFalse: MutableKnownFacts = mutableMapOf()
-        val leftIsFalse = logicSystem.approvePredicate(leftVariable eq onlyLeftEvaluated, conditionalFromLeft)
-        val rightIsFalse = logicSystem.approvePredicate(rightVariable eq onlyLeftEvaluated, conditionalFromRight)
+        val leftIsFalse = logicSystem.approvePredicate(flowFromLeft, leftVariable eq onlyLeftEvaluated, conditionalFromLeft)
+        val rightIsFalse = logicSystem.approvePredicate(flowFromRight, rightVariable eq onlyLeftEvaluated, conditionalFromRight)
         approvedIfFalse.mergeInfo(logicSystem.orForVerifiedFacts(leftIsFalse, rightIsFalse))
         approvedIfFalse.values.forEach { info ->
             flow.addLogicStatement((operatorVariable eq onlyLeftEvaluated) implies info)

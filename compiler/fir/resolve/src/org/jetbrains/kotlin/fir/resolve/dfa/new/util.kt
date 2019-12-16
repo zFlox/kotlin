@@ -30,7 +30,7 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
-fun UniversalConeInferenceContext.commonSuperTypeOrNull(types: List<ConeKotlinType>): ConeKotlinType? {
+fun ConeInferenceContext.commonSuperTypeOrNull(types: List<ConeKotlinType>): ConeKotlinType? {
     return when (types.size) {
         0 -> null
         1 -> types.first()
@@ -40,15 +40,31 @@ fun UniversalConeInferenceContext.commonSuperTypeOrNull(types: List<ConeKotlinTy
     }
 }
 
-fun UniversalConeInferenceContext.intersectTypesOrNull(types: List<ConeKotlinType>): ConeKotlinType? {
+fun ConeInferenceContext.intersectTypesOrNull(types: List<ConeKotlinType>): ConeKotlinType? {
     return when (types.size) {
         0 -> null
         1 -> types.first()
-        else -> ConeTypeIntersector.intersectTypes(this as ConeInferenceContext, types)
+        else -> ConeTypeIntersector.intersectTypes(this, types)
     }
 }
 
-fun DataFlowVariable.isSynthetic() = this is SyntheticVariable
+@UseExperimental(ExperimentalContracts::class)
+fun DataFlowVariable.isSynthetic(): Boolean {
+    contract {
+        returns(true) implies (this@isSynthetic is SyntheticVariable)
+        returns(false) implies (this@isSynthetic is RealVariable)
+    }
+    return this is SyntheticVariable
+}
+
+@UseExperimental(ExperimentalContracts::class)
+fun DataFlowVariable.isReal(): Boolean {
+    contract {
+        returns(true) implies (this@isReal is RealVariable)
+        returns(false) implies (this@isReal is SyntheticVariable)
+    }
+    return this is RealVariable
+}
 
 operator fun DataFlowInfo.plus(other: DataFlowInfo?): DataFlowInfo = other?.let { this + other } ?: this
 

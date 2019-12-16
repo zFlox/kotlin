@@ -102,31 +102,24 @@ class Predicate(val variable: DataFlowVariable, val condition: Condition) : Pred
 }
 
 abstract class DataFlowInfo : PredicateEffect<DataFlowInfo>() {
-    abstract val variable: DataFlowVariable
+    abstract val variable: RealVariable
     abstract val exactType: Set<ConeKotlinType>
     abstract val exactNotType: Set<ConeKotlinType>
 
     abstract operator fun plus(other: DataFlowInfo): DataFlowInfo
-    abstract operator fun minus(other: DataFlowInfo): DataFlowInfo
     abstract val isEmpty: Boolean
     val isNotEmpty: Boolean get() = !isEmpty
 }
 
 class MutableDataFlowInfo(
-    override val variable: DataFlowVariable,
-    override val exactType: MutableSet<ConeKotlinType>,
-    override val exactNotType: MutableSet<ConeKotlinType>
+    override val variable: RealVariable,
+    override val exactType: MutableSet<ConeKotlinType> = HashSet(),
+    override val exactNotType: MutableSet<ConeKotlinType> = HashSet()
 ) : DataFlowInfo() {
     override fun plus(other: DataFlowInfo): MutableDataFlowInfo = MutableDataFlowInfo(
         variable,
         HashSet(exactType).apply { addAll(other.exactType) },
         HashSet(exactNotType).apply { addAll(other.exactNotType) }
-    )
-
-    override fun minus(other: DataFlowInfo): MutableDataFlowInfo = MutableDataFlowInfo(
-        variable,
-        HashSet(exactType).apply { removeAll(other.exactType) },
-        HashSet(exactNotType).apply { removeAll(other.exactNotType) }
     )
 
     override val isEmpty: Boolean
@@ -183,10 +176,10 @@ infix fun DataFlowVariable.notEq(constant: Boolean?): Predicate {
 
 infix fun Predicate.implies(effect: PredicateEffect<*>): LogicStatement = LogicStatement(this, effect)
 
-infix fun DataFlowVariable.has(types: MutableSet<ConeKotlinType>): DataFlowInfo = MutableDataFlowInfo(this, types, HashSet())
-infix fun DataFlowVariable.has(type: ConeKotlinType): DataFlowInfo =
+infix fun RealVariable.has(types: MutableSet<ConeKotlinType>): DataFlowInfo = MutableDataFlowInfo(this, types, HashSet())
+infix fun RealVariable.has(type: ConeKotlinType): DataFlowInfo =
     MutableDataFlowInfo(this, HashSet<ConeKotlinType>().apply { this += type }, HashSet())
 
-infix fun DataFlowVariable.hasNot(types: MutableSet<ConeKotlinType>): DataFlowInfo = MutableDataFlowInfo(this, HashSet(), types)
-infix fun DataFlowVariable.hasNot(type: ConeKotlinType): DataFlowInfo =
+infix fun RealVariable.hasNot(types: MutableSet<ConeKotlinType>): DataFlowInfo = MutableDataFlowInfo(this, HashSet(), types)
+infix fun RealVariable.hasNot(type: ConeKotlinType): DataFlowInfo =
     MutableDataFlowInfo(this, HashSet(), HashSet<ConeKotlinType>().apply { this += type })
