@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.resolve.dfa.new
 
+import org.jetbrains.kotlin.fir.FirSymbolOwner
 import org.jetbrains.kotlin.fir.contracts.description.ConeBooleanConstantReference
 import org.jetbrains.kotlin.fir.contracts.description.ConeConditionalEffectDeclaration
 import org.jetbrains.kotlin.fir.contracts.description.ConeConstantReference
@@ -31,19 +32,46 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.types.AbstractTypeChecker
 import kotlin.IllegalArgumentException
 
-class FirDataFlowAnalyzer<FLOW : Flow>(
-    private val components: FirAbstractBodyResolveTransformer.BodyResolveTransformerComponents,
-    private val logicSystem: LogicSystem<FLOW>
+abstract class FirDataFlowAnalyzer<FLOW : Flow>(
+    protected val components: FirAbstractBodyResolveTransformer.BodyResolveTransformerComponents
 ) {
     companion object {
         internal val KOTLIN_BOOLEAN_NOT = CallableId(FqName("kotlin"), FqName("Boolean"), Name.identifier("not"))
+
+        fun createFirDataFlowAnalyzer(
+            components: FirAbstractBodyResolveTransformer.BodyResolveTransformerComponents
+        ): FirDataFlowAnalyzer<*> = object : FirDataFlowAnalyzer<PersistentFlow>(components) {
+            private val receiverStack: ImplicitReceiverStackImpl = components.implicitReceiverStack as ImplicitReceiverStackImpl
+
+            override val logicSystem: PersistentLogicSystem = object : PersistentLogicSystem(components.inferenceComponents.ctx) {
+                override fun processUpdatedReceiverVariable(flow: PersistentFlow, variable: RealVariable) {
+                    val symbol = variable.symbol
+
+                    val index = receiverStack.getReceiverIndex(symbol) ?: return
+                    val info = flow.getKnownInfo(variable)
+
+                    if (info == null) {
+                        receiverStack.replaceReceiverType(index, receiverStack.getOriginalType(index))
+                    } else {
+                        val types = info.exactType.toMutableList().also {
+                            it += receiverStack.getOriginalType(index)
+                        }
+                        receiverStack.replaceReceiverType(index, context.intersectTypesOrNull(types)!!)
+                    }
+                }
+
+                override fun updateAllReceivers(flow: PersistentFlow) {
+                    receiverStack.mapNotNull { variableStorage[it.boundSymbol] }.forEach { processUpdatedReceiverVariable(flow, it) }
+                }
+            }
+        }
     }
 
+    protected abstract val logicSystem: LogicSystem<FLOW>
     private val context: UniversalConeInferenceContext = components.inferenceComponents.ctx
-    private val receiverStack: ImplicitReceiverStackImpl = components.implicitReceiverStack as ImplicitReceiverStackImpl
 
     private val graphBuilder = ControlFlowGraphBuilder()
-    private val variableStorage = VariableStorage()
+    protected val variableStorage = VariableStorage()
     private val flowOnNodes = mutableMapOf<CFGNode<*>, FLOW>()
 
     private val variablesForWhenConditions = mutableMapOf<WhenBranchConditionExitNode, DataFlowVariable>()

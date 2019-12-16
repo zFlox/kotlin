@@ -17,7 +17,7 @@ abstract class Flow {
 
 fun KnownInfos.intersect(other: KnownInfos): MutableKnownFacts = TODO()
 
-abstract class LogicSystem<FLOW : Flow>(private val context: ConeInferenceContext) {
+abstract class LogicSystem<FLOW : Flow>(protected val context: ConeInferenceContext) {
     // ------------------------------- Flow operations -------------------------------
 
     abstract fun createEmptyFlow(): FLOW
