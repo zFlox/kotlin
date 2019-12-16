@@ -274,10 +274,8 @@ fun SimpleType.unCapture(): UnwrappedType {
 }
 
 fun unCaptureProjection(projection: TypeProjection): TypeProjection {
-    val unCapturedProjection = projection.type.constructor.safeAs<NewCapturedTypeConstructor>()?.let {
-        it.projection
-    } ?: projection
-    if (unCapturedProjection.type is ErrorType) return unCapturedProjection
+    val unCapturedProjection = projection.type.constructor.safeAs<NewCapturedTypeConstructor>()?.projection ?: projection
+    if (unCapturedProjection.isStarProjection || unCapturedProjection.type is ErrorType) return unCapturedProjection
 
     val newArguments = unCapturedProjection.type.arguments.map(::unCaptureProjection)
     return TypeProjectionImpl(
