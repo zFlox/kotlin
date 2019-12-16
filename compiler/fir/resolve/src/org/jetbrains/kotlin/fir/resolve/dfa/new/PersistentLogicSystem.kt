@@ -79,7 +79,8 @@ class PersistentFlow : Flow {
     }
 }
 
-abstract class PersistentLogicSystem(context: ConeInferenceContext) : LogicSystem<PersistentFlow>(context) {
+abstract class PersistentLogicSystem(private val anyType: ConeKotlinType, context: ConeInferenceContext) :
+    LogicSystem<PersistentFlow>(context) {
     override fun createEmptyFlow(): PersistentFlow {
         return PersistentFlow()
     }
@@ -89,8 +90,7 @@ abstract class PersistentLogicSystem(context: ConeInferenceContext) : LogicSyste
     }
 
     override fun joinFlow(flows: Collection<PersistentFlow>): PersistentFlow {
-//        if (flows.isEmpty()) return createEmptyFlow()
-        assert(flows.isNotEmpty())
+        if (flows.isEmpty()) return createEmptyFlow()
         flows.singleOrNull()?.let { return it }
         val commonFlow = flows.reduce(::lowestCommonFlow)
         val commonVariables = flows.map { it.diffVariablesIterable(commonFlow).toList() }
@@ -123,6 +123,7 @@ abstract class PersistentLogicSystem(context: ConeInferenceContext) : LogicSyste
         }
         return result
     }
+
     /**
      * This is an iterable over real variable that has known facts in flow range
      *   from [this] to [parentFlow]
@@ -165,7 +166,7 @@ abstract class PersistentLogicSystem(context: ConeInferenceContext) : LogicSyste
         with(flow) {
             knownFacts = knownFacts.addNewInfo(info)
             if (previousFlow != null) {
-                knownFacts = knownFacts.addNewInfo(info)
+                knownFactsDiff = knownFactsDiff.addNewInfo(info)
             }
             if (info.variable.isThisReference) {
                 processUpdatedReceiverVariable(flow, info.variable)
@@ -201,7 +202,10 @@ abstract class PersistentLogicSystem(context: ConeInferenceContext) : LogicSyste
     ) {
         with(flow) {
             val statements = logicStatements[originalVariable]?.takeIf { it.isNotEmpty() } ?: return
-            val newStatements = statements.filter(filter).map(transform).toPersistentList()
+            val newStatements = statements.filter(filter).map {
+                val newStatement = Predicate(newVariable, it.condition.condition) implies it.effect
+                transform(newStatement)
+            }.toPersistentList()
             if (shouldRemoveOriginalStatements) {
                 logicStatements -= originalVariable
             }
@@ -244,15 +248,27 @@ abstract class PersistentLogicSystem(context: ConeInferenceContext) : LogicSyste
         return resultFlow
     }
 
-
     private fun approvePredicatesInternal(
         flow: PersistentFlow,
         predicate: Predicate,
         initialStatements: Collection<LogicStatement>?,
         shouldRemoveSynthetics: Boolean
     ): ArrayListMultimap<RealVariable, DataFlowInfo> {
-        val predicatesToApprove = LinkedList<Predicate>().apply { this += predicate }
         val approvedFacts: ArrayListMultimap<RealVariable, DataFlowInfo> = ArrayListMultimap.create()
+        val predicatesToApprove = LinkedList<Predicate>().apply { this += predicate }
+        approvePredicatesInternal(flow, predicatesToApprove, initialStatements, shouldRemoveSynthetics, approvedFacts)
+        return approvedFacts
+    }
+
+    private fun approvePredicatesInternal(
+        flow: PersistentFlow,
+        predicatesToApprove: LinkedList<Predicate>,
+        initialStatements: Collection<LogicStatement>?,
+        shouldRemoveSynthetics: Boolean,
+        approvedFacts: ArrayListMultimap<RealVariable, DataFlowInfo>
+    ) {
+        if (predicatesToApprove.isEmpty()) return
+        val approvedVariables = mutableSetOf<RealVariable>()
         var firstIteration = true
         while (predicatesToApprove.isNotEmpty()) {
             @Suppress("NAME_SHADOWING")
@@ -267,13 +283,34 @@ abstract class PersistentLogicSystem(context: ConeInferenceContext) : LogicSyste
                 if (statement.condition == predicate) {
                     when (val effect = statement.effect) {
                         is Predicate -> predicatesToApprove += effect
-                        is DataFlowInfo -> approvedFacts.put(effect.variable, effect)
+                        is DataFlowInfo -> {
+                            approvedFacts.put(effect.variable, effect)
+                            approvedVariables += effect.variable
+                        }
                     }
                 }
             }
             firstIteration = false
         }
-        return approvedFacts
+
+        val newPredicates = LinkedList<Predicate>()
+        for (approvedVariable in approvedVariables) {
+            var variable = approvedVariable
+            foo@ while (variable.receiverVariable != null && variable.isSafeCall) {
+                when (val receiver = variable.receiverVariable!!) {
+                    is RealVariable -> {
+                        approvedFacts.put(receiver, receiver has anyType)
+                        variable = receiver
+                    }
+                    is SyntheticVariable -> {
+                        newPredicates += receiver notEq null
+                        break@foo
+                    }
+                    else -> throw IllegalStateException()
+                }
+            }
+        }
+        approvePredicatesInternal(flow, newPredicates, initialStatements = null, shouldRemoveSynthetics, approvedFacts)
     }
 
     override fun approvePredicateTo(
@@ -316,6 +353,7 @@ abstract class PersistentLogicSystem(context: ConeInferenceContext) : LogicSyste
 
 private fun lowestCommonFlow(left: PersistentFlow, right: PersistentFlow): PersistentFlow {
     val level = minOf(left.level, right.level)
+
     @Suppress("NAME_SHADOWING")
     var left = left
     while (left.level > level) {
@@ -360,7 +398,7 @@ private fun DataFlowInfo.toPersistent(): PersistentDataFlowInfo = PersistentData
     exactNotType.toPersistentSet()
 )
 
-private fun DataFlowInfo.asMutableInfo(): MutableDataFlowInfo = when (this) {
+fun DataFlowInfo.asMutableInfo(): MutableDataFlowInfo = when (this) {
     is MutableDataFlowInfo -> this
     is PersistentDataFlowInfo -> MutableDataFlowInfo(variable, exactType.toMutableSet(), exactNotType.toMutableSet())
     else -> throw IllegalArgumentException("Unknown DataFlowInfo type: ${this::class}")

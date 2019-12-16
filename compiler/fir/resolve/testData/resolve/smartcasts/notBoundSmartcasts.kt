@@ -47,5 +47,5 @@ fun test_3(d1: D, d2: D) {
     a.foo()
     b as B
     // Issue: b incorrectly smartcasted to (A & B)
-    b.<!AMBIGUITY!>foo<!>()  // should be OK
+    b.foo()  // should be OK
 }

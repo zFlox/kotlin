@@ -15,8 +15,6 @@ abstract class Flow {
     abstract fun removeConditions(variable: DataFlowVariable): Collection<LogicStatement>
 }
 
-fun KnownInfos.intersect(other: KnownInfos): MutableKnownFacts = TODO()
-
 abstract class LogicSystem<FLOW : Flow>(protected val context: ConeInferenceContext) {
     // ------------------------------- Flow operations -------------------------------
 

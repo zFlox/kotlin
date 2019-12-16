@@ -91,7 +91,7 @@ sealed class PredicateEffect<T : PredicateEffect<T>> {
     abstract fun invert(): T
 }
 
-class Predicate(val variable: DataFlowVariable, val condition: Condition) : PredicateEffect<Predicate>() {
+data class Predicate(val variable: DataFlowVariable, val condition: Condition) : PredicateEffect<Predicate>() {
     override fun invert(): Predicate {
         return Predicate(variable, condition.invert())
     }
@@ -109,6 +109,10 @@ abstract class DataFlowInfo : PredicateEffect<DataFlowInfo>() {
     abstract operator fun plus(other: DataFlowInfo): DataFlowInfo
     abstract val isEmpty: Boolean
     val isNotEmpty: Boolean get() = !isEmpty
+
+    override fun toString(): String {
+        return "$variable: $exactType, $exactNotType"
+    }
 }
 
 class MutableDataFlowInfo(
@@ -144,7 +148,11 @@ class MutableDataFlowInfo(
 class LogicStatement(
     val condition: Predicate,
     val effect: PredicateEffect<*>
-)
+) {
+    override fun toString(): String {
+        return "$condition -> $effect"
+    }
+}
 
 fun LogicStatement.invertCondition(): LogicStatement = LogicStatement(condition.invert(), effect)
 

@@ -69,7 +69,7 @@ fun DataFlowVariable.isReal(): Boolean {
 operator fun DataFlowInfo.plus(other: DataFlowInfo?): DataFlowInfo = other?.let { this + other } ?: this
 
 fun MutableKnownFacts.addInfo(variable: RealVariable, info: DataFlowInfo) {
-    put(variable, info as MutableDataFlowInfo) { it.apply { this += info } }
+    put(variable, info.asMutableInfo()) { it.apply { this += info } }
 }
 
 fun MutableKnownFacts.mergeInfo(other: Map<RealVariable, DataFlowInfo>) {
