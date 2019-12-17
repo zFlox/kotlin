@@ -27,7 +27,11 @@ fun case3() {
     val x1 = <!INVALID_IF_AS_EXPRESSION!>if<!> (throwExc(true)) true
 }
 
-// TESTCASE NUMBER: 4
+/*
+ * TESTCASE NUMBER: 4
+ * UNEXPECTED BEHAVIOUR
+ * ISSUES: KT-35510
+ */
 fun case4() {
     val x1 = if (throw Exception()) true
 
@@ -43,17 +47,37 @@ fun case5() {
     val x1 = <!INVALID_IF_AS_EXPRESSION!>if<!> (flag ?: throw Exception()) true
 }
 
-// TESTCASE NUMBER: 6
+/*
+ * TESTCASE NUMBER: 6
+ * UNEXPECTED BEHAVIOUR
+ * ISSUES: KT-35510
+ */
 fun case6() {
     val k1 = if(throw Exception());
 }
 
-// TESTCASE NUMBER: 8
+/*
+ * TESTCASE NUMBER: 7
+ * UNEXPECTED BEHAVIOUR
+ * ISSUES: KT-35510
+ */
 fun case7(nothing: Nothing) {
     val k1 = if(throw Exception())
-}
+<!SYNTAX!><!>}
 
-// TESTCASE NUMBER: 9
+/*
+ * TESTCASE NUMBER: 8
+ * UNEXPECTED BEHAVIOUR
+ * ISSUES: KT-35510
+ */
 fun case8(nothing: Nothing) {
     val x1 = if (nothing) true
 }
+
+/*
+ * TESTCASE NUMBER: 9
+ * UNEXPECTED BEHAVIOUR
+ * ISSUES: KT-35510
+ */fun case9() {
+    val k1 = if(throw Exception())
+<!SYNTAX!><!>}
