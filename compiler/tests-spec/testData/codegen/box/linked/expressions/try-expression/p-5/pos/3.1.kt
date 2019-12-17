@@ -37,7 +37,7 @@ fun box(): String {
     return if (isTryExecuted &&
         !isCatched &&
         isFinallyExecuted &&
-        isTryExpressionPropagated &&
+        isTryExpressionPropagated
     ) "OK"
     else "NOK"
 }
