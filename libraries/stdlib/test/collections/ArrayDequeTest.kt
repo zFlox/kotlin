@@ -364,116 +364,352 @@ class ArrayDequeTest {
         assertEquals(listOf(-8, -7, -6, -5, -4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7), deque.toList())
     }
 
+    private fun generateArrayDeque(head: Int, tail: Int): ArrayDeque<Int> {
+        check(tail > 0)
+
+        val deque = ArrayDeque<Int>()
+
+        repeat(tail) {
+            deque.addLast(it)
+            if (it < head) deque.removeFirst()
+        }
+        repeat(-head) { deque.addFirst(-(it + 1)) }
+
+        assertEquals(tail - head, deque.size)
+
+        return deque
+    }
+
     // MutableList operations
     @Test
     fun insert() {
-        val deque = ArrayDeque(listOf(0, 1, 2, 3, 4, 5)).apply { removeFirst() }
         // Move first elements
-        // head < tail
-        deque.add(1, -1)
-        assertEquals(listOf(/**/1, -1, 2, 3, 4, 5), deque.toList())
-        deque.add(2, -2)
-        assertEquals(listOf(1, /**/-1, -2, 2, 3, 4, 5), deque.toList())
 
-        // head > tail
-        // internalIndex < tail
-        deque.removeLast()
-        deque.add(2, -3)
-        assertEquals(listOf(1, -1, /**/-3, -2, 2, 3, 4), deque.toList())
-
-        deque.removeLast()
-        deque.add(2, -4)
-        assertEquals(listOf(1, -1, -4, /**/-3, -2, 2, 3), deque.toList())
-
-        // internalIndex > tail
-        deque.removeLast()
-        deque.add(1, -5)
-        assertEquals(listOf(1, -5, -1, -4, /**/-3, -2, 2), deque.toList())
-
+        // head < tail, internalIndex > head
+        generateArrayDeque(1, 6).let { deque ->
+            deque.add(1, 100)
+            assertEquals(listOf(/**/1, 100, 2, 3, 4, 5), deque.toList())
+        }
+        generateArrayDeque(1, 7).let { deque ->
+            deque.add(2, 100)
+            assertEquals(listOf(/**/1, 2, 100, 3, 4, 5, 6), deque.toList())
+        }
+        generateArrayDeque(0, 5).let { deque ->
+            deque.add(1, 100)
+            assertEquals(listOf(0, /**/100, 1, 2, 3, 4), deque.toList())
+        }
+        generateArrayDeque(0, 6).let { deque ->
+            deque.add(2, 100)
+            assertEquals(listOf(0, /**/1, 100, 2, 3, 4, 5), deque.toList())
+        }
         // buffer expansion
-        deque.add(2, -6)
-        assertEquals(listOf(/**/1, -5, -6, -1, -4, -3, -2, 2), deque.toList())
+        generateArrayDeque(1, 8).let { deque ->
+            deque.add(1, 100)
+            assertEquals(listOf(/**/1, 100, 2, 3, 4, 5, 6, 7), deque.toList())
+        }
+        generateArrayDeque(0, 7).let { deque ->
+            deque.add(2, 100)
+            assertEquals(listOf(/**/0, 1, 100, 2, 3, 4, 5, 6), deque.toList())
+        }
+
+        // head > tail, internalIndex < tail
+        generateArrayDeque(-1, 4).let { deque ->
+            deque.add(1, 100)
+            assertEquals(listOf(-1, 100, /**/0, 1, 2, 3), deque.toList())
+        }
+        generateArrayDeque(-1, 5).let { deque ->
+            deque.add(2, 100)
+            assertEquals(listOf(-1, 0, /**/100, 1, 2, 3, 4), deque.toList())
+        }
+        generateArrayDeque(-1, 5).let { deque ->
+            deque.add(1, 100)
+            assertEquals(listOf(-1, 100, /**/0, 1, 2, 3, 4), deque.toList())
+        }
+        generateArrayDeque(-2, 4).let { deque ->
+            deque.add(2, 100)
+            assertEquals(listOf(-2, -1, 100, /**/0, 1, 2, 3), deque.toList())
+        }
+        // buffer expansion
+        generateArrayDeque(-1, 6).let { deque ->
+            deque.add(2, 100)
+            assertEquals(listOf(/**/-1, 0, 100, 1, 2, 3, 4, 5), deque.toList())
+        }
+        generateArrayDeque(-2, 5).let { deque ->
+            deque.add(2, 100)
+            assertEquals(listOf(/**/-2, -1, 100, 0, 1, 2, 3, 4), deque.toList())
+        }
+
+        // head > tail, internalIndex > head
+        generateArrayDeque(-2, 3).let { deque ->
+            deque.add(1, 100)
+            assertEquals(listOf(-2, 100, -1, /**/0, 1, 2), deque.toList())
+        }
+        generateArrayDeque(-2, 4).let { deque ->
+            deque.add(2, 100)
+            assertEquals(listOf(-2, -1, 100, /**/0, 1, 2, 3), deque.toList())
+        }
+        // buffer expansion
+        generateArrayDeque(-2, 5).let { deque ->
+            deque.add(1, 100)
+            assertEquals(listOf(/**/-2, 100, -1, 0, 1, 2, 3, 4), deque.toList())
+        }
+        generateArrayDeque(-3, 4).let { deque ->
+            deque.add(2, 100)
+            assertEquals(listOf(/**/-3, -2, 100, -1, 0, 1, 2, 3), deque.toList())
+        }
 
         // Move last elements
-        // head < tail
-        deque.add(5, -7)
-        assertEquals(listOf(/**/1, -5, -6, -1, -4, -7, -3, -2, 2), deque.toList())
 
-        // head > tail
-        // internalIndex < tail
-        deque.add(0, -8)
-        assertEquals(listOf(-8, /**/1, -5, -6, -1, -4, -7, -3, -2, 2), deque.toList())
-        deque.add(9, -9)
-        assertEquals(listOf(-8, /**/1, -5, -6, -1, -4, -7, -3, -2, -9, 2), deque.toList())
+        // head < tail, internalIndex > head
+        generateArrayDeque(0, 5).let { deque ->
+            deque.add(4, 100)
+            assertEquals(listOf(/**/0, 1, 2, 3, 100, 4), deque.toList())
+        }
+        generateArrayDeque(0, 6).let { deque ->
+            deque.add(4, 100)
+            assertEquals(listOf(/**/0, 1, 2, 3, 100, 4, 5), deque.toList())
+        }
+        generateArrayDeque(3, 8).let { deque ->
+            deque.add(4, 100)
+            assertEquals(listOf(3, 4, 5, 6, 100, /**/7), deque.toList())
+        }
+        generateArrayDeque(2, 8).let { deque ->
+            deque.add(4, 100)
+            assertEquals(listOf(2, 3, 4, 5, 100, /**/6, 7), deque.toList())
+        }
+        // buffer expansion
+        generateArrayDeque(1, 8).let { deque ->
+            deque.add(6, 100)
+            assertEquals(listOf(/**/1, 2, 3, 4, 5, 6, 100, 7), deque.toList())
+        }
+        generateArrayDeque(0, 7).let { deque ->
+            deque.add(5, 100)
+            assertEquals(listOf(/**/0, 1, 2, 3, 4, 100, 5, 6), deque.toList())
+        }
 
-        // internalIndex > tail
-        listOf(-6, -1, -4, -7, -3, -2, -9, 2).asReversed().forEach { deque.remove(it) }
-        assertEquals(listOf(-8, /**/1, -5), deque.toList())
-        listOf(-10, -11, -12, -13, -14, -15, -16).asReversed().forEach { deque.addFirst(it) }
-        assertEquals(listOf(-10, -11, -12, -13, -14, -15, -16, -8, /**/1, -5), deque.toList())
+        // head > tail, internalIndex < tail
+        generateArrayDeque(-1, 4).let { deque ->
+            deque.add(4, 100)
+            assertEquals(listOf(-1, /**/0, 1, 2, 100, 3), deque.toList())
+        }
+        generateArrayDeque(-2, 4).let { deque ->
+            deque.add(4, 100)
+            assertEquals(listOf(-2, -1, /**/0, 1, 100, 2, 3), deque.toList())
+        }
+        generateArrayDeque(-4, 1).let { deque ->
+            deque.add(4, 100)
+            assertEquals(listOf(-4, -3, -2, -1, /**/100, 0), deque.toList())
+        }
+        generateArrayDeque(-4, 2).let { deque ->
+            deque.add(4, 100)
+            assertEquals(listOf(-4, -3, -2, -1, /**/100, 0, 1), deque.toList())
+        }
+        // buffer expansion
+        generateArrayDeque(-1, 6).let { deque ->
+            deque.add(6, 100)
+            assertEquals(listOf(/**/-1, 0, 1, 2, 3, 4, 100, 5), deque.toList())
+        }
+        generateArrayDeque(-2, 5).let { deque ->
+            deque.add(5, 100)
+            assertEquals(listOf(/**/-2, -1, 0, 1, 2, 100, 3, 4), deque.toList())
+        }
 
-        deque.add(8, -17)
-        assertEquals(listOf(-10, -11, -12, -13, -14, -15, -16, -8, /**/-17, 1, -5), deque.toList())
-
-        deque.add(6, -18)
-        assertEquals(listOf(-10, -11, -12, -13, -14, -15, -18, -16, /**/-8, -17, 1, -5), deque.toList())
+        // head > tail, internalIndex > head
+        generateArrayDeque(-5, 1).let { deque ->
+            deque.add(4, 100)
+            assertEquals(listOf(-5, -4, -3, -2, 100, /**/-1, 0), deque.toList())
+        }
+        generateArrayDeque(-5, 1).let { deque ->
+            deque.add(3, 100)
+            assertEquals(listOf(-5, -4, -3, 100, -2, /**/-1, 0), deque.toList())
+        }
+        generateArrayDeque(-4, 2).let { deque ->
+            deque.add(3, 100)
+            assertEquals(listOf(-4, -3, -2, 100, /**/-1, 0, 1), deque.toList())
+        }
+        // buffer expansion
+        generateArrayDeque(-6, 1).let { deque ->
+            deque.add(5, 100)
+            assertEquals(listOf(/**/-6, -5, -4, -3, -2, 100, -1, 0), deque.toList())
+        }
+        generateArrayDeque(-5, 2).let { deque ->
+            deque.add(4, 100)
+            assertEquals(listOf(/**/-5, -4, -3, -2, 100, -1, 0, 1), deque.toList())
+        }
     }
 
     @Test
     fun removeAt() {
         // Move first elements
-        // head < tail
 
-        // head > tail
-        // internalIndex < tail
+        // head < tail, internalIndex > head
+        generateArrayDeque(1, 6).let { deque ->
+            deque.removeAt(1)
+            assertEquals(listOf(/**/1, 3, 4, 5), deque.toList())
+        }
+        generateArrayDeque(1, 7).let { deque ->
+            deque.removeAt(2)
+            assertEquals(listOf(/**/1, 2, 4, 5, 6), deque.toList())
+        }
 
-        // internalIndex > tail
+        // head > tail, internalIndex < tail
+        generateArrayDeque(-1, 4).let { deque ->
+            deque.removeAt(1)
+            assertEquals(listOf(/**/-1, 1, 2, 3), deque.toList())
+        }
+        generateArrayDeque(-1, 5).let { deque ->
+            deque.removeAt(2)
+            assertEquals(listOf(/**/-1, 0, 2, 3, 4), deque.toList())
+        }
+        generateArrayDeque(-2, 5).let { deque ->
+            deque.removeAt(2)
+            assertEquals(listOf(-2, /**/-1, 1, 2, 3, 4), deque.toList())
+        }
+        generateArrayDeque(-3, 10).let { deque ->
+            deque.removeAt(5)
+            assertEquals(listOf(-3, -2, /**/-1, 0, 1, 3, 4, 5, 6, 7, 8, 9), deque.toList())
+        }
 
+        // head > tail, internalIndex > head
+        generateArrayDeque(-2, 3).let { deque ->
+            deque.removeAt(1)
+            assertEquals(listOf(-2, /**/0, 1, 2), deque.toList())
+        }
+        generateArrayDeque(-3, 4).let { deque ->
+            deque.removeAt(2)
+            assertEquals(listOf(-3, -2, /**/0, 1, 2, 3), deque.toList())
+        }
+        generateArrayDeque(-3, 4).let { deque ->
+            deque.removeAt(1)
+            assertEquals(listOf(-3, -1, /**/0, 1, 2, 3), deque.toList())
+        }
 
         // Move last elements
-        // head < tail
 
-        // head > tail
-        // internalIndex < tail
+        // head < tail, internalIndex > head
+        generateArrayDeque(0, 5).let { deque ->
+            deque.removeAt(3)
+            assertEquals(listOf(/**/0, 1, 2, 4), deque.toList())
+        }
+        generateArrayDeque(0, 6).let { deque ->
+            deque.removeAt(3)
+            assertEquals(listOf(/**/0, 1, 2, 4, 5), deque.toList())
+        }
 
-        // internalIndex > tail
+        // head > tail, internalIndex < tail
+        generateArrayDeque(-1, 4).let { deque ->
+            deque.removeAt(3)
+            assertEquals(listOf(-1, /**/0, 1, 3), deque.toList())
+        }
+        generateArrayDeque(-4, 3).let { deque ->
+            deque.removeAt(4)
+            assertEquals(listOf(-4, -3, -2, -1, /**/1, 2), deque.toList())
+        }
+        generateArrayDeque(-4, 2).let { deque ->
+            deque.removeAt(4)
+            assertEquals(listOf(-4, -3, -2, -1, /**/1), deque.toList())
+        }
+
+        // head > tail, internalIndex > head
+        generateArrayDeque(-5, 1).let { deque ->
+            deque.removeAt(4)
+            assertEquals(listOf(-5, -4, -3, -2, 0/**/), deque.toList())
+        }
+        generateArrayDeque(-5, 1).let { deque ->
+            deque.removeAt(3)
+            assertEquals(listOf(-5, -4, -3, -1, 0/**/), deque.toList())
+        }
+        generateArrayDeque(-4, 2).let { deque ->
+            deque.removeAt(3)
+            assertEquals(listOf(-4, -3, -2, 0, /**/1), deque.toList())
+        }
+        generateArrayDeque(-6, 1).let { deque ->
+            deque.removeAt(5)
+            assertEquals(listOf(-6, -5, -4, -3, -2, 0/**/), deque.toList())
+        }
+        generateArrayDeque(-4, 3).let { deque ->
+            deque.removeAt(3)
+            assertEquals(listOf(-4, -3, -2, 0, /**/1, 2), deque.toList())
+        }
     }
 
     @Test
     fun indexOf() {
         // head < tail
+        generateArrayDeque(0, 7).let { deque ->
+            (0..6).forEach { assertEquals(it, deque.indexOf(it)) }
+            assertEquals(-1, deque.indexOf(100))
+        }
 
         // head > tail
-        // internalIndex < tail
-
-        // internalIndex > tail
+        generateArrayDeque(-4, 3).let { deque ->
+            (0..6).forEach { assertEquals(it, deque.indexOf(it - 4)) }
+            assertEquals(-1, deque.indexOf(100))
+        }
     }
 
     @Test
     fun addAll() {
         // head < tail
+        generateArrayDeque(0, 3).let { deque ->
+            deque.addAll(listOf(3, 4, 5))
+            assertEquals(listOf(0, 1, 2, 3, 4, 5), deque.toList())
+
+            deque.addAll(6..100)
+            assertEquals((0..100).toList(), deque.toList())
+        }
+
+        generateArrayDeque(4, 6).let { deque ->
+            deque.addAll(listOf(6, 7, 8))
+            assertEquals(listOf(4, 5, 6, 7, 8), deque.toList())
+
+            deque.addAll(9..100)
+            assertEquals((4..100).toList(), deque.toList())
+        }
 
         // head > tail
+        generateArrayDeque(-3, 2).let { deque ->
+            deque.addAll(listOf(2, 3))
+            assertEquals(listOf(-3, -2, -1, 0, 1, 2, 3), deque.toList())
+
+            deque.addAll(4..100)
+            assertEquals((-3..100).toList(), deque.toList())
+        }
     }
 
     @Test
     fun insertAll() {
         // Move first elements
         // head < tail
+        generateArrayDeque(0, 4).let { deque ->
+            deque.addAll(0, listOf(4, 5))
+            assertEquals(listOf(4, 5, /**/0, 1, 2, 3), deque.toList())
+        }
+        generateArrayDeque(2, 7).let { deque ->
+            deque.addAll(2, listOf(100, 101))
+            assertEquals(listOf(/**/2, 3, 100, 101, 4, 5, 6), deque.toList())
+        }
+        generateArrayDeque(2, 12).let { deque ->
+            deque.addAll(2, listOf(100, 101, 102))
+            assertEquals(listOf(2, 3, 100, /**/101, 102, 4, 5, 6, 7, 8, 9, 10, 11), deque.toList())
+        }
+        // buffer expansion
 
-        // head > tail
-        // internalIndex < tail
+        // head > tail, internalIndex < tail
 
-        // internalIndex > tail
+        // head > tail, internalIndex >= head
+        generateArrayDeque(-2, 4).let { deque ->
+            deque.addAll(0, listOf(6, 7, 8, 9))
+            assertEquals(listOf(6, 7, 8, 9, -2, -1, /**/0, 1, 2, 3), deque.toList())
+        }
 
 
         // Move last elements
         // head < tail
 
-        // head > tail
-        // internalIndex < tail
+        // head > tail, internalIndex < tail
 
-        // internalIndex > tail
+        // head > tail, internalIndex > head
     }
 
     @Test
@@ -501,29 +737,26 @@ class ArrayDequeTest {
     fun set() {
         // head < tail
 
-        // head > tail
-        // internalIndex < tail
+        // head > tail, internalIndex < tail
 
-        // internalIndex > tail
+        // head > tail, internalIndex > head
     }
 
     @Test
     fun get() {
         // head < tail
 
-        // head > tail
-        // internalIndex < tail
+        // head > tail, internalIndex < tail
 
-        // internalIndex > tail
+        // head > tail, internalIndex > head
     }
 
     @Test
     fun subList() {
         // head < tail
 
-        // head > tail
-        // internalIndex < tail
+        // head > tail, internalIndex < tail
 
-        // internalIndex > tail
+        // head > tail, internalIndex > head
     }
 }
