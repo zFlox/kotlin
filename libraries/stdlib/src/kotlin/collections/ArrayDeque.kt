@@ -33,7 +33,7 @@ public class ArrayDeque<E>(capacity: Int) : AbstractMutableList<E>() {
         // Find the best power of two to hold elements.
         // Tests "<=" because arrays aren't kept full.
         if (capacity >= initialCapacity) {
-            initialCapacity = capacity.takeHighestOneBit().let { if (it == capacity) it else it shl 1 }
+            initialCapacity = capacity.takeHighestOneBit() shl 1
 
             if (initialCapacity < 0)   // Too many elements, must back off
                 initialCapacity = initialCapacity ushr 1 // Good luck allocating 2 ^ 30 elements
