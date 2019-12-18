@@ -41,4 +41,14 @@ fun case2() {
         <!UNREACHABLE_CODE!>JavaEnum.Val_1 -> { false }<!>
         <!UNREACHABLE_CODE!>JavaEnum.Val_2 -> { false }<!>
     }
+}// TESTCASE NUMBER: 3
+
+fun case3() {
+    val z = JavaEnum.Val_3
+    val when1 = when (z) {
+        <!ELSE_MISPLACED_IN_WHEN!>else<!> -> {true}
+        <!UNREACHABLE_CODE!>JavaEnum.Val_1 -> { false }<!>
+        <!UNREACHABLE_CODE!>JavaEnum.Val_2 -> { false }<!>
+        <!UNREACHABLE_CODE!>else -> { true }<!>
+    }
 }
