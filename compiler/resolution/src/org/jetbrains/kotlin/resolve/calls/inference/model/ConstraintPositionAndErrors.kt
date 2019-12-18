@@ -46,12 +46,13 @@ class DeclaredUpperBoundConstraintPositionImpl(val typeParameterDescriptor: Type
 class FirDeclaredUpperBoundConstraintPosition : DeclaredUpperBoundConstraintPosition()
 
 interface OnlyInputTypeConstraintPosition
+sealed class ArgumentAwareConstraintPosition(val argument: KotlinCallArgument) : ConstraintPosition()
 
-class ArgumentConstraintPosition(val argument: KotlinCallArgument) : ConstraintPosition(), OnlyInputTypeConstraintPosition {
+class ArgumentConstraintPosition(argument: KotlinCallArgument) : ArgumentAwareConstraintPosition(argument), OnlyInputTypeConstraintPosition {
     override fun toString() = "Argument $argument"
 }
 
-class ReceiverConstraintPosition(val argument: KotlinCallArgument) : ConstraintPosition(), OnlyInputTypeConstraintPosition {
+class ReceiverConstraintPosition(argument: KotlinCallArgument) : ArgumentAwareConstraintPosition(argument), OnlyInputTypeConstraintPosition {
     override fun toString() = "Receiver $argument"
 }
 
@@ -64,9 +65,9 @@ class KnownTypeParameterConstraintPosition(val typeArgument: KotlinType) : Const
 }
 
 class LHSArgumentConstraintPosition(
-    val argument: CallableReferenceKotlinCallArgument,
+    argument: CallableReferenceKotlinCallArgument,
     val receiver: DetailedReceiver
-) : ConstraintPosition() {
+) : ArgumentAwareConstraintPosition(argument) {
     override fun toString(): String {
         return "LHS receiver $receiver"
     }
