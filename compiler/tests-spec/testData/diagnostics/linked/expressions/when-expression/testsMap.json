@@ -354,6 +354,28 @@
       ]
     }
   },
+  "4": {
+    "neg": {
+      "1": [
+        {
+          "specVersion": "0.1-218",
+          "casesNumber": 4,
+          "description": " it is possible to  replace the else condition with an always-true condition",
+          "unexpectedBehaviour": false
+        }
+      ]
+    },
+    "pos": {
+      "1": [
+        {
+          "specVersion": "0.1-218",
+          "casesNumber": 4,
+          "description": " it is possible to  replace the else condition with an always-true condition",
+          "unexpectedBehaviour": false
+        }
+      ]
+    }
+  },
   "2": {
     "neg": {
       "2": [

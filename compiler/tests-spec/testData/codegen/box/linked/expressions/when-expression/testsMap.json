@@ -1,0 +1,60 @@
+{
+  "4": {
+    "neg": {
+      "1": [
+        {
+          "specVersion": "0.1-218",
+          "casesNumber": 0,
+          "description": " it is possible to  replace the else condition with an always-true condition (Boolean)",
+          "unexpectedBehaviour": false
+        },
+        {
+          "specVersion": "0.1-218",
+          "casesNumber": 0,
+          "description": " it is possible to  replace the else condition with an always-true condition (Boolean)",
+          "unexpectedBehaviour": false
+        },
+        {
+          "specVersion": "0.1-218",
+          "casesNumber": 0,
+          "description": " it is possible to  replace the else condition with an always-true condition (sealed class)",
+          "unexpectedBehaviour": false
+        },
+        {
+          "specVersion": "0.1-218",
+          "casesNumber": 0,
+          "description": "it is possible to  replace the else condition with an always-true condition (Enum)",
+          "unexpectedBehaviour": false
+        }
+      ]
+    },
+    "pos": {
+      "1": [
+        {
+          "specVersion": "0.1-218",
+          "casesNumber": 0,
+          "description": " it is possible to  replace the else condition with an always-true condition (Boolean)",
+          "unexpectedBehaviour": false
+        },
+        {
+          "specVersion": "0.1-218",
+          "casesNumber": 0,
+          "description": " it is possible to  replace the else condition with an always-true condition (Boolean)",
+          "unexpectedBehaviour": false
+        },
+        {
+          "specVersion": "0.1-218",
+          "casesNumber": 0,
+          "description": " it is possible to  replace the else condition with an always-true condition (sealed class)",
+          "unexpectedBehaviour": false
+        },
+        {
+          "specVersion": "0.1-218",
+          "casesNumber": 0,
+          "description": "it is possible to  replace the else condition with an always-true condition (Enum)",
+          "unexpectedBehaviour": false
+        }
+      ]
+    }
+  }
+}
