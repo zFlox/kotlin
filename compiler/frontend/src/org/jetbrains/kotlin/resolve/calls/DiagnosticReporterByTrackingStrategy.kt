@@ -263,88 +263,7 @@ class DiagnosticReporterByTrackingStrategy(
     override fun constraintError(diagnostic: KotlinCallDiagnostic) {
         when (diagnostic.javaClass) {
             NewConstraintError::class.java -> {
-                val constraintError = diagnostic as NewConstraintError
-                val position = constraintError.position.from
-                val argument =
-                    when (position) {
-                        is ArgumentConstraintPosition -> position.argument
-                        is ReceiverConstraintPosition -> position.argument
-                        is LHSArgumentConstraintPosition -> position.argument
-                        else -> null
-                    }
-                argument?.let {
-                    it.safeAs<LambdaKotlinCallArgument>()?.let lambda@{ lambda ->
-                        val parameterTypes = lambda.parametersTypes?.toList() ?: return@lambda
-                        val index = parameterTypes.indexOf(constraintError.upperKotlinType.unwrap())
-                        val lambdaExpression = lambda.psiExpression as? KtLambdaExpression ?: return@lambda
-                        val parameter = lambdaExpression.valueParameters.getOrNull(index) ?: return@lambda
-                        trace.report(Errors.EXPECTED_PARAMETER_TYPE_MISMATCH.on(parameter, constraintError.upperKotlinType))
-                        return
-                    }
-
-                    val expression = it.psiExpression ?: return
-                    val deparenthesized = KtPsiUtil.safeDeparenthesize(expression)
-                    if (reportConstantTypeMismatch(constraintError, deparenthesized)) return
-
-                    val compileTimeConstant = trace[BindingContext.COMPILE_TIME_VALUE, deparenthesized] as? TypedCompileTimeConstant
-                    if (compileTimeConstant != null) {
-                        val expressionType = trace[BindingContext.EXPRESSION_TYPE_INFO, expression]?.type
-                        if (expressionType != null &&
-                            !UnsignedTypes.isUnsignedType(compileTimeConstant.type) && UnsignedTypes.isUnsignedType(expressionType)
-                        ) {
-                            return
-                        }
-                    }
-                    trace.report(
-                        Errors.TYPE_MISMATCH.on(
-                            deparenthesized,
-                            constraintError.upperKotlinType,
-                            constraintError.lowerKotlinType
-                        )
-                    )
-                }
-
-                (position as? ExpectedTypeConstraintPosition)?.let {
-                    val call = it.topLevelCall.psiKotlinCall.psiCall.callElement.safeAs<KtExpression>()
-                    reportIfNonNull(call) {
-                        trace.report(
-                            Errors.TYPE_MISMATCH.on(
-                                it,
-                                constraintError.upperKotlinType,
-                                constraintError.lowerKotlinType
-                            )
-                        )
-                    }
-                }
-
-                (position as? ExplicitTypeParameterConstraintPosition)?.let {
-                    val typeArgumentReference = (it.typeArgument as SimpleTypeArgumentImpl).typeReference
-                    trace.report(
-                        UPPER_BOUND_VIOLATED.on(
-                            typeArgumentReference,
-                            constraintError.upperKotlinType,
-                            constraintError.lowerKotlinType
-                        )
-                    )
-                }
-
-                (position as? FixVariableConstraintPosition)?.let {
-                    val morePreciseDiagnosticExists = allDiagnostics.any { other ->
-                        other is NewConstraintError && other.position.from !is FixVariableConstraintPosition
-                    }
-                    if (morePreciseDiagnosticExists) return
-
-                    val call = it.resolvedAtom?.atom?.safeAs<PSIKotlinCall>()?.psiCall ?: call
-                    val expression = call.calleeExpression ?: return
-
-                    trace.reportDiagnosticOnce(
-                        TYPE_MISMATCH.on(
-                            expression,
-                            constraintError.upperKotlinType,
-                            constraintError.lowerKotlinType
-                        )
-                    )
-                }
+                reportDiagnosticNewConstraintError(diagnostic as NewConstraintError)
             }
 
             CapturedTypeFromSubtyping::class.java -> {
@@ -382,6 +301,90 @@ class DiagnosticReporterByTrackingStrategy(
                 }
                 trace.reportDiagnosticOnce(NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER.on(expression, typeVariableName))
             }
+        }
+    }
+
+    private fun reportDiagnosticNewConstraintError(constraintError: NewConstraintError) {
+        val position = constraintError.position.from
+        val argument =
+            when (position) {
+                is ArgumentConstraintPosition -> position.argument
+                is ReceiverConstraintPosition -> position.argument
+                is LHSArgumentConstraintPosition -> position.argument
+                else -> null
+            }
+        argument?.let {
+            it.safeAs<LambdaKotlinCallArgument>()?.let lambda@{ lambda ->
+                val parameterTypes = lambda.parametersTypes?.toList() ?: return@lambda
+                val index = parameterTypes.indexOf(constraintError.upperKotlinType.unwrap())
+                val lambdaExpression = lambda.psiExpression as? KtLambdaExpression ?: return@lambda
+                val parameter = lambdaExpression.valueParameters.getOrNull(index) ?: return@lambda
+                trace.report(EXPECTED_PARAMETER_TYPE_MISMATCH.on(parameter, constraintError.upperKotlinType))
+                return
+            }
+
+            val expression = it.psiExpression ?: return
+            val deparenthesized = KtPsiUtil.safeDeparenthesize(expression)
+            if (reportConstantTypeMismatch(constraintError, deparenthesized)) return
+
+            val compileTimeConstant = trace[BindingContext.COMPILE_TIME_VALUE, deparenthesized] as? TypedCompileTimeConstant
+            if (compileTimeConstant != null) {
+                val expressionType = trace[BindingContext.EXPRESSION_TYPE_INFO, expression]?.type
+                if (expressionType != null &&
+                    !UnsignedTypes.isUnsignedType(compileTimeConstant.type) && UnsignedTypes.isUnsignedType(expressionType)
+                ) {
+                    return
+                }
+            }
+            trace.report(
+                TYPE_MISMATCH.on(
+                    deparenthesized,
+                    constraintError.upperKotlinType,
+                    constraintError.lowerKotlinType
+                )
+            )
+        }
+
+        (position as? ExpectedTypeConstraintPosition)?.let {
+            val call = it.topLevelCall.psiKotlinCall.psiCall.callElement.safeAs<KtExpression>()
+            reportIfNonNull(call) {
+                trace.report(
+                    TYPE_MISMATCH.on(
+                        it,
+                        constraintError.upperKotlinType,
+                        constraintError.lowerKotlinType
+                    )
+                )
+            }
+        }
+
+        (position as? ExplicitTypeParameterConstraintPosition)?.let {
+            val typeArgumentReference = (it.typeArgument as SimpleTypeArgumentImpl).typeReference
+            trace.report(
+                UPPER_BOUND_VIOLATED.on(
+                    typeArgumentReference,
+                    constraintError.upperKotlinType,
+                    constraintError.lowerKotlinType
+                )
+            )
+        }
+
+        (position as? FixVariableConstraintPosition)?.let {
+            val morePreciseDiagnosticExists = allDiagnostics.any { other ->
+                other is NewConstraintError && other.position.from !is FixVariableConstraintPosition
+            }
+            if (morePreciseDiagnosticExists) return
+
+            val call = it.resolvedAtom?.atom?.safeAs<PSIKotlinCall>()?.psiCall ?: call
+            val expression = call.calleeExpression ?: return
+
+            trace.reportDiagnosticOnce(
+                TYPE_MISMATCH.on(
+                    expression,
+                    constraintError.upperKotlinType,
+                    constraintError.lowerKotlinType
+                )
+            )
         }
     }
 
