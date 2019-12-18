@@ -182,8 +182,12 @@ class DiagnosticReporterByTrackingStrategy(
         }
     }
 
-    private fun <T> reportIfNonNull(element: T?, report: (T) -> Unit) {
-        if (element != null) report(element)
+    private fun <T> reportIfNonNull(element: T?, report: (T) -> Unit): Boolean {
+        if (element != null) {
+            report(element)
+            return true
+        }
+        return false
     }
 
     override fun onCallArgumentName(callArgument: KotlinCallArgument, diagnostic: KotlinCallDiagnostic) {
@@ -263,7 +267,14 @@ class DiagnosticReporterByTrackingStrategy(
     override fun constraintError(diagnostic: KotlinCallDiagnostic) {
         when (diagnostic.javaClass) {
             NewConstraintError::class.java -> {
-                reportDiagnosticNewConstraintError(diagnostic as NewConstraintError)
+                if (!reportDiagnosticNewConstraintError(diagnostic as NewConstraintError)) {
+                    trace.report(
+                        NEW_INFERENCE_ERROR.on(
+                            psiKotlinCall.psiCall.callElement,
+                            "Constraint error: $diagnostic from ${diagnostic.position.from}"
+                        )
+                    )
+                }
             }
 
             CapturedTypeFromSubtyping::class.java -> {
@@ -304,8 +315,8 @@ class DiagnosticReporterByTrackingStrategy(
         }
     }
 
-    private fun reportDiagnosticNewConstraintError(constraintError: NewConstraintError) {
-        when (val position = constraintError.position.from) {
+    private fun reportDiagnosticNewConstraintError(constraintError: NewConstraintError): Boolean {
+        return when (val position = constraintError.position.from) {
             is ArgumentAwareConstraintPosition -> {
                 reportDiagnosticForArgumentAwareConstraintPosition(position, constraintError)
             }
@@ -332,16 +343,18 @@ class DiagnosticReporterByTrackingStrategy(
                         constraintError.lowerKotlinType
                     )
                 )
+
+                true
             }
 
             is FixVariableConstraintPosition -> {
                 val morePreciseDiagnosticExists = allDiagnostics.any { other ->
                     other is NewConstraintError && other.position.from !is FixVariableConstraintPosition
                 }
-                if (morePreciseDiagnosticExists) return
+                if (morePreciseDiagnosticExists) return true
 
                 val call = position.resolvedAtom?.atom?.safeAs<PSIKotlinCall>()?.psiCall ?: call
-                val expression = call.calleeExpression ?: return
+                val expression = call.calleeExpression ?: return false
 
                 trace.reportDiagnosticOnce(
                     TYPE_MISMATCH.on(
@@ -350,14 +363,17 @@ class DiagnosticReporterByTrackingStrategy(
                         constraintError.lowerKotlinType
                     )
                 )
+
+                true
             }
+            else -> false
         }
     }
 
     private fun reportDiagnosticForArgumentAwareConstraintPosition(
         position: ArgumentAwareConstraintPosition,
         constraintError: NewConstraintError
-    ) {
+    ): Boolean {
         val argument = position.argument
         argument.safeAs<LambdaKotlinCallArgument>()?.let lambda@{ lambda ->
             val parameterTypes = lambda.parametersTypes?.toList() ?: return@lambda
@@ -365,12 +381,12 @@ class DiagnosticReporterByTrackingStrategy(
             val lambdaExpression = lambda.psiExpression as? KtLambdaExpression ?: return@lambda
             val parameter = lambdaExpression.valueParameters.getOrNull(index) ?: return@lambda
             trace.report(EXPECTED_PARAMETER_TYPE_MISMATCH.on(parameter, constraintError.upperKotlinType))
-            return
+            return true
         }
 
-        val expression = argument.psiExpression ?: return
+        val expression = argument.psiExpression ?: return false
         val deparenthesized = KtPsiUtil.safeDeparenthesize(expression)
-        if (reportConstantTypeMismatch(constraintError, deparenthesized)) return
+        if (reportConstantTypeMismatch(constraintError, deparenthesized)) return true
 
         val compileTimeConstant = trace[BindingContext.COMPILE_TIME_VALUE, deparenthesized] as? TypedCompileTimeConstant
         if (compileTimeConstant != null) {
@@ -378,7 +394,7 @@ class DiagnosticReporterByTrackingStrategy(
             if (expressionType != null &&
                 !UnsignedTypes.isUnsignedType(compileTimeConstant.type) && UnsignedTypes.isUnsignedType(expressionType)
             ) {
-                return
+                return true
             }
         }
 
@@ -389,6 +405,8 @@ class DiagnosticReporterByTrackingStrategy(
                 constraintError.lowerKotlinType
             )
         )
+
+        return true
     }
 
     private fun reportConstantTypeMismatch(constraintError: NewConstraintError, expression: KtExpression): Boolean {
