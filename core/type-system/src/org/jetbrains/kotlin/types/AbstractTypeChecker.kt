@@ -287,7 +287,7 @@ object AbstractTypeChecker {
 
                     SeveralSupertypesWithSameConstructorPolicy.CHECK_ANY_OF_THEM,
                     SeveralSupertypesWithSameConstructorPolicy.INTERSECT_ARGUMENTS_AND_CHECK_AGAIN ->
-                        if (supertypesWithSameConstructor.any { isSubtypeForSameConstructor(it.asArgumentList(), superType) }) return true
+                        Unit // if (supertypesWithSameConstructor.anyApplyToAll { isSubtypeForSameConstructor(it.asArgumentList(), superType) }) return true
                 }
 
                 if (sameConstructorPolicy != SeveralSupertypesWithSameConstructorPolicy.INTERSECT_ARGUMENTS_AND_CHECK_AGAIN) return false
