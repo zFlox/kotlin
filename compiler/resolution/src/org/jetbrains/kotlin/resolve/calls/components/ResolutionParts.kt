@@ -150,7 +150,9 @@ internal object CreateFreshVariablesSubstitutor : ResolutionPart() {
             val shouldTypeParameterBeFlexible = typeParameter.shouldBeFlexible()
             val freshVariable = toFreshVariables.freshVariables[index]
             val typeVariableType = freshVariable.defaultType.let { type ->
-                if (shouldTypeParameterBeFlexible) KotlinTypeFactory.flexibleType(type, type.makeNullableAsSpecified(true)) else type
+                if (shouldTypeParameterBeFlexible) {
+                    KotlinTypeFactory.flexibleType(type, type.makeNullableAsSpecified(true)).inheritEnhancement(type)
+                } else type
             }
 
             val knownTypeArgument = knownTypeParametersResultingSubstitutor?.substitute(typeParameter.defaultType)
