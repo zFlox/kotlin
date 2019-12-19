@@ -63,6 +63,7 @@ abstract class KotlinDslScriptModelResolverCommon : AbstractProjectResolverExten
 
             KotlinDslScriptModel(
                 file.absolutePath,
+                System.currentTimeMillis(),
                 model.classPath.map { it.absolutePath },
                 model.sourcePath.map { it.absolutePath },
                 model.implicitImports,
