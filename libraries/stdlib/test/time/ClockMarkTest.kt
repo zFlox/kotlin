@@ -14,7 +14,7 @@ class ClockMarkTest {
     fun adjustment() {
         val clock = TestTimeSource()
 
-        fun TimeSourceMark.assertHasPassed(hasPassed: Boolean) {
+        fun TimeMark.assertHasPassed(hasPassed: Boolean) {
             assertEquals(!hasPassed, this.hasNotPassedNow(), "Expected mark in the future")
             assertEquals(hasPassed, this.hasPassedNow(), "Expected mark in the past")
 

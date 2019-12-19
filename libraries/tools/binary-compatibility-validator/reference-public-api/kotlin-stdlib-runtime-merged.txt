@@ -5298,14 +5298,14 @@ public final class kotlin/text/UStringsKt {
 public abstract class kotlin/time/AbstractDoubleTimeSource : kotlin/time/TimeSource {
 	public fun <init> (Ljava/util/concurrent/TimeUnit;)V
 	protected final fun getUnit ()Ljava/util/concurrent/TimeUnit;
-	public fun markNow ()Lkotlin/time/TimeSourceMark;
+	public fun markNow ()Lkotlin/time/TimeMark;
 	protected abstract fun read ()D
 }
 
 public abstract class kotlin/time/AbstractLongTimeSource : kotlin/time/TimeSource {
 	public fun <init> (Ljava/util/concurrent/TimeUnit;)V
 	protected final fun getUnit ()Ljava/util/concurrent/TimeUnit;
-	public fun markNow ()Lkotlin/time/TimeSourceMark;
+	public fun markNow ()Lkotlin/time/TimeMark;
 	protected abstract fun read ()J
 }
 
@@ -5400,27 +5400,31 @@ public final class kotlin/time/MeasureTimeKt {
 	public static final fun measureTimedValue (Lkotlin/time/TimeSource;Lkotlin/jvm/functions/Function0;)Lkotlin/time/TimedValue;
 }
 
-public final class kotlin/time/MonoTimeSource : kotlin/time/AbstractLongTimeSource, kotlin/time/TimeSource {
-	public static final field INSTANCE Lkotlin/time/MonoTimeSource;
-	public fun toString ()Ljava/lang/String;
-}
-
 public final class kotlin/time/TestTimeSource : kotlin/time/AbstractLongTimeSource {
 	public fun <init> ()V
 	public final fun plusAssign-LRDsOJo (D)V
 }
 
-public abstract interface class kotlin/time/TimeSource {
-	public abstract fun markNow ()Lkotlin/time/TimeSourceMark;
-}
-
-public abstract class kotlin/time/TimeSourceMark {
+public abstract class kotlin/time/TimeMark {
 	public fun <init> ()V
 	public abstract fun elapsedNow ()D
 	public final fun hasNotPassedNow ()Z
 	public final fun hasPassedNow ()Z
-	public fun minus-LRDsOJo (D)Lkotlin/time/TimeSourceMark;
-	public fun plus-LRDsOJo (D)Lkotlin/time/TimeSourceMark;
+	public fun minus-LRDsOJo (D)Lkotlin/time/TimeMark;
+	public fun plus-LRDsOJo (D)Lkotlin/time/TimeMark;
+}
+
+public abstract interface class kotlin/time/TimeSource {
+	public static final field Companion Lkotlin/time/TimeSource$Companion;
+	public abstract fun markNow ()Lkotlin/time/TimeMark;
+}
+
+public final class kotlin/time/TimeSource$Companion {
+}
+
+public final class kotlin/time/TimeSource$Monotonic : kotlin/time/TimeSource {
+	public static final field INSTANCE Lkotlin/time/TimeSource$Monotonic;
+	public fun markNow ()Lkotlin/time/TimeMark;
 }
 
 public final class kotlin/time/TimedValue {

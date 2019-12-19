@@ -10,7 +10,7 @@ import org.w3c.performance.Performance
 
 @SinceKotlin("1.3")
 @ExperimentalTime
-public actual object MonoTimeSource : TimeSource {
+internal actual object MonotonicTimeSource : TimeSource {
 
     private val actualClock: TimeSource = run {
         val isNode: Boolean = js("typeof process !== 'undefined' && process.versions && !!process.versions.node")
@@ -23,7 +23,7 @@ public actual object MonoTimeSource : TimeSource {
 
     }
 
-    override fun markNow(): TimeSourceMark = actualClock.markNow()
+    override fun markNow(): TimeMark = actualClock.markNow()
 }
 
 internal external interface Process {
@@ -34,7 +34,7 @@ internal external interface Process {
 @ExperimentalTime
 internal class HrTimeSource(val process: Process) : TimeSource {
 
-    override fun markNow(): TimeSourceMark = object : TimeSourceMark() {
+    override fun markNow(): TimeMark = object : TimeMark() {
         val startedAt = process.hrtime()
         override fun elapsedNow(): Duration =
             process.hrtime(startedAt).let { (seconds, nanos) -> seconds.seconds + nanos.nanoseconds }

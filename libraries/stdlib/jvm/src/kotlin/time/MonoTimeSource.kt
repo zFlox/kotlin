@@ -7,7 +7,7 @@ package kotlin.time
 
 @SinceKotlin("1.3")
 @ExperimentalTime
-public actual object MonoTimeSource : AbstractLongTimeSource(unit = DurationUnit.NANOSECONDS), TimeSource { // TODO: interface should not be required here
+internal actual object MonotonicTimeSource : AbstractLongTimeSource(unit = DurationUnit.NANOSECONDS), TimeSource { // TODO: interface should not be required here
     override fun read(): Long = System.nanoTime()
     override fun toString(): String = "Clock(System.nanoTime())"
 }

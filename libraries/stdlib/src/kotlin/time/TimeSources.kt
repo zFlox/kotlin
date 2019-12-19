@@ -5,20 +5,18 @@
 
 package kotlin.time
 
-/**
- * The most precise clock available in the platform.
- *
- * The clock returns its readings from a source of monotonic time when it is available in a target platform,
- * and resorts to a non-monotonic time source otherwise.
- */
 @SinceKotlin("1.3")
 @ExperimentalTime
-public expect object MonoTimeSource : TimeSource
+typealias MonoClock = TimeSource.Monotonic
+
+@SinceKotlin("1.3")
+@ExperimentalTime
+internal expect object MonotonicTimeSource : TimeSource
 
 /**
- * An abstract class used to implement clocks that return their readings as [Long] values in the specified [unit].
+ * An abstract class used to implement time sources that return their readings as [Long] values in the specified [unit].
  *
- * @property unit The unit in which this clock readings are expressed.
+ * @property unit The unit in which this time source's readings are expressed.
  */
 @SinceKotlin("1.3")
 @ExperimentalTime
@@ -29,18 +27,18 @@ public abstract class AbstractLongTimeSource(protected val unit: DurationUnit) :
      */
     protected abstract fun read(): Long
 
-    private class LongClockMark(private val startedAt: Long, private val timeSource: AbstractLongTimeSource, private val offset: Duration) : TimeSourceMark() {
+    private class LongTimeMark(private val startedAt: Long, private val timeSource: AbstractLongTimeSource, private val offset: Duration) : TimeMark() {
         override fun elapsedNow(): Duration = (timeSource.read() - startedAt).toDuration(timeSource.unit) - offset
-        override fun plus(duration: Duration): TimeSourceMark = LongClockMark(startedAt, timeSource, offset + duration)
+        override fun plus(duration: Duration): TimeMark = LongTimeMark(startedAt, timeSource, offset + duration)
     }
 
-    override fun markNow(): TimeSourceMark = LongClockMark(read(), this, Duration.ZERO)
+    override fun markNow(): TimeMark = LongTimeMark(read(), this, Duration.ZERO)
 }
 
 /**
- * An abstract class used to implement clocks that return their readings as [Double] values in the specified [unit].
+ * An abstract class used to implement time sources that return their readings as [Double] values in the specified [unit].
  *
- * @property unit The unit in which this clock readings are expressed.
+ * @property unit The unit in which this time source's readings are expressed.
  */
 @SinceKotlin("1.3")
 @ExperimentalTime
@@ -51,25 +49,25 @@ public abstract class AbstractDoubleTimeSource(protected val unit: DurationUnit)
      */
     protected abstract fun read(): Double
 
-    private class DoubleClockMark(private val startedAt: Double, private val timeSource: AbstractDoubleTimeSource, private val offset: Duration) : TimeSourceMark() {
+    private class DoubleTimeMark(private val startedAt: Double, private val timeSource: AbstractDoubleTimeSource, private val offset: Duration) : TimeMark() {
         override fun elapsedNow(): Duration = (timeSource.read() - startedAt).toDuration(timeSource.unit) - offset
-        override fun plus(duration: Duration): TimeSourceMark = DoubleClockMark(startedAt, timeSource, offset + duration)
+        override fun plus(duration: Duration): TimeMark = DoubleTimeMark(startedAt, timeSource, offset + duration)
     }
 
-    override fun markNow(): TimeSourceMark = DoubleClockMark(read(), this, Duration.ZERO)
+    override fun markNow(): TimeMark = DoubleTimeMark(read(), this, Duration.ZERO)
 }
 
 /**
- * A clock that has programmatically updatable readings. It is useful as a predictable source of time in tests.
+ * A time source that has programmatically updatable readings. It is useful as a predictable source of time in tests.
  *
- * The current clock reading value can be advanced by the specified duration amount with the operator [plusAssign]:
+ * The current reading value can be advanced by the specified duration amount with the operator [plusAssign]:
  *
  * ```
- * val clock = TestClock()
- * clock += 10.seconds
+ * val timeSource = TestTimeSource()
+ * timeSource += 10.seconds
  * ```
  *
- * Implementation note: the current clock reading value is stored as a [Long] number of nanoseconds,
+ * Implementation note: the current reading value is stored as a [Long] number of nanoseconds,
  * thus it's capable to represent a time range of approximately ±292 years.
  * Should the reading value overflow as the result of [plusAssign] operation, an [IllegalStateException] is thrown.
  */

@@ -10,7 +10,7 @@ import kotlin.contracts.*
 /**
  * Executes the given function [block] and returns the duration of elapsed time interval.
  *
- * The elapsed time is measured with [MonoTimeSource].
+ * The elapsed time is measured with [TimeSource.Monotonic].
  */
 @SinceKotlin("1.3")
 @ExperimentalTime
@@ -18,7 +18,7 @@ public inline fun measureTime(block: () -> Unit): Duration {
     contract {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
     }
-    return MonoTimeSource.measureTime(block)
+    return TimeSource.Monotonic.measureTime(block)
 }
 
 
@@ -54,7 +54,7 @@ public data class TimedValue<T>(val value: T, val duration: Duration)
  * Executes the given function [block] and returns an instance of [TimedValue] class, containing both
  * the result of the function execution and the duration of elapsed time interval.
  *
- * The elapsed time is measured with [MonoTimeSource].
+ * The elapsed time is measured with [TimeSource.Monotonic].
  */
 @SinceKotlin("1.3")
 @ExperimentalTime
@@ -63,7 +63,7 @@ public inline fun <T> measureTimedValue(block: () -> T): TimedValue<T> {
         callsInPlace(block, InvocationKind.EXACTLY_ONCE)
     }
 
-    return MonoTimeSource.measureTimedValue(block)
+    return TimeSource.Monotonic.measureTimedValue(block)
 }
 
 /**
