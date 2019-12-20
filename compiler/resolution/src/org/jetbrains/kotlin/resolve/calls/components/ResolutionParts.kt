@@ -149,6 +149,7 @@ internal object CreateFreshVariablesSubstitutor : ResolutionPart() {
             val typeParameter = typeParameters[index]
             val shouldTypeParameterBeFlexible = typeParameter.shouldBeFlexible()
             val freshVariable = toFreshVariables.freshVariables[index]
+            // TODO: don't forget to implement preservation flexibility of java type parameters in FIR
             val typeVariableType = freshVariable.defaultType.let { type ->
                 if (shouldTypeParameterBeFlexible) {
                     KotlinTypeFactory.flexibleType(type, type.makeNullableAsSpecified(true)).inheritEnhancement(type)

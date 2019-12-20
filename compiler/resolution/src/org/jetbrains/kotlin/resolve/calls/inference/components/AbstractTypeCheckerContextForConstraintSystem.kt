@@ -8,7 +8,9 @@ package org.jetbrains.kotlin.resolve.calls.inference.components
 import org.jetbrains.kotlin.types.AbstractNullabilityChecker
 import org.jetbrains.kotlin.types.AbstractTypeChecker
 import org.jetbrains.kotlin.types.AbstractTypeCheckerContext
+import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.model.*
+import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
 
 abstract class AbstractTypeCheckerContextForConstraintSystem : AbstractTypeCheckerContext(), TypeSystemInferenceExtensionContext {
 
@@ -27,6 +29,10 @@ abstract class AbstractTypeCheckerContextForConstraintSystem : AbstractTypeCheck
     abstract fun addUpperConstraint(typeVariable: TypeConstructorMarker, superType: KotlinTypeMarker)
 
     abstract fun addLowerConstraint(typeVariable: TypeConstructorMarker, subType: KotlinTypeMarker)
+
+    abstract fun isFromTypeParameter(): Boolean
+
+    abstract fun isFromTypeArgument(): Boolean
 
     override fun getLowerCapturedTypePolicy(subType: SimpleTypeMarker, superType: CapturedTypeMarker): LowerCapturedTypePolicy = when {
         isMyTypeVariable(subType) -> LowerCapturedTypePolicy.SKIP_LOWER
