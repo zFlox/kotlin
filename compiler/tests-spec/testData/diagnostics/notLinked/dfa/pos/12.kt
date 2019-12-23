@@ -1827,7 +1827,7 @@ fun <T> Map<T, *>?.case_32() {
         funNullableAny()
         isEmpty()
         apply {
-            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>"), DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>")!>this<!>
+            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>"), DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>")!>this<!>
             equals(null)
             propT
             propAny
@@ -1838,29 +1838,29 @@ fun <T> Map<T, *>?.case_32() {
             funNullableT()
             funNullableAny()
             isEmpty()
-            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>"), DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>")!>this<!>.equals(null)
-            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>"), DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>")!>this<!>.propT
-            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>"), DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>")!>this<!>.propAny
-            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>"), DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>")!>this<!>.propNullableT
-            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>"), DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>")!>this<!>.propNullableAny
-            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>"), DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>")!>this<!>.funT()
-            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>"), DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>")!>this<!>.funAny()
-            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>"), DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>")!>this<!>.funNullableT()
-            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>"), DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>")!>this<!>.funNullableAny()
-            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>"), DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>")!>this<!>.isEmpty()
+            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>"), DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>")!>this<!>.equals(null)
+            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>"), DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>")!>this<!>.propT
+            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>"), DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>")!>this<!>.propAny
+            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>"), DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>")!>this<!>.propNullableT
+            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>"), DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>")!>this<!>.propNullableAny
+            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>"), DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>")!>this<!>.funT()
+            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>"), DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>")!>this<!>.funAny()
+            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>"), DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>")!>this<!>.funNullableT()
+            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>"), DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>")!>this<!>.funNullableAny()
+            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>"), DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>")!>this<!>.isEmpty()
         }
         also {
-            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>")!>it<!>
-            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>")!>it<!>.equals(null)
-            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>")!>it<!>.propT
-            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>")!>it<!>.propAny
-            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>")!>it<!>.propNullableT
-            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>")!>it<!>.propNullableAny
-            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>")!>it<!>.funT()
-            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>")!>it<!>.funAny()
-            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>")!>it<!>.funNullableT()
-            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>")!>it<!>.funNullableAny()
-            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, kotlin.Any?>")!>it<!>.isEmpty()
+            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>")!>it<!>
+            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>")!>it<!>.equals(null)
+            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>")!>it<!>.propT
+            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>")!>it<!>.propAny
+            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>")!>it<!>.propNullableT
+            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>")!>it<!>.propNullableAny
+            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>")!>it<!>.funT()
+            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>")!>it<!>.funAny()
+            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>")!>it<!>.funNullableT()
+            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>")!>it<!>.funNullableAny()
+            <!DEBUG_INFO_EXPRESSION_TYPE("kotlin.collections.Map<T, *>")!>it<!>.isEmpty()
         }
     }
 }
