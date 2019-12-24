@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.backend.common.CodegenUtil
 import org.jetbrains.kotlin.backend.common.ir.copyTo
 import org.jetbrains.kotlin.backend.common.ir.copyTypeParametersFrom
 import org.jetbrains.kotlin.backend.common.ir.isSuspend
+import org.jetbrains.kotlin.backend.common.lower.allOverridden
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
 import org.jetbrains.kotlin.backend.jvm.JvmLoweredDeclarationOrigin
 import org.jetbrains.kotlin.codegen.ClassBuilder
@@ -45,7 +46,6 @@ import org.jetbrains.kotlin.resolve.jvm.jvmSignature.JvmMethodGenericSignature
 import org.jetbrains.kotlin.serialization.deserialization.descriptors.DescriptorWithContainerSource
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.org.objectweb.asm.MethodVisitor
-import org.jetbrains.org.objectweb.asm.Opcodes
 import org.jetbrains.org.objectweb.asm.Type
 import org.jetbrains.org.objectweb.asm.commons.InstructionAdapter
 
@@ -77,8 +77,8 @@ internal fun generateStateMachineForNamedFunction(
         internalNameForDispatchReceiver = classCodegen.visitor.thisName,
         putContinuationParameterToLvt = false,
         disableTailCallOptimizationForFunctionReturningUnit = irFunction.returnType.isUnit() &&
-                (irFunction as? IrSimpleFunction)?.overriddenSymbols?.let { symbols ->
-                    symbols.isNotEmpty() && symbols.any { !it.owner.returnType.isUnit() }
+                (irFunction as? IrSimpleFunction)?.allOverridden()?.toList()?.let { functions ->
+                    functions.isNotEmpty() && functions.any { !it.returnType.isUnit() }
                 } == true
     )
 }
@@ -142,10 +142,10 @@ internal fun IrFunction.getOrCreateSuspendFunctionViewIfNeeded(context: JvmBacke
         origin == JvmLoweredDeclarationOrigin.FOR_INLINE_STATE_MACHINE_TEMPLATE_CAPTURES_CROSSINLINE_VIEW
     ) return this
     context.suspendFunctionOriginalToView[this]?.let { return it }
-    return suspendFunctionView(context)
+    return suspendFunctionView(context, true)
 }
 
-private fun IrFunction.suspendFunctionView(context: JvmBackendContext): IrFunction {
+fun IrFunction.suspendFunctionView(context: JvmBackendContext, generateBody: Boolean): IrFunction {
     require(this.isSuspend && this is IrSimpleFunction)
     val originalDescriptor = this.descriptor
     // For SuspendFunction{N}.invoke we need to generate INVOKEINTERFACE Function{N+1}.invoke(...Ljava/lang/Object;)...
@@ -188,28 +188,30 @@ private fun IrFunction.suspendFunctionView(context: JvmBackendContext): IrFuncti
         )
         val valueParametersMapping = explicitParameters.zip(it.explicitParameters).toMap()
 
-        // Add the suspend function view to the map before transforming the body to make sure
-        // that recursive suspend functions do not lead to unbounded recursion at compile time.
-        context.recordSuspendFunctionView(this, it)
+        if (generateBody) {
+            // Add the suspend function view to the map before transforming the body to make sure
+            // that recursive suspend functions do not lead to unbounded recursion at compile time.
+            context.recordSuspendFunctionView(this, it)
 
-        it.body = body?.deepCopyWithSymbols(this)
-        it.body?.transformChildrenVoid(object : IrElementTransformerVoid() {
-            override fun visitGetValue(expression: IrGetValue): IrGetValue =
-                valueParametersMapping[expression.symbol.owner]?.let { newParam ->
-                    expression.run { IrGetValueImpl(startOffset, endOffset, type, newParam.symbol, origin) }
-                } ?: expression
+            it.body = body?.deepCopyWithSymbols(this)
+            it.body?.transformChildrenVoid(object : IrElementTransformerVoid() {
+                override fun visitGetValue(expression: IrGetValue): IrGetValue =
+                    valueParametersMapping[expression.symbol.owner]?.let { newParam ->
+                        expression.run { IrGetValueImpl(startOffset, endOffset, type, newParam.symbol, origin) }
+                    } ?: expression
 
-            override fun visitClass(declaration: IrClass): IrStatement {
-                // Do not cross class boundaries inside functions. Otherwise, callable references will try to access wrong $completion.
-                return declaration
-            }
+                override fun visitClass(declaration: IrClass): IrStatement {
+                    // Do not cross class boundaries inside functions. Otherwise, callable references will try to access wrong $completion.
+                    return declaration
+                }
 
-            override fun visitCall(expression: IrCall): IrExpression {
-                if (!expression.isSuspend) return super.visitCall(expression)
-                return super.visitCall(expression.createSuspendFunctionCallViewIfNeeded(context, it, callerIsInlineLambda = false))
-            }
-        })
-        it.copyAttributes(this)
+                override fun visitCall(expression: IrCall): IrExpression {
+                    if (!expression.isSuspend) return super.visitCall(expression)
+                    return super.visitCall(expression.createSuspendFunctionCallViewIfNeeded(context, it, callerIsInlineLambda = false))
+                }
+            })
+            it.copyAttributes(this)
+        }
     }
 }
 
