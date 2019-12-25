@@ -123,8 +123,6 @@ open class KotlinNativeTargetConfigurator<T : KotlinNativeTarget>(
             description = "Links ${binary.outputKind.description} '${binary.name}' for a target '${target.name}'."
             enabled = binary.konanTarget.enabledOnCurrentHost
 
-            val targetSubDirectory = target.disambiguationClassifier?.let { "$it/" }.orEmpty()
-            destinationDir = buildDir.resolve("bin/$targetSubDirectory${binary.name}")
             addCompilerPlugins()
 
             if (binary !is TestExecutable) {

@@ -76,11 +76,10 @@ sealed class NativeBinary(
 
     // Output access.
     // TODO: Provide output configurations and integrate them with Gradle Native.
-    var outputDirectory: File
-        get() = linkTask.destinationDir
-        set(value) {
-            linkTask.destinationDir = value
-        }
+    var outputDirectory: File = with(project) {
+        val targetSubDirectory = target.disambiguationClassifier?.let { "$it/" }.orEmpty()
+        buildDir.resolve("bin/$targetSubDirectory${this@NativeBinary.name}")
+    }
 
     val outputFile: File
         get() = linkTask.outputFile.get()
