@@ -102,6 +102,8 @@ sourceSets {
 
 projectTest(parallel = true) {
     dependsOn(":dist")
+    dependsOn(":kotlin-stdlib-js-ir:generateFullRuntimeKLib")    // For Klib tests
+
     workingDir = rootDir
     systemProperty("kotlin.test.script.classpath", testSourceSet.output.classesDirs.joinToString(File.pathSeparator))
     doFirst {

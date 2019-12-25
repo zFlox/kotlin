@@ -5,26 +5,89 @@
 
 package org.jetbrains.kotlin.codegen.ir
 
+import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
+import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment.Companion.createForTests
 import org.jetbrains.kotlin.codegen.AbstractBlackBoxCodegenTest
+import org.jetbrains.kotlin.codegen.CodegenTestCase
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
+import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.TargetBackend
-
+import org.jetbrains.kotlin.utils.rethrow
 import java.io.File
+import java.nio.file.Paths
+import java.util.*
+import java.util.concurrent.TimeUnit
 
 abstract class AbstractCompileKotlinAgainstKlibTest : AbstractBlackBoxCodegenTest() {
-    lateinit var kLibName: String
+    lateinit var klibName: String
+    lateinit var outputDir: File
 
     override fun getBackend() = TargetBackend.JVM_IR
 
     override fun doMultiFileTest(wholeFile: File, files: List<TestFile>) {
-        // TODO: Compile Klib form sources, instead of storing it as a binary.
-        kLibName = wholeFile.toString().removeSuffix(".kt") + ".klib"
+        outputDir = javaSourcesOutputDirectory
+        klibName = Paths.get(outputDir.toString(), wholeFile.name.toString().removeSuffix(".kt")).toString()
+
+        val classpath: MutableList<File> = ArrayList()
+        classpath.add(KotlinTestUtils.getAnnotationsJar())
+        val configuration = createConfiguration(
+            configurationKind, CodegenTestCase.getJdkKind(files),
+            classpath,
+            listOf(outputDir),
+            files
+        )
+        myEnvironment = createForTests(
+            testRootDisposable, configuration, EnvironmentConfigFiles.JVM_CONFIG_FILES
+        )
+        setupEnvironment(myEnvironment)
+
+
         // All files but last are Klib's sources.
-        super.doMultiFileTest(wholeFile, listOf(files.last()));
+        try {
+            compileToKlib(files.dropLast(1))
+        } catch (t: Throwable) {
+            if (!isIgnoredTarget(wholeFile)) {
+                throw rethrow(t)
+            }
+        }
+        super.doMultiFileTest(wholeFile, listOf(files.last()))
     }
 
     override fun updateConfiguration(configuration: CompilerConfiguration) {
-        configuration.put(JVMConfigurationKeys.KLIB_PATHS, listOf(kLibName));
+        configuration.put(JVMConfigurationKeys.KLIB_PATHS, listOf(klibName + ".klib"))
+    }
+
+    // We need real (as opposed to virtual) files in order to produce a Klib.
+    private fun loadMultiFilesReal(files: List<TestFile>): List<String> {
+        val dir = outputDir
+        return files.map { testFile ->
+            assert(testFile.name.endsWith(".kt"))
+            val ktFile = File(Paths.get(dir.toString(), testFile.name).toString())
+            ktFile.writeText(testFile.content)
+            ktFile.toString()
+        }
+    }
+
+    // For now, while there is no common backend, we generate Klib using
+    // the JS_IR command line.
+    private fun compileToKlib(files: List<TestFile>) {
+        val sourceFiles = loadMultiFilesReal(files)
+        val process = ProcessBuilder(
+            "dist/kotlinc/bin/kotlinc-js",
+            "-output", klibName,
+            "-Xir-produce-klib-file",
+            "-libraries", "libraries/stdlib/js-ir/build/fullRuntime/klib/",
+            *sourceFiles.toTypedArray()
+        )
+            .start()
+            .also { it.waitFor(TIMEOUT_SECONDS, TimeUnit.SECONDS) }
+        if (process.exitValue() != 0) {
+            throw Exception(process.errorStream.bufferedReader().readText())
+        }
+    }
+
+    companion object {
+        const val TIMEOUT_SECONDS = 10L
     }
 }
