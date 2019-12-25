@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.types.expressions;
 
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -335,10 +334,9 @@ public class ExpressionTypingServices {
             return blockLevelVisitor.getTypeInfo(statementExpression, context.replaceExpectedType(expectedType).replaceContextDependency(dependency), true);
         }
         if (context.languageVersionSettings.supportsFeature(LanguageFeature.NewInference) &&
-            statementExpression instanceof KtLambdaExpression) {
-            PsiElement parent = PsiUtilsKt.getNonStrictParentOfType(statementExpression, KtFunctionLiteral.class);
-            if (parent != null) {
-                KtFunctionLiteral functionLiteral = (KtFunctionLiteral) parent;
+            (statementExpression instanceof KtLambdaExpression || statementExpression instanceof KtCallableReferenceExpression)) {
+            KtFunctionLiteral functionLiteral = PsiUtilsKt.getNonStrictParentOfType(statementExpression, KtFunctionLiteral.class);
+            if (functionLiteral != null) {
                 KotlinResolutionCallbacksImpl.LambdaInfo info =
                         context.trace.getBindingContext().get(BindingContext.NEW_INFERENCE_LAMBDA_INFO, functionLiteral);
                 if (info != null) {
