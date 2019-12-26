@@ -326,18 +326,9 @@ public class ExpressionTypingServices {
                                              )
                                      );
 
-        if (context.languageVersionSettings.supportsFeature(LanguageFeature.NewInference) && !isUnitExpectedType &&
-            (statementExpression instanceof KtLambdaExpression || statementExpression instanceof KtCallableReferenceExpression)) {
-            KtFunctionLiteral functionLiteral = PsiUtilsKt.getNonStrictParentOfType(statementExpression, KtFunctionLiteral.class);
-            if (functionLiteral != null) {
-                KotlinResolutionCallbacksImpl.LambdaInfo info =
-                        context.trace.getBindingContext().get(BindingContext.NEW_INFERENCE_LAMBDA_INFO, functionLiteral);
-                if (info != null) {
-                    info.getLastExpressionInfo().setLexicalScope(context.scope);
-                    info.getLastExpressionInfo().setTrace(context.trace);
-                    return new KotlinTypeInfo(DONT_CARE, context.dataFlowInfo);
-                }
-            }
+        if (!isUnitExpectedType && statementExpression instanceof KtCallableReferenceExpression) {
+            KotlinTypeInfo typeInfo = createDontCareTypeInfoForNILambda(statementExpression, context);
+            if (typeInfo != null) return typeInfo;
         }
 
         if (context.expectedType != NO_EXPECTED_TYPE) {
@@ -355,6 +346,11 @@ public class ExpressionTypingServices {
             }
 
             return blockLevelVisitor.getTypeInfo(statementExpression, context.replaceExpectedType(expectedType).replaceContextDependency(dependency), true);
+        }
+
+        if (statementExpression instanceof KtLambdaExpression) {
+            KotlinTypeInfo typeInfo = createDontCareTypeInfoForNILambda(statementExpression, context);
+            if (typeInfo != null) return typeInfo;
         }
 
         KotlinTypeInfo result = blockLevelVisitor.getTypeInfo(statementExpression, context, true);
@@ -381,6 +377,25 @@ public class ExpressionTypingServices {
             }
         }
         return result;
+    }
+
+    @Nullable
+    private static KotlinTypeInfo createDontCareTypeInfoForNILambda(
+            @NotNull KtExpression statementExpression,
+            @NotNull ExpressionTypingContext context
+    ) {
+        if (!context.languageVersionSettings.supportsFeature(LanguageFeature.NewInference)) return null;
+        KtFunctionLiteral functionLiteral = PsiUtilsKt.getNonStrictParentOfType(statementExpression, KtFunctionLiteral.class);
+        if (functionLiteral != null) {
+            KotlinResolutionCallbacksImpl.LambdaInfo info =
+                    context.trace.getBindingContext().get(BindingContext.NEW_INFERENCE_LAMBDA_INFO, functionLiteral);
+            if (info != null) {
+                info.getLastExpressionInfo().setLexicalScope(context.scope);
+                info.getLastExpressionInfo().setTrace(context.trace);
+                return new KotlinTypeInfo(DONT_CARE, context.dataFlowInfo);
+            }
+        }
+        return null;
     }
 
     private static class EffectsFilteringTrace extends AbstractFilteringTrace {
