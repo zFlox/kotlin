@@ -10235,6 +10235,11 @@ public class DiagnosticsTestGenerated extends AbstractDiagnosticsTest {
                     runTest("compiler/testData/diagnostics/tests/inference/coercionToUnit/coercionToUnitForLastLambdaInLambda.kt");
                 }
 
+                @TestMetadata("coercionToUnitReference.kt")
+                public void testCoercionToUnitReference() throws Exception {
+                    runTest("compiler/testData/diagnostics/tests/inference/coercionToUnit/coercionToUnitReference.kt");
+                }
+
                 @TestMetadata("coercionWithExpectedType.kt")
                 public void testCoercionWithExpectedType() throws Exception {
                     runTest("compiler/testData/diagnostics/tests/inference/coercionToUnit/coercionWithExpectedType.kt");

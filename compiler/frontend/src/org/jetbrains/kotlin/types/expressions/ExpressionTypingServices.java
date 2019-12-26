@@ -316,7 +316,17 @@ public class ExpressionTypingServices {
             @NotNull CoercionStrategy coercionStrategyForLastExpression,
             @NotNull ExpressionTypingInternals blockLevelVisitor
     ) {
-        if (context.languageVersionSettings.supportsFeature(LanguageFeature.NewInference) &&
+        boolean isUnitExpectedType = context.expectedType != NO_EXPECTED_TYPE &&
+                                     (
+                                             context.expectedType == UNIT_EXPECTED_TYPE ||
+                                             //the first check is necessary to avoid invocation 'isUnit(UNIT_EXPECTED_TYPE)'
+                                             (
+                                                     coercionStrategyForLastExpression == COERCION_TO_UNIT &&
+                                                     KotlinBuiltIns.isUnit(context.expectedType)
+                                             )
+                                     );
+
+        if (context.languageVersionSettings.supportsFeature(LanguageFeature.NewInference) && !isUnitExpectedType &&
             (statementExpression instanceof KtLambdaExpression || statementExpression instanceof KtCallableReferenceExpression)) {
             KtFunctionLiteral functionLiteral = PsiUtilsKt.getNonStrictParentOfType(statementExpression, KtFunctionLiteral.class);
             if (functionLiteral != null) {
@@ -332,8 +342,7 @@ public class ExpressionTypingServices {
 
         if (context.expectedType != NO_EXPECTED_TYPE) {
             KotlinType expectedType;
-            if (context.expectedType == UNIT_EXPECTED_TYPE ||//the first check is necessary to avoid invocation 'isUnit(UNIT_EXPECTED_TYPE)'
-                (coercionStrategyForLastExpression == COERCION_TO_UNIT && KotlinBuiltIns.isUnit(context.expectedType))) {
+            if (isUnitExpectedType) {
                 expectedType = UNIT_EXPECTED_TYPE;
             }
             else {
