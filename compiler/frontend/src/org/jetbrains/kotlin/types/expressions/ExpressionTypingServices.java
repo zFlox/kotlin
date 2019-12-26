@@ -316,6 +316,20 @@ public class ExpressionTypingServices {
             @NotNull CoercionStrategy coercionStrategyForLastExpression,
             @NotNull ExpressionTypingInternals blockLevelVisitor
     ) {
+        if (context.languageVersionSettings.supportsFeature(LanguageFeature.NewInference) &&
+            (statementExpression instanceof KtLambdaExpression || statementExpression instanceof KtCallableReferenceExpression)) {
+            KtFunctionLiteral functionLiteral = PsiUtilsKt.getNonStrictParentOfType(statementExpression, KtFunctionLiteral.class);
+            if (functionLiteral != null) {
+                KotlinResolutionCallbacksImpl.LambdaInfo info =
+                        context.trace.getBindingContext().get(BindingContext.NEW_INFERENCE_LAMBDA_INFO, functionLiteral);
+                if (info != null) {
+                    info.getLastExpressionInfo().setLexicalScope(context.scope);
+                    info.getLastExpressionInfo().setTrace(context.trace);
+                    return new KotlinTypeInfo(DONT_CARE, context.dataFlowInfo);
+                }
+            }
+        }
+
         if (context.expectedType != NO_EXPECTED_TYPE) {
             KotlinType expectedType;
             if (context.expectedType == UNIT_EXPECTED_TYPE ||//the first check is necessary to avoid invocation 'isUnit(UNIT_EXPECTED_TYPE)'
@@ -333,19 +347,7 @@ public class ExpressionTypingServices {
 
             return blockLevelVisitor.getTypeInfo(statementExpression, context.replaceExpectedType(expectedType).replaceContextDependency(dependency), true);
         }
-        if (context.languageVersionSettings.supportsFeature(LanguageFeature.NewInference) &&
-            (statementExpression instanceof KtLambdaExpression || statementExpression instanceof KtCallableReferenceExpression)) {
-            KtFunctionLiteral functionLiteral = PsiUtilsKt.getNonStrictParentOfType(statementExpression, KtFunctionLiteral.class);
-            if (functionLiteral != null) {
-                KotlinResolutionCallbacksImpl.LambdaInfo info =
-                        context.trace.getBindingContext().get(BindingContext.NEW_INFERENCE_LAMBDA_INFO, functionLiteral);
-                if (info != null) {
-                    info.getLastExpressionInfo().setLexicalScope(context.scope);
-                    info.getLastExpressionInfo().setTrace(context.trace);
-                    return new KotlinTypeInfo(DONT_CARE, context.dataFlowInfo);
-                }
-            }
-        }
+
         KotlinTypeInfo result = blockLevelVisitor.getTypeInfo(statementExpression, context, true);
         if (coercionStrategyForLastExpression == COERCION_TO_UNIT) {
             boolean mightBeUnit = false;
