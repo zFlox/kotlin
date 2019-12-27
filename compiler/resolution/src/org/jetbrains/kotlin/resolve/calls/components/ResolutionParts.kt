@@ -152,7 +152,7 @@ internal object CreateFreshVariablesSubstitutor : ResolutionPart() {
             // TODO: don't forget to implement preservation flexibility of java type parameters in FIR
             val typeVariableType = freshVariable.defaultType.let { type ->
                 if (shouldTypeParameterBeFlexible) {
-                    type //KotlinTypeFactory.flexibleType(type, type.makeNullableAsSpecified(true)).inheritEnhancement(type)
+                    type//KotlinTypeFactory.flexibleType(type, type.makeNullableAsSpecified(true)).inheritEnhancement(type)
                 } else type
             }
 

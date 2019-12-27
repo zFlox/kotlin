@@ -209,7 +209,7 @@ abstract class AbstractTypeCheckerContextForConstraintSystem : AbstractTypeCheck
         val simplifiedSuperType = if (typeVariableLowerBound.isDefinitelyNotNullType()) {
             superType.withNullability(true)
         } else if (isFlexibleTypeVariable && superType is SimpleTypeMarker) {
-            createFlexibleType(superType, superType.withNullability(true))
+            superType
         } else superType
 
         addUpperConstraint(typeVariableLowerBound.typeConstructor(), simplifiedSuperType)
