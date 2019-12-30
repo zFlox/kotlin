@@ -265,6 +265,9 @@ class FirCallResolver(
         }
 
         when {
+            reducedCandidates.size == 1 && result.currentApplicability >= CandidateApplicability.INAPPLICABLE -> {
+                return true
+            }
             noSuccessfulCandidates -> {
                 return false
             }
@@ -422,18 +425,7 @@ class FirCallResolver(
             candidates.isEmpty() -> FirErrorNamedReferenceImpl(
                 source, FirUnresolvedNameError(name)
             )
-            applicability < CandidateApplicability.SYNTHETIC_RESOLVED -> {
-                FirErrorNamedReferenceImpl(
-                    source,
-                    FirInapplicableCandidateError(applicability, candidates.map {
-                        FirInapplicableCandidateError.CandidateInfo(
-                            it.symbol,
-                            if (it.systemInitialized) it.system.diagnostics else emptyList()
-                        )
-                    })
-                )
-            }
-            candidates.size == 1 -> {
+            candidates.size == 1  && applicability >= CandidateApplicability.INAPPLICABLE -> {
                 val candidate = candidates.single()
                 val coneSymbol = candidate.symbol
                 when {
@@ -445,6 +437,17 @@ class FirCallResolver(
                         FirResolvedNamedReferenceImpl(source, name, coneSymbol)
                     else -> FirNamedReferenceWithCandidate(source, name, candidate)
                 }
+            }
+            applicability < CandidateApplicability.SYNTHETIC_RESOLVED -> {
+                FirErrorNamedReferenceImpl(
+                    source,
+                    FirInapplicableCandidateError(applicability, candidates.map {
+                        FirInapplicableCandidateError.CandidateInfo(
+                            it.symbol,
+                            if (it.systemInitialized) it.system.diagnostics else emptyList()
+                        )
+                    })
+                )
             }
             else -> FirErrorNamedReferenceImpl(
                 source, FirAmbiguityError(name, candidates.map { it.symbol })
