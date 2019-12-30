@@ -465,33 +465,37 @@ class RawFirBuilder(session: FirSession, val scopeProvider: FirScopeProvider, va
         }
 
         private fun KtEnumEntry.toFirEnumEntry(delegatedEnumSelfTypeRef: FirTypeRef): FirDeclaration {
-            val obj = FirAnonymousObjectImpl(
-                source = toFirSourceElement(),
-                session,
-                ClassKind.ENUM_ENTRY,
-                scopeProvider,
-                FirAnonymousObjectSymbol()
-            )
-            val delegatedEntrySelfType =
-                FirResolvedTypeRefImpl(source = null, ConeClassLikeTypeImpl(obj.symbol.toLookupTag(), emptyArray(), isNullable = false))
-
-            extractSuperTypeListEntriesTo(obj, delegatedEntrySelfType, delegatedEnumSelfTypeRef, ClassKind.ENUM_ENTRY)
-
-            for (declaration in declarations) {
-                obj.declarations += declaration.toFirDeclaration(
-                    delegatedEnumSelfTypeRef,
-                    delegatedSelfType = null,
-                    this,
-                    hasPrimaryConstructor = false
-                )
-            }
-
             return FirEnumEntryImpl(
                 source = toFirSourceElement(),
                 session,
                 delegatedEnumSelfTypeRef,
                 name = nameAsSafeName,
-                initializer = obj,
+                initializer = withChildClassName(nameAsSafeName) {
+                    val obj = FirAnonymousObjectImpl(
+                        source = toFirSourceElement(),
+                        session,
+                        ClassKind.ENUM_ENTRY,
+                        scopeProvider,
+                        FirAnonymousObjectSymbol()
+                    )
+                    val delegatedEntrySelfType =
+                        FirResolvedTypeRefImpl(
+                            source = null,
+                            ConeClassLikeTypeImpl(obj.symbol.toLookupTag(), emptyArray(), isNullable = false)
+                        )
+
+                    extractSuperTypeListEntriesTo(obj, delegatedEntrySelfType, delegatedEnumSelfTypeRef, ClassKind.ENUM_ENTRY)
+
+                    for (declaration in declarations) {
+                        obj.declarations += declaration.toFirDeclaration(
+                            delegatedEnumSelfTypeRef,
+                            delegatedSelfType = null,
+                            this,
+                            hasPrimaryConstructor = false
+                        )
+                    }
+                    obj
+                },
                 status = FirDeclarationStatusImpl(
                     Visibilities.PUBLIC, Modality.FINAL
                 ).apply {

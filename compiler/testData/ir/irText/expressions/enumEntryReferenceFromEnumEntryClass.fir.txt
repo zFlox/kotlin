@@ -40,7 +40,7 @@ FILE fqName:<root> fileName:/enumEntryReferenceFromEnumEntryClass.kt
             SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:counter type:kotlin.Int visibility:private' type=kotlin.Unit origin=null
               receiver: GET_VAR '<this>: <uninitialized parent>.<anonymous> declared in <no parent>.<anonymous>' type=<uninitialized parent>.<anonymous> origin=null
               value: CONST Int type=kotlin.Int value=1
-            CALL 'public final fun foo (): kotlin.Unit declared in <root>.MyEnum' type=kotlin.Unit origin=null
+            CALL 'public final fun foo (): kotlin.Unit declared in <root>.MyEnum.Z' type=kotlin.Unit origin=null
               $this: GET_VAR '<this>: <uninitialized parent>.<anonymous> declared in <no parent>.<anonymous>' type=<uninitialized parent>.<anonymous> origin=null
         PROPERTY name:aLambda visibility:public modality:FINAL [val]
           FIELD PROPERTY_BACKING_FIELD name:aLambda type:kotlin.Function0<kotlin.Unit> visibility:private [final]
@@ -52,7 +52,7 @@ FILE fqName:<root> fileName:/enumEntryReferenceFromEnumEntryClass.kt
                     SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:counter type:kotlin.Int visibility:private' type=kotlin.Unit origin=null
                       receiver: GET_VAR '<this>: <uninitialized parent>.<anonymous> declared in <no parent>.<anonymous>' type=<uninitialized parent>.<anonymous> origin=null
                       value: CONST Int type=kotlin.Int value=1
-                    CALL 'public final fun foo (): kotlin.Unit declared in <root>.MyEnum' type=kotlin.Unit origin=null
+                    CALL 'public final fun foo (): kotlin.Unit declared in <root>.MyEnum.Z' type=kotlin.Unit origin=null
                       $this: GET_VAR '<this>: <uninitialized parent>.<anonymous> declared in <no parent>.<anonymous>' type=<uninitialized parent>.<anonymous> origin=null
           FUN DEFAULT_PROPERTY_ACCESSOR name:<get-aLambda> visibility:public modality:FINAL <> ($this:<root>.MyEnum.Z) returnType:kotlin.Function0<kotlin.Unit>
             correspondingProperty: PROPERTY name:aLambda visibility:public modality:FINAL [val]
@@ -76,7 +76,7 @@ FILE fqName:<root> fileName:/enumEntryReferenceFromEnumEntryClass.kt
                       SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:counter type:kotlin.Int visibility:private' type=kotlin.Unit origin=null
                         receiver: GET_VAR '<this>: <uninitialized parent>.<anonymous> declared in <no parent>.<anonymous>' type=<uninitialized parent>.<anonymous> origin=null
                         value: CONST Int type=kotlin.Int value=1
-                      CALL 'public final fun foo (): kotlin.Unit declared in <root>.MyEnum' type=kotlin.Unit origin=null
+                      CALL 'public final fun foo (): kotlin.Unit declared in <root>.MyEnum.Z' type=kotlin.Unit origin=null
                         $this: GET_VAR '<this>: <uninitialized parent>.<anonymous> declared in <no parent>.<anonymous>' type=<uninitialized parent>.<anonymous> origin=null
                   FUN name:test visibility:public modality:FINAL <> ($this:<root>.MyEnum.Z.anObject.<no name provided>) returnType:kotlin.Unit
                     $this: VALUE_PARAMETER name:<this> type:<root>.MyEnum.Z.anObject.<no name provided>
@@ -84,7 +84,7 @@ FILE fqName:<root> fileName:/enumEntryReferenceFromEnumEntryClass.kt
                       SET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:counter type:kotlin.Int visibility:private' type=kotlin.Unit origin=null
                         receiver: GET_VAR '<this>: <uninitialized parent>.<anonymous> declared in <no parent>.<anonymous>' type=<uninitialized parent>.<anonymous> origin=null
                         value: CONST Int type=kotlin.Int value=1
-                      CALL 'public final fun foo (): kotlin.Unit declared in <root>.MyEnum' type=kotlin.Unit origin=null
+                      CALL 'public final fun foo (): kotlin.Unit declared in <root>.MyEnum.Z' type=kotlin.Unit origin=null
                         $this: GET_VAR '<this>: <uninitialized parent>.<anonymous> declared in <no parent>.<anonymous>' type=<uninitialized parent>.<anonymous> origin=null
                 CONSTRUCTOR_CALL 'private constructor <init> () [primary] declared in <root>.MyEnum.Z.anObject.<no name provided>' type=<root>.MyEnum.Z.anObject.<no name provided> origin=null
           FUN DEFAULT_PROPERTY_ACCESSOR name:<get-anObject> visibility:public modality:FINAL <> ($this:<root>.MyEnum.Z) returnType:<uninitialized parent>.<anonymous>
