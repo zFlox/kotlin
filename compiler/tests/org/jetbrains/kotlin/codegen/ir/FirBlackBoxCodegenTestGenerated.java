@@ -248,6 +248,29 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
                 runTest("compiler/testData/codegen/box/annotations/annotatedLambda/samLambda.kt");
             }
         }
+
+        @TestMetadata("compiler/testData/codegen/box/annotations/typeAnnotations")
+        @TestDataPath("$PROJECT_ROOT")
+        @RunWith(JUnit3RunnerWithInners.class)
+        public static class TypeAnnotations extends AbstractFirBlackBoxCodegenTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTestWithCustomIgnoreDirective(this::doTest, TargetBackend.JVM_IR, testDataFilePath, "// IGNORE_BACKEND_FIR: ");
+            }
+
+            public void testAllFilesPresentInTypeAnnotations() throws Exception {
+                KotlinTestUtils.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/annotations/typeAnnotations"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            }
+
+            @TestMetadata("methodParameters.kt")
+            public void testMethodParameters() throws Exception {
+                runTest("compiler/testData/codegen/box/annotations/typeAnnotations/methodParameters.kt");
+            }
+
+            @TestMetadata("typeUseAnnotation.kt")
+            public void testTypeUseAnnotation() throws Exception {
+                runTest("compiler/testData/codegen/box/annotations/typeAnnotations/typeUseAnnotation.kt");
+            }
+        }
     }
 
     @TestMetadata("compiler/testData/codegen/box/argumentOrder")
