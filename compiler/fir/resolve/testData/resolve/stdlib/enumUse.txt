@@ -1,0 +1,6 @@
+FILE: enumUse.kt
+    public final fun use(some: R|kotlin/Any|): R|kotlin/Unit| {
+    }
+    public final fun test(): R|kotlin/Unit| {
+        R|/use|(Q|kotlin/annotation/AnnotationTarget|.R|kotlin/annotation/AnnotationTarget.CLASS|)
+    }

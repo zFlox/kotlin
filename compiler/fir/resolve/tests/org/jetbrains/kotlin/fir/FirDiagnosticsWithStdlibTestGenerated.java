@@ -73,6 +73,11 @@ public class FirDiagnosticsWithStdlibTestGenerated extends AbstractFirDiagnostic
         runTest("compiler/fir/resolve/testData/resolve/stdlib/emptyArray.kt");
     }
 
+    @TestMetadata("enumUse.kt")
+    public void testEnumUse() throws Exception {
+        runTest("compiler/fir/resolve/testData/resolve/stdlib/enumUse.kt");
+    }
+
     @TestMetadata("exception.kt")
     public void testException() throws Exception {
         runTest("compiler/fir/resolve/testData/resolve/stdlib/exception.kt");
