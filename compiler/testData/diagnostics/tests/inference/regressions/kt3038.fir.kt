@@ -15,7 +15,7 @@ fun hello() {
     var enumElemSecond : TestEnum = inferenceTest(TestEnum.FIRST)
     enumElemSecond = TestEnum.SECOND // Ok
 
-    use(enumElemFirst, enumElemSecond)
+    <!INAPPLICABLE_CANDIDATE!>use<!>(enumElemFirst, enumElemSecond)
 }
 
 
