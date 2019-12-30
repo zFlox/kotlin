@@ -45,7 +45,5 @@ fun getAccessorNameSuffix(
         else ->
             throw UnsupportedOperationException("Do not know how to create accessor for descriptor $descriptor")
     }
-    return if (superCallDescriptor == null) suffix else "$suffix\$s${superCallDescriptor.name.asString().hexHashCode()}"
+    return if (superCallDescriptor == null) suffix else "$suffix\$s${superCallDescriptor.name.asString().hashCode()}"
 }
-
-fun Any.hexHashCode(): String = String.format("%08x", hashCode())

@@ -28,10 +28,10 @@ class Kotlin : Base.Derived() {
     }
 }
 // TESTED_OBJECT_KIND: function
-// TESTED_OBJECTS: differentPackage/Kotlin, access$baseOnly$s001f7af1
+// TESTED_OBJECTS: differentPackage/Kotlin, access$baseOnly$s2063089
 // FLAGS: ACC_PUBLIC, ACC_STATIC, ACC_FINAL, ACC_SYNTHETIC
 
 // TESTED_OBJECT_KIND: function
-// TESTED_OBJECTS: differentPackage/Kotlin, access$baseOnly$sbff92dfd
+// TESTED_OBJECTS: differentPackage/Kotlin, access$baseOnly$s-1074188803
 // FLAGS: ACC_PUBLIC, ACC_STATIC, ACC_FINAL, ACC_SYNTHETIC
 
