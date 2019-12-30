@@ -45,5 +45,10 @@ fun getAccessorNameSuffix(
         else ->
             throw UnsupportedOperationException("Do not know how to create accessor for descriptor $descriptor")
     }
-    return if (superCallDescriptor == null) suffix else "$suffix\$s${superCallDescriptor.name.asString().hashCode()}"
+    return if (superCallDescriptor == null) suffix else "$suffix\$s${superCallDescriptor.syntheticAccessorToSuperHashCode()}"
 }
+
+fun ClassDescriptor.syntheticAccessorToSuperHashCode(): String =
+    // TODO: change this to `String.format("%08x", classId.asString().hashCode())` as soon as we're ready to break compatibility
+    //       with pre-KT-21178 code
+    name.asString().hashCode().toString()
