@@ -959,17 +959,15 @@ fun checkSuperMethodsWithPopup(
         append(" of ")
         append(SymbolPresentationUtil.getSymbolPresentableText(superClass))
     }
-    val list = JBList<String>(renameBase, renameCurrent)
+
     JBPopupFactory.getInstance()
-        .createListPopupBuilder(list)
+        .createPopupChooserBuilder(listOf(renameBase, renameCurrent))
         .setTitle(title)
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback {
-            val value = list.selectedValue ?: return@setItemChoosenCallback
-
-            if (value == renameBase) {
+        .setItemChosenCallback { selected ->
+            if (selected == renameBase) {
                 val ableToRename = declaration.project.let { project ->
                     deepestSuperMethods.all { PsiElementRenameHandler.canRename(project, editor, it) }
                 }
