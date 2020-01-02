@@ -11,16 +11,16 @@ import java.awt.datatransfer.DataFlavor
 import java.io.Serializable
 
 data class TextBlock(val startOffset: Int, val endOffset: Int, val text: String)
-data class TextBlockReferenceCandidates(val textBlock: TextBlock, val referenceCandidates: List<TextRange>)
+data class TextBlockReferenceCandidates(val textBlock: TextBlock, val referenceCandidateRanges: List<TextRange>)
 
 class BasicKotlinReferenceTransferableData(
     val sourceFileUrl: String,
-    val pkg: String?,
+    val packageName: String,
     val imports: List<String>,
     val endOfImportsOffset: Int,
     val sourceText: String,
     val textBlockReferenceCandidates: List<TextBlockReferenceCandidates>
-) : TextBlockTransferableData, Serializable {
+) : TextBlockTransferableData, Cloneable, Serializable {
     override fun getFlavor() = dataFlavor
     override fun getOffsetCount() = 0
 
@@ -43,5 +43,14 @@ class BasicKotlinReferenceTransferableData(
             }
         }
     }
+
+    public override fun clone(): BasicKotlinReferenceTransferableData {
+        try {
+            return super.clone() as BasicKotlinReferenceTransferableData
+        } catch (e: CloneNotSupportedException) {
+            throw RuntimeException()
+        }
+    }
+
 }
 
