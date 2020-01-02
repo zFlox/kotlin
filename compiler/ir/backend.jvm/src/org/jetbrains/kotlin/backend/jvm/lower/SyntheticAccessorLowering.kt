@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.backend.jvm.ir.IrInlineReferenceLocator
 import org.jetbrains.kotlin.backend.jvm.ir.hasJvmDefault
 import org.jetbrains.kotlin.backend.jvm.ir.isLambda
 import org.jetbrains.kotlin.backend.jvm.ir.shouldBeHidden
-import org.jetbrains.kotlin.codegen.syntheticAccessorToSuperHashCode
+import org.jetbrains.kotlin.codegen.syntheticAccessorToSuperSuffix
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.descriptors.Visibility
@@ -457,11 +457,11 @@ internal class SyntheticAccessorLowering(val context: JvmBackendContext) : IrEle
             parentAsClass.isJvmInterface -> if (!Visibilities.isPrivate(visibility) && hasJvmDefault()) "\$jd" else ""
 
             // Accessor for _s_uper-qualified call
-            superQualifier != null -> "\$s" + superQualifier.descriptor.syntheticAccessorToSuperHashCode()
+            superQualifier != null -> "\$s" + superQualifier.descriptor.syntheticAccessorToSuperSuffix()
 
             // Access to static members that need an accessor must be because they are inherited,
             // hence accessed on a _s_upertype.
-            isStatic -> "\$s" + hashForAccessorDisambiguation()
+            isStatic -> "\$s" + parentAsClass.descriptor.syntheticAccessorToSuperSuffix()
 
             else -> ""
         }
@@ -486,12 +486,9 @@ internal class SyntheticAccessorLowering(val context: JvmBackendContext) : IrEle
 
         // Static accesses that need an accessor must be due to being inherited, hence accessed on a
         // _s_upertype
-        val staticSuffix = if (isStatic) "\$s" + hashForAccessorDisambiguation() else ""
+        val staticSuffix = if (isStatic) "\$s" + parentAsClass.descriptor.syntheticAccessorToSuperSuffix() else ""
         return companionSuffix + staticSuffix
     }
-
-    private fun IrDeclaration.hashForAccessorDisambiguation() =
-        context.getLocalClassType(parentAsClass)?.className?.hashCode() ?: parentAsClass.descriptor.syntheticAccessorToSuperHashCode()
 
     private val Visibility.isPrivate
         get() = Visibilities.isPrivate(this)
