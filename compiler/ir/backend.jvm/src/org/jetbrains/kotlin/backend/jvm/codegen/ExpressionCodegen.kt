@@ -1,11 +1,12 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.backend.jvm.codegen
 
 import org.jetbrains.kotlin.backend.common.lower.BOUND_RECEIVER_PARAMETER
+import org.jetbrains.kotlin.backend.common.lower.LocalDeclarationsLowering
 import org.jetbrains.kotlin.backend.jvm.JvmLoweredDeclarationOrigin
 import org.jetbrains.kotlin.backend.jvm.intrinsics.IrIntrinsicMethods
 import org.jetbrains.kotlin.backend.jvm.intrinsics.JavaClassProperty
@@ -50,11 +51,9 @@ import org.jetbrains.kotlin.resolve.jvm.jvmSignature.JvmMethodSignature
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeSystemCommonBackendContext
 import org.jetbrains.kotlin.types.model.TypeParameterMarker
-import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.keysToMap
-import org.jetbrains.kotlin.utils.sure
 import org.jetbrains.org.objectweb.asm.Label
 import org.jetbrains.org.objectweb.asm.Type
 import org.jetbrains.org.objectweb.asm.commons.InstructionAdapter
@@ -402,7 +401,7 @@ class ExpressionCodegen(
             }
             expression.symbol.descriptor is ConstructorDescriptor ->
                 throw AssertionError("IrCall with ConstructorDescriptor: ${expression.javaClass.simpleName}")
-            callee.shouldGenerateSuspendMarkers() ->
+            expression.isSuspensionPoint() ->
                 addInlineMarker(mv, isStartNotEnd = true)
         }
 
@@ -428,7 +427,7 @@ class ExpressionCodegen(
         expression.markLineNumber(true)
 
         // Do not generate redundant markers in continuation class.
-        if (callee.shouldGenerateSuspendMarkers()) {
+        if (expression.isSuspensionPoint()) {
             addSuspendMarker(mv, isStartNotEnd = true)
         }
 
@@ -441,7 +440,7 @@ class ExpressionCodegen(
             callGenerator.genCall(callable, this, expression)
         }
 
-        if (callee.shouldGenerateSuspendMarkers()) {
+        if (expression.isSuspensionPoint()) {
             // Check return type of non-lowered suspend call, in order to replace the result of the call with Unit,
             // otherwise, it would seem like the call returns non-unit upon resume.
             // See box/coroutines/tailCallOptimization/unit tests.
@@ -490,10 +489,28 @@ class ExpressionCodegen(
         }
     }
 
-    private fun IrFunction.shouldGenerateSuspendMarkers(): Boolean {
-        if (!isSuspend) return false
-        if (irFunction.shouldNotContainSuspendMarkers()) return false
-        return !symbol.owner.isInline || fqNameForIrSerialization == FqName("kotlin.coroutines.intrinsics.IntrinsicsKt.suspendCoroutineUninterceptedOrReturn")
+    private fun IrFunctionAccessExpression.isSuspensionPoint(): Boolean {
+        val owner = symbol.owner
+        return when {
+            // Only suspend functions are suspension points
+            !owner.isSuspend -> false
+            // But not inside continuation classes and bridges
+            irFunction.shouldNotContainSuspendMarkers() -> false
+            // Noinline function are always suspension points
+            !owner.isInline -> true
+            // The suspend intrinsics are, albeit inline, are also suspension points
+            owner.fqNameForIrSerialization == FqName("kotlin.coroutines.intrinsics.IntrinsicsKt.suspendCoroutineUninterceptedOrReturn") -> true
+            // Inside $$forInline functions crossinline calls are (usually) not suspension points, otherwise, flow will be pessimized
+            (dispatchReceiver as? IrGetField)?.symbol?.owner?.origin ==
+                    LocalDeclarationsLowering.DECLARATION_ORIGIN_FIELD_FOR_CROSSINLINE_CAPTURED_VALUE ->
+                irFunction.origin != JvmLoweredDeclarationOrigin.FOR_INLINE_STATE_MACHINE_TEMPLATE_CAPTURES_CROSSINLINE
+            // The same goes for inline lambdas
+            (dispatchReceiver as? IrGetValue)?.let {
+                it.origin == IrStatementOrigin.VARIABLE_AS_FUNCTION && (it.symbol.owner as? IrValueParameter)?.isNoinline != true
+            } == true -> irFunction.origin != JvmLoweredDeclarationOrigin.FOR_INLINE_STATE_MACHINE_TEMPLATE
+            // Otherwise, this is normal inline call, ergo not a suspension point
+            else -> false
+        }
     }
 
     override fun visitVariable(declaration: IrVariable, data: BlockInfo): PromisedValue {
