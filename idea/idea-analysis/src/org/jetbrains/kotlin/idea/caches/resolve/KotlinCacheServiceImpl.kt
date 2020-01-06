@@ -59,6 +59,7 @@ import org.jetbrains.kotlin.psi.psiUtil.contains
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.diagnostics.KotlinSuppressCache
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.sumByLong
 
@@ -120,9 +121,14 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
 
     private fun getFilesForElements(elements: List<KtElement>): List<KtFile> {
         return elements.map {
-            // in theory `containingKtFile` is `@NotNull` but in practice EA-114080
-            @Suppress("USELESS_ELVIS")
-            it.containingKtFile ?: throw IllegalStateException("containingKtFile was null for $it of ${it.javaClass}")
+            try {
+                // in theory `containingKtFile` is `@NotNull` but in practice EA-114080
+                @Suppress("USELESS_ELVIS")
+                it.containingKtFile ?: throw IllegalStateException("containingKtFile was null for $it of ${it.javaClass}")
+            } catch (e: Exception) {
+                throw KotlinExceptionWithAttachments("Couldn't get containingKtFile for ktElement")
+                    .withAttachment("element.kt", it.text)
+            }
         }
     }
 
