@@ -261,6 +261,11 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
                 KotlinTestUtils.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/annotations/typeAnnotations"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
             }
 
+            @TestMetadata("implicitReturn.kt")
+            public void testImplicitReturn() throws Exception {
+                runTest("compiler/testData/codegen/box/annotations/typeAnnotations/implicitReturn.kt");
+            }
+
             @TestMetadata("methodParameters.kt")
             public void testMethodParameters() throws Exception {
                 runTest("compiler/testData/codegen/box/annotations/typeAnnotations/methodParameters.kt");

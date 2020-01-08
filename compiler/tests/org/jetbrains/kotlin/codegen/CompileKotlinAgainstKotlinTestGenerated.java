@@ -477,6 +477,11 @@ public class CompileKotlinAgainstKotlinTestGenerated extends AbstractCompileKotl
             KotlinTestUtils.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/compileKotlinAgainstKotlin/typeAnnotations"), Pattern.compile("^(.+)\\.kt$"), null, true);
         }
 
+        @TestMetadata("implicitReturn.kt")
+        public void testImplicitReturn() throws Exception {
+            runTest("compiler/testData/compileKotlinAgainstKotlin/typeAnnotations/implicitReturn.kt");
+        }
+
         @TestMetadata("typeAnnotationTarget6.kt")
         public void testTypeAnnotationTarget6() throws Exception {
             runTest("compiler/testData/compileKotlinAgainstKotlin/typeAnnotations/typeAnnotationTarget6.kt");
