@@ -140,7 +140,7 @@ public abstract class AnnotationCodegen {
         }
 
         generateAdditionalAnnotations(annotated, returnType, annotationDescriptorsAlreadyPresent);
-        generateTypeAnnotations(typeForTypeAnnotations);
+        generateTypeAnnotations(annotated, typeForTypeAnnotations);
     }
 
     private void generateAdditionalAnnotations(
@@ -193,13 +193,15 @@ public abstract class AnnotationCodegen {
     }
 
     private static boolean isInvisibleFromTheOutside(@Nullable DeclarationDescriptor descriptor) {
-        if (descriptor instanceof CallableMemberDescriptor && KotlinTypeMapper.isAccessor((CallableMemberDescriptor) descriptor)) {
-            return true;
-        }
+        if (isAccessor(descriptor)) return true;
         if (descriptor instanceof MemberDescriptor) {
             return AsmUtil.getVisibilityAccessFlag((MemberDescriptor) descriptor) == Opcodes.ACC_PRIVATE;
         }
         return false;
+    }
+
+    private static boolean isAccessor(@Nullable Annotated descriptor) {
+        return descriptor instanceof CallableMemberDescriptor && KotlinTypeMapper.isAccessor((CallableMemberDescriptor) descriptor);
     }
 
     private void generateNullabilityAnnotation(@Nullable KotlinType type, @NotNull Set<String> annotationDescriptorsAlreadyPresent) {
@@ -666,8 +668,9 @@ public abstract class AnnotationCodegen {
         return av == null ? NO_ANNOTATION_VISITOR : av;
     }
 
-    private void generateTypeAnnotations(@Nullable KotlinType type) {
-        if (type == null ||
+    private void generateTypeAnnotations(@NotNull Annotated annotated, @Nullable KotlinType type) {
+        if (isAccessor(annotated) ||
+            type == null ||
             state.getTarget() == JvmTarget.JVM_1_6 ||
             !state.getConfiguration().getBoolean(JVMConfigurationKeys.EMIT_JVM_TYPE_ANNOTATIONS)) {
             return;
