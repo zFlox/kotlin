@@ -407,13 +407,13 @@ class ExpressionCodegen(
 
         expression.dispatchReceiver?.let { receiver ->
             val type = if ((expression as? IrCall)?.superQualifierSymbol != null) receiver.asmType else callable.owner
-            continuationAwareGenValueAndPut(receiver, type, callee.dispatchReceiverParameter!!, data, callGenerator)
+            callGenerator.genValueAndPut(callee.dispatchReceiverParameter!!, receiver, type, this, data)
         }
 
         expression.extensionReceiver?.let { receiver ->
             val type = callable.signature.valueParameters.singleOrNull { it.kind == JvmMethodParameterKind.RECEIVER }?.asmType
                 ?: error("No single extension receiver parameter: ${callable.signature.valueParameters}")
-            continuationAwareGenValueAndPut(receiver, type, callee.extensionReceiverParameter!!, data, callGenerator)
+            callGenerator.genValueAndPut(callee.extensionReceiverParameter!!, receiver, type, this, data)
         }
 
         callGenerator.beforeValueParametersStart()
@@ -421,7 +421,7 @@ class ExpressionCodegen(
             val arg = expression.getValueArgument(i)
             val parameterType = callable.valueParameterTypes[i]
             require(arg != null) { "Null argument in ExpressionCodegen for parameter ${irParameter.render()}" }
-            continuationAwareGenValueAndPut(arg, parameterType, irParameter, data, callGenerator)
+            callGenerator.genValueAndPut(irParameter, arg, parameterType, this, data)
         }
 
         expression.markLineNumber(true)
@@ -469,23 +469,6 @@ class ExpressionCodegen(
                 MaterialValue(this, callable.asmMethod.returnType, returnType).discard().coerce(expression.type)
             else ->
                 MaterialValue(this, callable.asmMethod.returnType, returnType).coerce(expression.type)
-        }
-    }
-
-    // In order to support java interop of inline suspend functions, we generate continuations of inline suspend functions.
-    // They should behave as ordinary suspend functions, i.e. we should not inline the content of the inline function into continuation.
-    // Thus, we should put its arguments to stack.
-    private fun continuationAwareGenValueAndPut(
-        arg: IrExpression,
-        parameterType: Type,
-        irParameter: IrValueParameter,
-        data: BlockInfo,
-        callGenerator: IrCallGenerator
-    ) {
-        if (irFunction.isInvokeSuspendOfContinuation()) {
-            gen(arg, parameterType, irParameter.type, data)
-        } else {
-            callGenerator.genValueAndPut(irParameter, arg, parameterType, this, data)
         }
     }
 

@@ -700,7 +700,8 @@ class MethodInliner(
     //   2) it is ASTORE'd right after
     //   3) it is passed to invoke of lambda
     private fun replaceContinuationAccessesWithFakeContinuationsIfNeeded(processingNode: MethodNode) {
-        // in ir backend inline suspend lambdas do not use ALOAD 0
+        // in ir backend inline suspend lambdas do not use ALOAD 0 to get continuation, since they are generated as static functions
+        // instead they get continuation from parameter.
         if (inliningContext.state.isIrBackend) return
         val lambdaInfo = inliningContext.lambdaInfo ?: return
         if (!lambdaInfo.isSuspend) return
