@@ -99,7 +99,6 @@ public abstract class AnnotationCodegen {
 
     /**
      * @param returnType can be null if not applicable (e.g. {@code annotated} is a class)
-     * @param typeForTypeAnnotations
      */
     public void genAnnotations(
             @Nullable Annotated annotated,
