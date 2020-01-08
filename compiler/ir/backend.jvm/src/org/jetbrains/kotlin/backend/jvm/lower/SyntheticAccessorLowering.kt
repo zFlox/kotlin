@@ -106,6 +106,7 @@ internal class SyntheticAccessorLowering(val context: JvmBackendContext) : IrEle
     override fun visitConstructor(declaration: IrConstructor): IrStatement {
         if (declaration.isOrShouldBeHidden) {
             pendingAccessorsToAdd.add(handleHiddenConstructor(declaration))
+            declaration.visibility = Visibilities.PRIVATE
         }
 
         return super.visitConstructor(declaration)
@@ -137,9 +138,6 @@ internal class SyntheticAccessorLowering(val context: JvmBackendContext) : IrEle
     private fun handleHiddenConstructor(declaration: IrConstructor): IrConstructorImpl {
         require(declaration.isOrShouldBeHidden, declaration::render)
         return context.hiddenConstructors.getOrPut(declaration) {
-            // TODO: avoid modifying elements from other files here
-            declaration.visibility = Visibilities.PRIVATE
-
             declaration.makeConstructorAccessor().also { accessor ->
                 // There's a special case in the JVM backend for serializing the metadata of hidden
                 // constructors - we serialize the descriptor of the original constructor, but the
