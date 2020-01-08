@@ -11,17 +11,29 @@ import com.intellij.debugger.engine.JavaDebugProcess
 import com.intellij.debugger.engine.JavaExecutionStack
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
+import com.intellij.ide.CommonActionsManager
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.ui.CaptionPanel
+import com.intellij.ui.ComboboxSpeedSearch
 import com.intellij.ui.DoubleClickListener
-import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.border.CustomLineBorder
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.SingleAlarm
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.frame.*
+import com.intellij.xdebugger.impl.actions.XDebuggerActions
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel
@@ -43,17 +55,24 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.ApplicationThreadExecu
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.AsyncStackTraceContext
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineDebugProbesProxy
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.ManagerThreadExecutor
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.*
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.CreateContentParams
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.CreateContentParamsProvider
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.XDebugSessionListenerProvider
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.logger
 import org.jetbrains.kotlin.idea.debugger.evaluate.ExecutionContext
+import java.awt.BorderLayout
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import javax.swing.JPanel
 
 
 class XCoroutineView(val project: Project, val session: XDebugSession) :
     Disposable, XDebugSessionListenerProvider, CreateContentParamsProvider {
     val log by logger
-    val splitter = OnePixelSplitter("SomeKey", 0.25f)
+
+    val mainPanel = JPanel(BorderLayout())
+    val someCombobox = ComboBox<String>()
     val panel = XDebuggerTreePanel(project, session.debugProcess.editorsProvider, this, null, XCOROUTINE_POPUP_ACTION_GROUP, null)
     val alarm = SingleAlarm(Runnable { resetRoot() }, VIEW_CLEAR_DELAY, this)
     val javaDebugProcess = session.debugProcess as JavaDebugProcess
@@ -70,10 +89,44 @@ class XCoroutineView(val project: Project, val session: XDebugSession) :
     }
 
     init {
-        splitter.firstComponent = panel.mainPanel
+        someCombobox.setRenderer(
+            SimpleListCellRenderer.create<String> { label: JBLabel, value: String?, index: Int ->
+                if (value != null) {
+                    label.text = value
+//                    label.icon = value.icon
+                } else if (index >= 0) {
+                    label.text = "Loading..."
+                }
+            }
+        )
+        object : ComboboxSpeedSearch(someCombobox) {
+            override fun getElementText(element: Any?): String? {
+                return element.toString()
+            }
+        }
+        someCombobox.addItem("Loading...")
+        val myToolbar = createToolbar()
+        val myThreadsPanel = Wrapper()
+        myThreadsPanel.setBorder(CustomLineBorder(CaptionPanel.CNT_ACTIVE_BORDER_COLOR, 0, 0, 1, 0))
+        myThreadsPanel.add(myToolbar?.getComponent(), BorderLayout.EAST)
+        myThreadsPanel.add(someCombobox, BorderLayout.CENTER)
+        mainPanel.add(myThreadsPanel, BorderLayout.NORTH)
+        mainPanel.add(panel.mainPanel, BorderLayout.CENTER)
         selectedNodeListener.installOn()
     }
 
+
+    private fun createToolbar(): ActionToolbarImpl? {
+        val framesGroup = DefaultActionGroup()
+        val actionsManager = CommonActionsManager.getInstance()
+        framesGroup
+            .addAll(ActionManager.getInstance().getAction(XDebuggerActions.FRAMES_TOP_TOOLBAR_GROUP))
+        val toolbar = ActionManager.getInstance().createActionToolbar(
+            ActionPlaces.DEBUGGER_TOOLBAR, framesGroup, true
+        ) as ActionToolbarImpl
+        toolbar.setReservePlaceAutoPopupIcon(false)
+        return toolbar
+    }
 
     fun saveState() {
         DebuggerUIUtil.invokeLater {
@@ -113,7 +166,7 @@ class XCoroutineView(val project: Project, val session: XDebugSession) :
     override fun createContentParams(): CreateContentParams =
         CreateContentParams(
             CoroutineDebuggerContentInfo.XCOROUTINE_THREADS_CONTENT,
-            splitter,
+            mainPanel,
             KotlinBundle.message("debugger.session.tab.xcoroutine.title"),
             null,
             panel.tree
